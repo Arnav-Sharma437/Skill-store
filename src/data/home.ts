@@ -86,19 +86,19 @@ export const BEST_SELLERS: Product[] = [
 export const SUMMER_OFFERS: SummerOfferBanner[] = [
   {
     id: "offer-1",
-    imageUrl: "/images/banners/summer_offer_1.jpg",
+    imageUrl: "/images/offers/summer_offer_1.jpg",
     title: "TUQO High Pressure Car Washer Machine",
     link: "/shop?product=hw2040",
   },
   {
     id: "offer-2",
-    imageUrl: "/images/banners/summer_offer_2.jpg",
+    imageUrl: "/images/offers/summer_offer_2.jpg",
     title: "Pumpkin Hand-Powered Miter Box",
     link: "/shop?product=miter_box",
   },
   {
     id: "offer-3",
-    imageUrl: "/images/banners/summer_offer_3.jpg",
+    imageUrl: "/images/offers/summer_offer_3.jpg",
     title: "Professional Power Tools",
     link: "/shop?category=power_tools",
   },
