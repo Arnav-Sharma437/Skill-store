@@ -1,0 +1,271 @@
+.header {
+  position: sticky;
+  top: 0;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  z-index: 99;
+  font-family: var(--font-sans);
+  height: 80px;
+  display: flex;
+  align-items: center;
+}
+
+.container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.logoLink {
+  display: block;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.logoIcon {
+  font-size: var(--text-2xl);
+  color: var(--accent);
+  filter: drop-shadow(0 2px 4px rgba(59, 130, 246, 0.3));
+}
+
+.logoText {
+  font-family: var(--font-accent);
+  font-weight: var(--weight-bold);
+  font-size: var(--text-lg);
+  letter-spacing: 0.1em;
+  color: var(--text-primary);
+  background: linear-gradient(135deg, var(--text-primary), var(--accent));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* --- Navigation Links --- */
+.desktopNav {
+  display: flex;
+  gap: var(--space-6);
+}
+
+.navLink {
+  font-weight: var(--weight-medium);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  position: relative;
+  padding: var(--space-1) 0;
+}
+
+.navLink:hover {
+  color: var(--accent);
+}
+
+.navLink::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: var(--accent);
+  transition: width var(--transition-fast) ease;
+}
+
+.navLink:hover::after {
+  width: 100%;
+}
+
+.active {
+  color: var(--accent);
+}
+
+.active::after {
+  width: 100%;
+}
+
+/* --- Search Form --- */
+.searchForm {
+  display: flex;
+  align-items: center;
+  position: relative;
+  max-width: 320px;
+  width: 100%;
+}
+
+.searchInput {
+  width: 100%;
+  padding: var(--space-2) var(--space-10) var(--space-2) var(--space-4);
+  font-size: var(--text-sm);
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  transition: border-color var(--transition-fast), background var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.searchInput:focus {
+  background: var(--surface);
+  border-color: var(--focus-ring);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.searchButton {
+  position: absolute;
+  right: var(--space-3);
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: color var(--transition-fast);
+}
+
+.searchButton:hover {
+  color: var(--accent);
+}
+
+/* --- Actions Buttons --- */
+.actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.actionIcon {
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
+  background: transparent;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.actionIcon:hover {
+  background: var(--surface-alt);
+  color: var(--accent);
+}
+
+.badge {
+  position: absolute;
+  top: var(--space-1);
+  right: var(--space-1);
+  background: var(--accent);
+  color: var(--accent-foreground);
+  font-size: 10px;
+  font-weight: var(--weight-bold);
+  min-width: 16px;
+  height: 16px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  border: 2px solid var(--surface);
+}
+
+.mobileMenuToggle {
+  display: none;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  cursor: pointer;
+  padding: var(--space-1);
+}
+
+/* --- Mobile Navigation Drawer --- */
+.mobileNav {
+  display: none;
+  position: absolute;
+  top: 80px;
+  left: 0;
+  width: 100%;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  box-shadow: var(--shadow-md);
+  padding: var(--space-4) var(--container-padding) var(--space-6);
+  flex-direction: column;
+  gap: var(--space-4);
+  animation: slideDown var(--transition-normal) forwards;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.mobileNavLinks {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.mobileNavLink {
+  font-weight: var(--weight-semibold);
+  font-size: var(--text-base);
+  color: var(--text-primary);
+  padding: var(--space-1) 0;
+  border-bottom: 1px solid var(--surface-alt);
+}
+
+.mobileActive {
+  color: var(--accent);
+}
+
+.mobileSearchForm {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.mobileSearchInput {
+  flex-grow: 1;
+}
+
+.mobileSearchButton {
+  background: var(--accent);
+  color: var(--accent-foreground);
+  border: none;
+  border-radius: var(--radius-md);
+  padding: 0 var(--space-4);
+  font-weight: var(--weight-semibold);
+  cursor: pointer;
+}
+
+/* --- Responsive Adjustments --- */
+@media (max-width: 1024px) {
+  .searchForm {
+    max-width: 200px;
+  }
+}
+
+@media (max-width: 768px) {
+  .desktopNav,
+  .searchForm {
+    display: none;
+  }
+
+  .mobileMenuToggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .mobileNav {
+    display: flex;
+  }
+}
