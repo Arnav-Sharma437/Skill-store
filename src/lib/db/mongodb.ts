@@ -1,4 +1,14 @@
 import mongoose from "mongoose";
+import dns from "node:dns";
+
+// Force Google DNS to resolve MongoDB Atlas SRV URLs correctly in local environments
+if (process.env.NODE_ENV === "development" || !process.env.VERCEL) {
+  try {
+    dns.setServers(["8.8.8.8", "8.8.4.4"]);
+  } catch (err) {
+    console.warn("Failed to set custom DNS servers for MongoDB connection:", err);
+  }
+}
 
 const MONGODB_URI = process.env.MONGODB_URI;
 
