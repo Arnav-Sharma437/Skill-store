@@ -58,8 +58,7 @@
 
 .scrollContainer {
   width: 100%;
-  overflow-x: auto;
-  scroll-behavior: smooth;
+  overflow: hidden;
   padding-bottom: 10px;
 }
 
