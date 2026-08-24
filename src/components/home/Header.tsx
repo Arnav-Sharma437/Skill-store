@@ -127,8 +127,14 @@ export default function Header() {
                   onMouseEnter={() => setActiveSubmenu("washer")}
                 >
                   <div className={styles.dropdownLeft}>
-                    {/* Pressure Washer Icon */}
-                    <span className={styles.menuIcon}>🚿</span>
+                    <span className={styles.menuIcon}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M7 16H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h3"></path>
+                        <path d="M12 12h10"></path>
+                        <path d="M18 8l4 4-4 4"></path>
+                        <path d="M7 6v12a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2H9a2 2 0 0 0-2 2z"></path>
+                      </svg>
+                    </span>
                     <span>HIGH PRESSURE WASHER</span>
                   </div>
                   <span className={styles.submenuArrow}>&gt;</span>
@@ -145,7 +151,13 @@ export default function Header() {
                 {/* 2. Vaccum Cleaner */}
                 <Link href="/shop?category=vaccum" className={styles.dropdownItem} onMouseEnter={() => setActiveSubmenu(null)}>
                   <div className={styles.dropdownLeft}>
-                    <span className={styles.menuIcon}>🌪️</span>
+                    <span className={styles.menuIcon}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <path d="M12 2a4 4 0 0 1 4 4v2a4 4 0 0 1-8 0V6a4 4 0 0 1 4-4z"></path>
+                        <path d="M6 16h12"></path>
+                      </svg>
+                    </span>
                     <span>VACCUM CLEANER</span>
                   </div>
                 </Link>
@@ -153,7 +165,13 @@ export default function Header() {
                 {/* 3. Autocare Detailing */}
                 <Link href="/shop?category=autocare" className={styles.dropdownItem} onMouseEnter={() => setActiveSubmenu(null)}>
                   <div className={styles.dropdownLeft}>
-                    <span className={styles.menuIcon}>🧽</span>
+                    <span className={styles.menuIcon}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12.5V16c0 .6.4 1 1 1h2"></path>
+                        <circle cx="7" cy="17" r="2"></circle>
+                        <circle cx="17" cy="17" r="2"></circle>
+                      </svg>
+                    </span>
                     <span>AUTOCARE DETAILING</span>
                   </div>
                 </Link>
@@ -161,7 +179,12 @@ export default function Header() {
                 {/* 4. Accessories & Spares */}
                 <Link href="/shop?category=spares" className={styles.dropdownItem} onMouseEnter={() => setActiveSubmenu(null)}>
                   <div className={styles.dropdownLeft}>
-                    <span className={styles.menuIcon}>⚙️</span>
+                    <span className={styles.menuIcon}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                      </svg>
+                    </span>
                     <span>ACCESSORIES & SPARES</span>
                   </div>
                 </Link>
@@ -172,7 +195,13 @@ export default function Header() {
                   onMouseEnter={() => setActiveSubmenu("compressor")}
                 >
                   <div className={styles.dropdownLeft}>
-                    <span className={styles.menuIcon}>💨</span>
+                    <span className={styles.menuIcon}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <path d="M12 8V12l3 3"></path>
+                        <path d="M16 4h4"></path>
+                      </svg>
+                    </span>
                     <span>AIR COMPRESSOR</span>
                   </div>
                   <span className={styles.submenuArrow}>&gt;</span>
@@ -189,7 +218,12 @@ export default function Header() {
                 {/* 6. Cordless Tools */}
                 <Link href="/shop?category=cordless" className={styles.dropdownItem} onMouseEnter={() => setActiveSubmenu(null)}>
                   <div className={styles.dropdownLeft}>
-                    <span className={styles.menuIcon}>🔌</span>
+                    <span className={styles.menuIcon}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M18 4H6a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h4v8a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2v-8h4a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"></path>
+                        <circle cx="10" cy="8" r="1"></circle>
+                      </svg>
+                    </span>
                     <span>CORDLESS TOOLS</span>
                   </div>
                 </Link>
