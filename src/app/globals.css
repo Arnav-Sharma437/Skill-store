@@ -71,29 +71,29 @@
   --transition-spring: 300ms cubic-bezier(0.4, 0, 0.2, 1);
 
   /* --- Colors (Light Mode Default) --- */
-  --background: #fcfcfd;
+  --background: #ffffff;
   --surface: #ffffff;
-  --surface-alt: #f4f5f6;
+  --surface-alt: #f3f4f6;
   
-  --primary: #0f172a;
-  --primary-hover: #1e293b;
+  --primary: #132c66; /* Navy Blue */
+  --primary-hover: #17306e;
   --primary-foreground: #ffffff;
   
-  --secondary: #475569;
-  --secondary-hover: #334155;
+  --secondary: #4b5563;
+  --secondary-hover: #374151;
   --secondary-foreground: #ffffff;
 
-  --accent: #2563eb;
-  --accent-hover: #1d4ed8;
-  --accent-foreground: #ffffff;
+  --accent: #ffd300; /* Yellow Accent */
+  --accent-hover: #e6be00;
+  --accent-foreground: #132c66;
 
-  --text-primary: #0f172a;
-  --text-secondary: #475569;
-  --text-muted: #94a3b8;
+  --text-primary: #000000;
+  --text-secondary: #374151;
+  --text-muted: #6b7280;
   
-  --border: #e2e8f0;
+  --border: #e5e7eb;
   --border-hover: #cbd5e1;
-  --focus-ring: #3b82f6;
+  --focus-ring: #38b6ff;
 
   --success: #10b981;
   --success-foreground: #ffffff;
@@ -109,38 +109,7 @@
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    /* --- Colors (Dark Mode) --- */
-    --background: #0b0f19;
-    --surface: #111827;
-    --surface-alt: #1f2937;
-    
-    --primary: #f8fafc;
-    --primary-hover: #e2e8f0;
-    --primary-foreground: #0f172a;
-    
-    --secondary: #94a3b8;
-    --secondary-hover: #cbd5e1;
-    --secondary-foreground: #0f172a;
-
-    --accent: #3b82f6;
-    --accent-hover: #60a5fa;
-    --accent-foreground: #ffffff;
-
-    --text-primary: #f8fafc;
-    --text-secondary: #cbd5e1;
-    --text-muted: #64748b;
-    
-    --border: #1f2937;
-    --border-hover: #374151;
-    --focus-ring: #3b82f6;
-
-    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
-    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.18);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.15);
-  }
-}
+/* Enforce consistent theme across light/dark OS modes */
 
 /* --- Base Reset & Typography --- */
 

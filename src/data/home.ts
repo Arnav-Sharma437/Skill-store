@@ -1,127 +1,113 @@
-export interface Banner {
+export interface HeroSlide {
   id: string;
-  title: string;
-  subtitle: string;
   imageUrl: string;
-  buttonText: string;
   link: string;
 }
 
 export interface Product {
   id: string;
   title: string;
-  category: string;
-  instructor: string;
+  imageUrl: string;
   rating: number;
   ratingCount: number;
-  price: number;
-  originalPrice?: number;
-  badge?: string;
+}
+
+export interface SummerOfferBanner {
+  id: string;
+  imageUrl: string;
+  title: string;
+  link: string;
 }
 
 export interface Brand {
   id: string;
   name: string;
+  logoText: string;
+  logoColor?: string;
+  isCustomSvg?: boolean;
 }
 
-export const HERO_SLIDES: Banner[] = [
+export const HERO_SLIDES: HeroSlide[] = [
   {
-    id: "banner-1",
-    title: "Master Full-Stack Web Development",
-    subtitle: "Build modern, production-ready web applications with Next.js, React, Node.js, and MongoDB. Learn from elite engineers.",
-    imageUrl: "/images/banners/web-dev.jpg",
-    buttonText: "Explore Developer Skills",
-    link: "/shop?category=development",
+    id: "hero-1",
+    imageUrl: "/images/banners/hero_tuqo.jpg",
+    link: "/shop?brand=tuqo",
   },
   {
-    id: "banner-2",
-    title: "Design High-Converting Interfaces",
-    subtitle: "Master Figma, wireframing, prototyping, and modern design principles. Elevate your creative portfolio today.",
-    imageUrl: "/images/banners/design.jpg",
-    buttonText: "Explore Design Skills",
-    link: "/shop?category=design",
+    id: "hero-2",
+    imageUrl: "/images/banners/hero_tuqo.jpg", // Slide 2
+    link: "/shop?brand=tuqo",
   },
   {
-    id: "banner-3",
-    title: "Lead the AI & Machine Learning Wave",
-    subtitle: "Dive deep into Python, neural networks, generative AI, and advanced predictive analytics. Master future-proof technologies.",
-    imageUrl: "/images/banners/ai.jpg",
-    buttonText: "Explore Data Skills",
-    link: "/shop?category=ai",
+    id: "hero-3",
+    imageUrl: "/images/banners/hero_tuqo.jpg", // Slide 3
+    link: "/shop?brand=tuqo",
   },
 ];
 
 export const BEST_SELLERS: Product[] = [
   {
     id: "prod-1",
-    title: "Next.js 16 & React 19: The Complete Guide",
-    category: "Development",
-    instructor: "Dr. Angela Yu, Sarah Connor",
-    rating: 4.8,
-    ratingCount: 12450,
-    price: 89.99,
-    originalPrice: 179.99,
-    badge: "Best Seller",
+    title: "TUQO High Pressure Washer HW2000 / 140 Bar",
+    imageUrl: "/images/products/hw2000.jpg",
+    rating: 5,
+    ratingCount: 241,
   },
   {
     id: "prod-2",
-    title: "Figma UI/UX Masterclass: Wireframe to Prototype",
-    category: "Design",
-    instructor: "Andrei Neagoie, Daniel Walter",
-    rating: 4.9,
-    ratingCount: 8930,
-    price: 69.99,
-    originalPrice: 139.99,
-    badge: "New",
+    title: "TUQO HG12 High Pressure Washer Trigger Gun / M22-M14",
+    imageUrl: "/images/products/trigger_gun.jpg",
+    rating: 5,
+    ratingCount: 780,
   },
   {
     id: "prod-3",
-    title: "Data Science, Deep Learning & Python Bootcamp",
-    category: "AI & Data Science",
-    instructor: "Jose Portilla, Frank Kane",
-    rating: 4.7,
-    ratingCount: 15300,
-    price: 99.99,
-    originalPrice: 199.99,
-    badge: "Hot",
+    title: "TUQO Cordless High Pressure Washer CDW400",
+    imageUrl: "/images/products/cdw400.jpg",
+    rating: 4,
+    ratingCount: 605,
   },
   {
     id: "prod-4",
-    title: "Premium Digital Marketing & SEO Strategy 2026",
-    category: "Marketing",
-    instructor: "Rob Percival, Daragh Walsh",
-    rating: 4.6,
-    ratingCount: 6420,
-    price: 49.99,
-    originalPrice: 99.99,
+    title: "TUQO DS102 Premium Pressure Washer 4Pcs Nozzle Tips",
+    imageUrl: "/images/products/nozzle_tips.jpg",
+    rating: 4,
+    ratingCount: 420,
   },
   {
     id: "prod-5",
-    title: "The Ultimate Product Management A-Z Certification",
-    category: "Business",
-    instructor: "Cole Mercer, Evan Kimbrell",
-    rating: 4.8,
-    ratingCount: 7120,
-    price: 79.99,
-    originalPrice: 159.99,
+    title: "TUQO Air Compressor 25 Liters LK25DB - Oil Type",
+    imageUrl: "/images/products/compressor.jpg",
+    rating: 5,
+    ratingCount: 241,
+  },
+];
+
+export const SUMMER_OFFERS: SummerOfferBanner[] = [
+  {
+    id: "offer-1",
+    imageUrl: "/images/banners/summer_offer_1.jpg",
+    title: "TUQO High Pressure Car Washer Machine",
+    link: "/shop?product=hw2040",
   },
   {
-    id: "prod-6",
-    title: "Advanced CSS Animations, Flexbox, Grid & Layouts",
-    category: "Design",
-    instructor: "Jonas Schmedtmann",
-    rating: 4.9,
-    ratingCount: 11050,
-    price: 39.99,
-    originalPrice: 79.99,
-    badge: "Trending",
+    id: "offer-2",
+    imageUrl: "/images/banners/summer_offer_2.jpg",
+    title: "Pumpkin Hand-Powered Miter Box",
+    link: "/shop?product=miter_box",
+  },
+  {
+    id: "offer-3",
+    imageUrl: "/images/banners/summer_offer_3.jpg",
+    title: "Professional Power Tools",
+    link: "/shop?category=power_tools",
   },
 ];
 
 export const BRANDS: Brand[] = [
-  { id: "brand-google", name: "Google" },
-  { id: "brand-amazon", name: "Amazon" },
-  { id: "brand-meta", name: "Meta" },
-  { id: "brand-microsoft", name: "Microsoft" },
-  { id: "brand-netflix", name: "Netflix" },
+  { id: "brand-tuqo", name: "TUQO", logoText: "TUQO" },
+  { id: "brand-costec", name: "COSTEC", logoText: "COSTEC" },
+  { id: "brand-metso", name: "METSO", logoText: "METSO" },
+  { id: "brand-pumpkin", name: "PUMPKIN", logoText: "PUMPKIN" },
+  { id: "brand-ultratouch", name: "Ultra TOUCH", logoText: "Ultra TOUCH" },
 ];

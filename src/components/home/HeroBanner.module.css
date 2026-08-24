@@ -1,9 +1,11 @@
 .heroSection {
   position: relative;
   width: 100%;
-  height: 520px;
+  aspect-ratio: 16 / 5.5; /* Large wide machinery banner aspect ratio */
+  min-height: 250px;
+  max-height: 480px;
   overflow: hidden;
-  background: #090d16;
+  background: #000000;
   z-index: 1;
 }
 
@@ -18,8 +20,6 @@
   position: relative;
   min-width: 100%;
   height: 100%;
-  display: flex;
-  align-items: center;
 }
 
 .imageContainer {
@@ -28,7 +28,6 @@
   left: 0;
   width: 100%;
   height: 100%;
-  z-index: 0;
 }
 
 .image {
@@ -36,132 +35,43 @@
   object-position: center;
 }
 
-.overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  /* Dark left gradient to make text extremely legible */
-  background: linear-gradient(
-    90deg,
-    rgba(9, 13, 22, 0.95) 0%,
-    rgba(9, 13, 22, 0.7) 50%,
-    rgba(9, 13, 22, 0.2) 100%
-  );
-}
-
-.contentContainer {
-  position: relative;
-  z-index: 10;
-  width: 100%;
-  pointer-events: none; /* Let clicks pass to nav buttons if any overlap */
-}
-
-.content {
-  max-width: 580px;
-  pointer-events: auto; /* Re-enable pointer events for links/buttons */
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--space-4);
-  color: #ffffff;
-  padding: var(--space-4) 0;
-  animation: fadeInUp var(--transition-slow) forwards;
-}
-
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.title {
-  font-family: var(--font-accent);
-  font-size: var(--text-4xl);
-  font-weight: var(--weight-bold);
-  line-height: var(--lh-tight);
-  color: #f8fafc;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
-}
-
-.subtitle {
-  font-size: var(--text-lg);
-  line-height: var(--lh-relaxed);
-  color: #cbd5e1;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
-}
-
-.ctaButton {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  background: var(--accent);
-  color: var(--accent-foreground);
-  padding: var(--space-3) var(--space-6);
-  font-weight: var(--weight-semibold);
-  font-size: var(--text-sm);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-md);
-  transition: background var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
-}
-
-.ctaButton:hover {
-  background: var(--accent-hover);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
-}
-
-.arrowIcon {
-  transition: transform var(--transition-fast);
-}
-
-.ctaButton:hover .arrowIcon {
-  transform: translateX(4px);
-}
-
-/* --- Navigation Buttons --- */
+/* --- Navigation Buttons (White circles with black arrow icon) --- */
 .navButton {
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  background: rgba(9, 13, 22, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #ffffff;
-  width: 50px;
-  height: 50px;
-  border-radius: var(--radius-full);
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  color: #000000;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   z-index: 20;
-  transition: background var(--transition-fast), border-color var(--transition-fast), transform var(--transition-fast);
+  transition: background var(--transition-fast), transform var(--transition-fast);
 }
 
 .navButton:hover {
-  background: var(--accent);
-  border-color: var(--accent);
+  background: #f3f4f6;
   transform: translateY(-50%) scale(1.05);
 }
 
 .prevButton {
-  left: var(--space-6);
+  left: var(--space-4);
 }
 
 .nextButton {
-  right: var(--space-6);
+  right: var(--space-4);
 }
 
 /* --- Pagination Indicators --- */
 .pagination {
   position: absolute;
-  bottom: var(--space-6);
+  bottom: var(--space-4);
   left: 50%;
   transform: translateX(-50%);
   display: flex;
@@ -170,69 +80,28 @@
 }
 
 .dot {
-  width: 10px;
-  height: 10px;
-  border-radius: var(--radius-full);
-  background: rgba(255, 255, 255, 0.4);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5);
   border: none;
   cursor: pointer;
   padding: 0;
-  transition: background var(--transition-fast), width var(--transition-fast);
+  transition: background var(--transition-fast);
 }
 
 .activeDot {
-  background: var(--accent);
-  width: 28px;
+  background: #ffffff;
+  width: 8px;
 }
 
 /* --- Responsive Adjustments --- */
-@media (max-width: 1024px) {
-  .heroSection {
-    height: 440px;
-  }
-  
-  .title {
-    font-size: var(--text-3xl);
-  }
-  
-  .subtitle {
-    font-size: var(--text-base);
-  }
-}
-
 @media (max-width: 768px) {
   .heroSection {
-    height: 380px;
+    aspect-ratio: 16 / 7;
   }
-  
   .navButton {
-    display: none; /* Hide arrows on mobile for swipe/tap friendliness */
-  }
-
-  .content {
-    max-width: 100%;
-    padding: 0 var(--space-4);
-  }
-
-  .title {
-    font-size: var(--text-2xl);
-  }
-}
-
-@media (max-width: 480px) {
-  .heroSection {
-    height: 340px;
-  }
-
-  .title {
-    font-size: var(--text-xl);
-  }
-
-  .subtitle {
-    font-size: var(--text-sm);
-  }
-
-  .ctaButton {
-    padding: var(--space-2) var(--space-4);
+    width: 36px;
+    height: 36px;
   }
 }

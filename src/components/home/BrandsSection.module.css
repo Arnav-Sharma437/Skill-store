@@ -1,85 +1,65 @@
 .section {
-  padding: var(--space-12) 0;
-  background: var(--surface);
-  border-top: 1px solid var(--border);
-  border-bottom: 1px solid var(--border);
-  font-family: var(--font-sans);
+  padding: 30px 0 50px;
+  background: #ffffff;
+  width: 100%;
+}
+
+.titleBar {
+  background: #132c66; /* Navy Blue */
+  text-align: center;
+  padding: 10px 0;
+  margin-bottom: 24px;
+  width: 100%;
 }
 
 .title {
-  font-family: var(--font-accent);
-  font-size: var(--text-sm);
-  font-weight: var(--weight-bold);
-  color: var(--text-muted);
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: 0.5px;
+  color: #ffffff;
+  margin: 0;
   text-transform: uppercase;
-  letter-spacing: 0.15em;
-  text-align: center;
-  margin-bottom: var(--space-8);
 }
 
 .grid {
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
-  gap: var(--space-12);
+  gap: 20px;
   flex-wrap: wrap;
 }
 
-.brandLogo {
-  color: var(--text-muted);
-  opacity: 0.45;
-  transition: color var(--transition-fast) ease, opacity var(--transition-fast) ease, transform var(--transition-fast) ease;
-  cursor: pointer;
+.brandCard {
+  background: #ffffff;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 12px;
+  width: 220px;
+  height: 74px;
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  transition: transform var(--transition-fast) ease, border-color var(--transition-fast) ease;
 }
 
-.brandLogo:hover {
-  opacity: 1;
-  transform: scale(1.1);
+.brandCard:hover {
+  transform: translateY(-2px);
+  border-color: #ffd300; /* Yellow hover border */
 }
 
-/* Brand Specific Hover Colors */
-.google:hover {
-  color: #4285f4; /* Google Blue */
+@media (max-width: 1200px) {
+  .grid {
+    justify-content: center;
+  }
 }
 
-.amazon:hover {
-  color: #ff9900; /* Amazon Orange */
-}
-
-.meta:hover {
-  color: #0668e1; /* Meta Blue */
-}
-
-.microsoft:hover {
-  opacity: 1;
-  color: initial; /* Microsoft uses standard inline SVG colors */
-}
-
-.netflix:hover {
-  color: #e50914; /* Netflix Red */
-}
-
-/* --- Responsive Adjustments --- */
 @media (max-width: 768px) {
-  .grid {
-    gap: var(--space-8);
+  .title {
+    font-size: 14px;
   }
-  
-  .brandLogo svg {
-    max-width: 90px;
-    height: auto;
-  }
-}
-
-@media (max-width: 480px) {
-  .grid {
-    gap: var(--space-6);
-  }
-  
-  .brandLogo svg {
-    max-width: 75px;
+  .brandCard {
+    width: 170px;
+    height: 60px;
   }
 }

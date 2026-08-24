@@ -1,28 +1,18 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import styles from "./AnnouncementBar.module.css";
 
 export default function AnnouncementBar() {
-  const [isVisible, setIsVisible] = useState(true);
-
-  if (!isVisible) return null;
+  const text = "*2% Discount On Prepaid Orders / Free Shipment & COD Available*";
+  // Repeat the text to create a scrolling marquee or filled top bar
+  const repeatedText = `${text}   ${text}   ${text}   ${text}   ${text}`;
 
   return (
     <div className={styles.bar}>
-      <div className={styles.content}>
-        <span className={styles.badge}>SUMMER SALE</span>
-        <p className={styles.text}>
-          ⚡ Get 50% off on all master bundles with code: <strong>SUMMERSKILLS50</strong> (Limited Time Offer)
-        </p>
+      <div className={styles.marquee}>
+        <span className={styles.text}>{repeatedText}</span>
       </div>
-      <button 
-        className={styles.closeBtn} 
-        onClick={() => setIsVisible(false)}
-        aria-label="Close announcement"
-      >
-        &times;
-      </button>
     </div>
   );
 }

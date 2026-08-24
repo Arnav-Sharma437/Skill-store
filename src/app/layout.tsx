@@ -15,8 +15,8 @@ const firaSans = Fira_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Skill Store - Premium Full-Stack E-Commerce",
-  description: "Find the best professional development and technical skills, courses, and resources.",
+  title: "Skill Store - Premium Hardware & Power Tools",
+  description: "Find the best professional machinery, high-pressure washers, air compressors, and power tool accessories from TUQO and COSTEC.",
 };
 
 export default function RootLayout({
