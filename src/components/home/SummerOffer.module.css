@@ -84,6 +84,7 @@
   box-shadow: 0 1px 3px rgba(0,0,0,0.05);
   transition: transform var(--transition-fast) ease, box-shadow var(--transition-fast) ease;
   display: block;
+  flex-shrink: 0;
 }
 
 .bannerCard:hover {

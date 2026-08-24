@@ -20,10 +20,10 @@
 /* Floating social icons on the left side of the curve */
 .socialsFloating {
   position: absolute;
-  top: 30px; /* Positioned nicely along the deep curved slope */
+  top: 25px; /* Shifted down to match curve dip */
   left: calc((100vw - var(--container-width)) / 2 + var(--container-padding));
   display: flex;
-  gap: 16px;
+  gap: 20px;
   z-index: 10;
 }
 
@@ -34,57 +34,61 @@
 }
 
 .socialCircle {
-  width: 52px; /* Increased circle size */
-  height: 52px;
+  width: 64px; /* Increased circle size matching mockup proportions */
+  height: 64px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
-  transition: transform var(--transition-fast) ease, filter var(--transition-fast) ease, background-color var(--transition-fast) ease;
-  color: #ffffff !important; /* Ensure icons are white */
-}
-
-/* Branded official colors */
-.socialFacebook {
-  background-color: #1877f2;
-}
-
-.socialFacebook:hover {
-  background-color: #166fe5;
-  transform: translateY(-3px) scale(1.05);
-}
-
-.socialInstagram {
-  background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
-}
-
-.socialInstagram:hover {
-  filter: brightness(1.1);
-  transform: translateY(-3px) scale(1.05);
-}
-
-.socialWhatsapp {
-  background-color: #25d366;
-}
-
-.socialWhatsapp:hover {
-  background-color: #20ba5a;
-  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  transition: transform var(--transition-fast) ease, background-color var(--transition-fast) ease;
+  border: 1.5px solid #132c66; /* Match line border */
+  text-decoration: none;
 }
 
 .socialCircle svg {
-  width: 24px; /* Larger icon inside */
-  height: 24px;
+  width: 28px; /* Larger icon inside */
+  height: 28px;
 }
 
-.socialCircle:hover {
-  transform: translateY(-3px) scale(1.05);
-  background: #e6be00;
+/* Yellow Facebook icon circle */
+.socialFacebook {
+  background-color: #ffd300;
+  color: #132c66 !important;
+  transform: translateY(0);
+}
+
+.socialFacebook:hover {
+  background-color: #e6be00;
+  transform: translateY(-4px) scale(1.05);
+}
+
+/* White Instagram icon circle */
+.socialInstagram {
+  background-color: #ffffff;
+  color: #132c66 !important;
+  transform: translateY(22px);
+}
+
+.socialInstagram:hover {
+  background-color: #f3f4f6;
+  transform: translateY(18px) scale(1.05);
+}
+
+/* Yellow WhatsApp icon circle */
+.socialWhatsapp {
+  background-color: #ffd300;
+  color: #132c66 !important;
+  transform: translateY(48px);
+}
+
+.socialWhatsapp:hover {
+  background-color: #e6be00;
+  transform: translateY(44px) scale(1.05);
 }
 
 .mainFooter {
-  padding: 20px 0 50px;
+  padding: 40px 0 80px; /* Taller padding */
   background: #132c66;
 }
 
@@ -96,21 +100,21 @@
 }
 
 .columnBrand {
-  flex: 1.5;
+  flex: 1.6;
   min-width: 320px;
 }
 
 .logo {
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin-bottom: 12px;
+  gap: 8px;
+  margin-bottom: 16px;
 }
 
 .logoSkill {
   font-family: var(--font-accent);
   font-weight: 900;
-  font-size: 32px; /* Increased logo size */
+  font-size: 38px; /* Taller logo size */
   color: #ffffff;
   letter-spacing: 0.5px;
 }
@@ -118,7 +122,7 @@
 .logoStore {
   font-family: var(--font-accent);
   font-weight: 900;
-  font-size: 32px;
+  font-size: 38px;
   color: #ffd300;
   letter-spacing: 0.5px;
 }
@@ -127,49 +131,55 @@
 .slogan {
   background: #ffd300;
   color: #132c66;
-  padding: 6px 20px 6px 12px;
+  padding: 8px 24px 8px 14px; /* Larger padding */
   font-family: var(--font-sans);
   font-weight: 800;
-  font-size: 12px;
+  font-size: 13px; /* Larger font */
   text-transform: uppercase;
   display: inline-block;
   clip-path: polygon(0 0, 100% 0, calc(100% - 12px) 100%, 0 100%);
-  margin-bottom: 24px;
-  letter-spacing: 0.2px;
+  margin-bottom: 28px;
+  letter-spacing: 0.5px;
 }
 
 .contactList {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px; /* Taller gap */
 }
 
 .contactItem {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
 }
 
 .contactIcon {
-  width: 34px; /* Larger rounded white icons */
-  height: 34px;
+  width: 38px; /* Larger rounded white icons */
+  height: 38px;
   background: #ffffff;
   border: 1.5px solid #132c66;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
+  font-size: 18px;
   flex-shrink: 0;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
+.contactIcon svg {
+  width: 18px;
+  height: 18px;
+  stroke: #132c66 !important;
+}
+
 .contactText {
   font-family: var(--font-sans);
-  font-size: 13px; /* Increased text size */
+  font-size: 14px; /* Larger text size */
   color: #ffffff;
-  line-height: 1.4;
-  font-weight: 500;
+  line-height: 1.45;
+  font-weight: 600;
 }
 
 .columnLinks {
@@ -180,24 +190,24 @@
 .columnTitle {
   font-family: var(--font-sans);
   font-weight: 700;
-  font-size: 16px; /* Increased heading size */
+  font-size: 18px; /* Taller heading size */
   color: #ffd300;
-  margin-bottom: 24px;
+  margin-bottom: 28px;
   letter-spacing: 0.5px;
 }
 
 .nav {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 16px; /* Larger line spacing */
 }
 
 .link {
   font-family: var(--font-sans);
-  font-size: 13px; /* Increased link size */
+  font-size: 14px; /* Larger link size */
   color: #ffffff;
   transition: color var(--transition-fast) ease;
-  font-weight: 500;
+  font-weight: 700; /* Bold uppercase links */
   text-decoration: none;
 }
 
@@ -207,8 +217,8 @@
 
 /* --- Newsletter Row --- */
 .newsletterContainer {
-  margin-top: 40px;
-  padding-top: 30px;
+  margin-top: 50px;
+  padding-top: 40px;
   border-top: 1.5px solid rgba(255, 255, 255, 0.1);
   display: flex;
   justify-content: center;
@@ -218,15 +228,15 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--space-3);
+  gap: var(--space-4);
   width: 100%;
-  max-width: 480px;
+  max-width: 600px; /* Taller newsletter box */
 }
 
 .newsletterTitle {
   font-family: var(--font-sans);
   font-weight: 700;
-  font-size: 15px; /* Increased size */
+  font-size: 16px; /* Larger size */
   color: #ffd300;
   margin: 0;
   letter-spacing: 0.5px;
@@ -235,7 +245,7 @@
 .newsletterForm {
   display: flex;
   width: 100%;
-  height: 42px; /* Taller form */
+  height: 48px; /* Taller form input/button */
 }
 
 .newsletterInput {
@@ -243,8 +253,8 @@
   background: #ffffff;
   border: none;
   border-radius: 6px 0 0 6px;
-  padding: 0 18px;
-  font-size: 13px;
+  padding: 0 20px;
+  font-size: 14px;
   color: #000000;
 }
 
@@ -262,10 +272,10 @@
   color: #132c66;
   border: none;
   border-radius: 0 6px 6px 0;
-  padding: 0 28px;
+  padding: 0 36px;
   font-family: var(--font-sans);
-  font-weight: 700;
-  font-size: 12px;
+  font-weight: 800;
+  font-size: 14px;
   cursor: pointer;
   transition: background var(--transition-fast) ease;
 }
@@ -277,14 +287,14 @@
 /* --- Copyright Bar --- */
 .copyrightBar {
   background: #000000;
-  padding: 16px 0;
+  padding: 18px 0;
   text-align: center;
   border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .copyrightText {
   font-family: var(--font-sans);
-  font-size: 11px; /* Increased size */
+  font-size: 12px; /* Larger size */
   color: #ffffff;
   opacity: 0.7;
   letter-spacing: 0.5px;
@@ -298,5 +308,18 @@
   }
   .newsletterInner {
     max-width: 100%;
+  }
+  .socialsFloating {
+    position: relative;
+    top: 0;
+    left: 0;
+    justify-content: center;
+    padding: 20px 0;
+  }
+  .socialFacebook, .socialInstagram, .socialWhatsapp {
+    transform: none !important;
+  }
+  .curveWrapper {
+    height: 100px;
   }
 }
