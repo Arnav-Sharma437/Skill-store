@@ -6,7 +6,7 @@
 
 .curveWrapper {
   position: relative;
-  height: 100px; /* Increased curve height */
+  height: 160px; /* Deeper curved footer height */
   width: 100%;
   background: #ffffff;
 }
@@ -20,7 +20,7 @@
 /* Floating social icons on the left side of the curve */
 .socialsFloating {
   position: absolute;
-  top: 15px; /* Shifted down to match curve dip */
+  top: 30px; /* Positioned nicely along the deep curved slope */
   left: calc((100vw - var(--container-width)) / 2 + var(--container-padding));
   display: flex;
   gap: 16px;
@@ -37,13 +37,40 @@
   width: 52px; /* Increased circle size */
   height: 52px;
   border-radius: 50%;
-  background: #ffd300; /* Yellow Accent */
-  color: #132c66; /* Navy Blue Icon */
   display: flex;
   align-items: center;
   justify-content: center;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
-  transition: transform var(--transition-fast) ease, background var(--transition-fast) ease;
+  transition: transform var(--transition-fast) ease, filter var(--transition-fast) ease, background-color var(--transition-fast) ease;
+  color: #ffffff !important; /* Ensure icons are white */
+}
+
+/* Branded official colors */
+.socialFacebook {
+  background-color: #1877f2;
+}
+
+.socialFacebook:hover {
+  background-color: #166fe5;
+  transform: translateY(-3px) scale(1.05);
+}
+
+.socialInstagram {
+  background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+}
+
+.socialInstagram:hover {
+  filter: brightness(1.1);
+  transform: translateY(-3px) scale(1.05);
+}
+
+.socialWhatsapp {
+  background-color: #25d366;
+}
+
+.socialWhatsapp:hover {
+  background-color: #20ba5a;
+  transform: translateY(-3px) scale(1.05);
 }
 
 .socialCircle svg {
