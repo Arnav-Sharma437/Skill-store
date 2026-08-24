@@ -19,8 +19,8 @@ export default function Footer() {
     <footer className={styles.footer}>
       {/* Concave Curved SVG Separator at the top of the footer */}
       <div className={styles.curveWrapper}>
-        <svg viewBox="0 0 1440 60" fill="none" xmlns="http://www.w3.org/2000/svg" className={styles.curveSvg} preserveAspectRatio="none">
-          <path d="M0,0 C480,50 960,50 1440,0 L1440,60 L0,60 Z" fill="#132c66"/>
+        <svg viewBox="0 0 1440 100" fill="none" xmlns="http://www.w3.org/2000/svg" className={styles.curveSvg} preserveAspectRatio="none">
+          <path d="M0,0 C480,90 960,90 1440,0 L1440,100 L0,100 Z" fill="#132c66"/>
         </svg>
 
         {/* Social Icons floating on the curve */}

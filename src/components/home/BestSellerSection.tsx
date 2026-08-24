@@ -1,23 +1,21 @@
 "use client";
 
-import React, { useRef } from "react";
+import React, { useState } from "react";
 import styles from "./BestSellerSection.module.css";
 import ProductCard from "./ProductCard";
 import { BEST_SELLERS } from "@/data/home";
 
 export default function BestSellerSection() {
-  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const [products, setProducts] = useState(BEST_SELLERS);
 
   const scrollLeft = () => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollBy({ left: -270, behavior: "smooth" });
-    }
+    // Shift elements to the right (move last to first)
+    setProducts((prev) => [prev[prev.length - 1], ...prev.slice(0, prev.length - 1)]);
   };
 
   const scrollRight = () => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollBy({ left: 270, behavior: "smooth" });
-    }
+    // Shift elements to the left (move first to last)
+    setProducts((prev) => [...prev.slice(1), prev[0]]);
   };
 
   return (
@@ -46,10 +44,10 @@ export default function BestSellerSection() {
           </div>
         </div>
 
-        {/* Product Cards Row (Scrollable wrapper) */}
-        <div ref={scrollRef} className={styles.scrollContainer}>
+        {/* Product Cards Row */}
+        <div className={styles.scrollContainer}>
           <div className={styles.productRow}>
-            {BEST_SELLERS.map((product) => (
+            {products.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
           </div>

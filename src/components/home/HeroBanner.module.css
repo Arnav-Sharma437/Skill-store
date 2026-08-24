@@ -1,9 +1,9 @@
 .heroSection {
   position: relative;
   width: 100%;
-  aspect-ratio: 16 / 5.5; /* Large wide machinery banner aspect ratio */
-  min-height: 250px;
-  max-height: 480px;
+  aspect-ratio: 16 / 4.5; /* Taller banner aspect ratio */
+  min-height: 300px;
+  max-height: 560px; /* Increased height */
   overflow: hidden;
   background: #000000;
   z-index: 1;

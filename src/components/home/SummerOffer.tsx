@@ -1,24 +1,22 @@
 "use client";
 
-import React, { useRef } from "react";
+import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import styles from "./SummerOffer.module.css";
 import { SUMMER_OFFERS } from "@/data/home";
 
 export default function SummerOffer() {
-  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const [offers, setOffers] = useState(SUMMER_OFFERS);
 
   const scrollLeft = () => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollBy({ left: -320, behavior: "smooth" });
-    }
+    // Shift elements to the right (move last to first)
+    setOffers((prev) => [prev[prev.length - 1], ...prev.slice(0, prev.length - 1)]);
   };
 
   const scrollRight = () => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollBy({ left: 320, behavior: "smooth" });
-    }
+    // Shift elements to the left (move first to last)
+    setOffers((prev) => [...prev.slice(1), prev[0]]);
   };
 
   return (
@@ -47,14 +45,16 @@ export default function SummerOffer() {
           </div>
         </div>
 
-        {/* Banners Row (Scrollable carousel container) */}
-        <div ref={scrollRef} className={styles.scrollContainer}>
+        {/* Banners Row */}
+        <div className={styles.scrollContainer}>
           <div className={styles.bannersRow}>
-            {SUMMER_OFFERS.map((offer, idx) => {
-              // The third banner is narrow (3:4 ratio), others are wider (4:3 ratio)
-              const cardClass = idx === 2 ? styles.narrowCard : styles.wideCard;
-              const imgWidth = idx === 2 ? 300 : 450;
-              const imgHeight = idx === 2 ? 400 : 338;
+            {offers.map((offer) => {
+              // The third banner (idx === 2) in the initial array was narrow, but since they rotate,
+              // we can map the styling based on the original offer id so that specific cards stay styled correctly!
+              const isNarrow = offer.id === "offer-3";
+              const cardClass = isNarrow ? styles.narrowCard : styles.wideCard;
+              const imgWidth = isNarrow ? 300 : 450;
+              const imgHeight = isNarrow ? 400 : 338;
               
               return (
                 <Link href={offer.link} key={offer.id} className={`${styles.bannerCard} ${cardClass}`}>

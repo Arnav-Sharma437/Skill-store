@@ -6,7 +6,7 @@
 
 .curveWrapper {
   position: relative;
-  height: 60px;
+  height: 100px; /* Increased curve height */
   width: 100%;
   background: #ffffff;
 }
@@ -20,14 +20,13 @@
 /* Floating social icons on the left side of the curve */
 .socialsFloating {
   position: absolute;
-  top: 5px;
+  top: 15px; /* Shifted down to match curve dip */
   left: calc((100vw - var(--container-width)) / 2 + var(--container-padding));
   display: flex;
-  gap: 12px;
+  gap: 16px;
   z-index: 10;
 }
 
-/* Fallback for smaller screens */
 @media (max-width: 1240px) {
   .socialsFloating {
     left: var(--container-padding);
@@ -35,51 +34,56 @@
 }
 
 .socialCircle {
-  width: 36px;
-  height: 36px;
+  width: 52px; /* Increased circle size */
+  height: 52px;
   border-radius: 50%;
   background: #ffd300; /* Yellow Accent */
   color: #132c66; /* Navy Blue Icon */
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
   transition: transform var(--transition-fast) ease, background var(--transition-fast) ease;
 }
 
+.socialCircle svg {
+  width: 24px; /* Larger icon inside */
+  height: 24px;
+}
+
 .socialCircle:hover {
-  transform: translateY(-2px);
+  transform: translateY(-3px) scale(1.05);
   background: #e6be00;
 }
 
 .mainFooter {
-  padding: 10px 0 40px;
+  padding: 20px 0 50px;
   background: #132c66;
 }
 
 .container {
   display: flex;
   justify-content: space-between;
-  gap: 30px;
+  gap: 40px;
   flex-wrap: wrap;
 }
 
 .columnBrand {
   flex: 1.5;
-  min-width: 280px;
+  min-width: 320px;
 }
 
 .logo {
   display: flex;
   align-items: center;
-  gap: 4px;
-  margin-bottom: 4px;
+  gap: 6px;
+  margin-bottom: 12px;
 }
 
 .logoSkill {
   font-family: var(--font-accent);
   font-weight: 900;
-  font-size: 24px;
+  font-size: 32px; /* Increased logo size */
   color: #ffffff;
   letter-spacing: 0.5px;
 }
@@ -87,43 +91,58 @@
 .logoStore {
   font-family: var(--font-accent);
   font-weight: 900;
-  font-size: 24px;
-  color: #ffd300; /* Yellow */
+  font-size: 32px;
+  color: #ffd300;
   letter-spacing: 0.5px;
 }
 
+/* Yellow Slanted Slogan Banner */
 .slogan {
+  background: #ffd300;
+  color: #132c66;
+  padding: 6px 20px 6px 12px;
   font-family: var(--font-sans);
-  font-size: 11px;
-  font-style: italic;
-  font-weight: 500;
-  color: #ffd300;
-  margin-bottom: 20px;
+  font-weight: 800;
+  font-size: 12px;
+  text-transform: uppercase;
+  display: inline-block;
+  clip-path: polygon(0 0, 100% 0, calc(100% - 12px) 100%, 0 100%);
+  margin-bottom: 24px;
+  letter-spacing: 0.2px;
 }
 
 .contactList {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: 16px;
 }
 
 .contactItem {
   display: flex;
-  align-items: flex-start;
-  gap: 8px;
+  align-items: center;
+  gap: 12px;
 }
 
 .contactIcon {
-  font-size: 14px;
+  width: 34px; /* Larger rounded white icons */
+  height: 34px;
+  background: #ffffff;
+  border: 1.5px solid #132c66;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
   flex-shrink: 0;
-  margin-top: 1px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .contactText {
   font-family: var(--font-sans);
-  font-size: 11px;
+  font-size: 13px; /* Increased text size */
   color: #ffffff;
   line-height: 1.4;
+  font-weight: 500;
 }
 
 .columnLinks {
@@ -134,23 +153,25 @@
 .columnTitle {
   font-family: var(--font-sans);
   font-weight: 700;
-  font-size: 13px;
+  font-size: 16px; /* Increased heading size */
   color: #ffd300;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
   letter-spacing: 0.5px;
 }
 
 .nav {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
 }
 
 .link {
   font-family: var(--font-sans);
-  font-size: 11px;
+  font-size: 13px; /* Increased link size */
   color: #ffffff;
   transition: color var(--transition-fast) ease;
+  font-weight: 500;
+  text-decoration: none;
 }
 
 .link:hover {
@@ -161,7 +182,7 @@
 .newsletterContainer {
   margin-top: 40px;
   padding-top: 30px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1.5px solid rgba(255, 255, 255, 0.1);
   display: flex;
   justify-content: center;
 }
@@ -178,7 +199,7 @@
 .newsletterTitle {
   font-family: var(--font-sans);
   font-weight: 700;
-  font-size: 13px;
+  font-size: 15px; /* Increased size */
   color: #ffd300;
   margin: 0;
   letter-spacing: 0.5px;
@@ -187,16 +208,16 @@
 .newsletterForm {
   display: flex;
   width: 100%;
-  height: 36px;
+  height: 42px; /* Taller form */
 }
 
 .newsletterInput {
   flex-grow: 1;
   background: #ffffff;
   border: none;
-  border-radius: 4px 0 0 4px;
-  padding: 0 16px;
-  font-size: 12px;
+  border-radius: 6px 0 0 6px;
+  padding: 0 18px;
+  font-size: 13px;
   color: #000000;
 }
 
@@ -213,11 +234,11 @@
   background: #ffd300;
   color: #132c66;
   border: none;
-  border-radius: 0 4px 4px 0;
-  padding: 0 24px;
+  border-radius: 0 6px 6px 0;
+  padding: 0 28px;
   font-family: var(--font-sans);
   font-weight: 700;
-  font-size: 11px;
+  font-size: 12px;
   cursor: pointer;
   transition: background var(--transition-fast) ease;
 }
@@ -229,14 +250,14 @@
 /* --- Copyright Bar --- */
 .copyrightBar {
   background: #000000;
-  padding: 14px 0;
+  padding: 16px 0;
   text-align: center;
   border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .copyrightText {
   font-family: var(--font-sans);
-  font-size: 10px;
+  font-size: 11px; /* Increased size */
   color: #ffffff;
   opacity: 0.7;
   letter-spacing: 0.5px;
