@@ -1,11 +1,11 @@
 .heroSection {
   position: relative;
   width: 100%;
-  max-width: 1440px;
-  height: 444px; /* Exact requested banner height */
-  margin: 0 auto;
+  aspect-ratio: 16 / 4.5; /* Taller banner aspect ratio */
+  min-height: 300px;
+  max-height: 560px; /* Increased height */
   overflow: hidden;
-  background: #0b0202;
+  background: #000000;
   z-index: 1;
 }
 
@@ -98,7 +98,6 @@
 /* --- Responsive Adjustments --- */
 @media (max-width: 768px) {
   .heroSection {
-    height: auto;
     aspect-ratio: 16 / 7;
   }
   .navButton {

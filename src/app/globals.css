@@ -61,7 +61,7 @@
   --max-width-lg: 1024px;
   --max-width-xl: 1280px;
   --max-width-xxl: 1440px;
-  --container-width: 1440px;
+  --container-width: 1400px;
   --container-padding: var(--space-4);
 
   /* --- Transitions --- */
