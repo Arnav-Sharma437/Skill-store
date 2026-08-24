@@ -6,18 +6,32 @@ import ProductCard from "./ProductCard";
 import { BEST_SELLERS } from "@/data/home";
 
 export default function BestSellerSection() {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const totalItems = BEST_SELLERS.length;
-  
-  // We allow sliding up to the point where the last items are visible.
-  // On desktop (1400px container), all 5 fit, but on smaller screens we slide.
-  // Let's slide 1 card at a time up to index = totalItems - 1.
-  const handlePrev = () => {
-    setCurrentIndex((prev) => (prev === 0 ? totalItems - 1 : prev - 1));
-  };
+  const [products, setProducts] = useState(BEST_SELLERS);
+  const [offset, setOffset] = useState(0);
+  const [isTransitioning, setIsTransitioning] = useState(false);
 
   const handleNext = () => {
-    setCurrentIndex((prev) => (prev === totalItems - 1 ? 0 : prev + 1));
+    if (isTransitioning) return;
+    setIsTransitioning(true);
+    setOffset(-265); // Slide left by one card width (245px) + gap (20px)
+  };
+
+  const handlePrev = () => {
+    if (isTransitioning) return;
+    setIsTransitioning(true);
+    setOffset(265); // Slide right by one card width + gap
+  };
+
+  const handleTransitionEnd = () => {
+    setIsTransitioning(false);
+    if (offset < 0) {
+      // Next: shift first product to the end
+      setProducts((prev) => [...prev.slice(1), prev[0]]);
+    } else if (offset > 0) {
+      // Prev: shift last product to the front
+      setProducts((prev) => [prev[prev.length - 1], ...prev.slice(0, prev.length - 1)]);
+    }
+    setOffset(0); // Reset translation offset instantly
   };
 
   return (
@@ -46,16 +60,17 @@ export default function BestSellerSection() {
           </div>
         </div>
 
-        {/* Product Cards Row with CSS Transition */}
+        {/* Product Cards Row with Seamless Transition */}
         <div className={styles.scrollContainer}>
           <div 
             className={styles.productRow}
             style={{ 
-              transform: `translateX(-${currentIndex * 265}px)`,
-              transition: "transform 0.5s cubic-bezier(0.25, 1, 0.5, 1)"
+              transform: `translateX(${offset}px)`,
+              transition: isTransitioning ? "transform 0.4s cubic-bezier(0.25, 1, 0.5, 1)" : "none"
             }}
+            onTransitionEnd={handleTransitionEnd}
           >
-            {BEST_SELLERS.map((product) => (
+            {products.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
           </div>

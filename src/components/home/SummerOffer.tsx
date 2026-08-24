@@ -7,15 +7,32 @@ import styles from "./SummerOffer.module.css";
 import { SUMMER_OFFERS } from "@/data/home";
 
 export default function SummerOffer() {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const totalItems = SUMMER_OFFERS.length;
-
-  const handlePrev = () => {
-    setCurrentIndex((prev) => (prev === 0 ? totalItems - 1 : prev - 1));
-  };
+  const [offers, setOffers] = useState(SUMMER_OFFERS);
+  const [offset, setOffset] = useState(0);
+  const [isTransitioning, setIsTransitioning] = useState(false);
 
   const handleNext = () => {
-    setCurrentIndex((prev) => (prev === totalItems - 1 ? 0 : prev + 1));
+    if (isTransitioning) return;
+    setIsTransitioning(true);
+    setOffset(-470); // Slide left by wide card width (450px) + gap (20px)
+  };
+
+  const handlePrev = () => {
+    if (isTransitioning) return;
+    setIsTransitioning(true);
+    setOffset(470); // Slide right by wide card width + gap
+  };
+
+  const handleTransitionEnd = () => {
+    setIsTransitioning(false);
+    if (offset < 0) {
+      // Next: shift first offer to the end
+      setOffers((prev) => [...prev.slice(1), prev[0]]);
+    } else if (offset > 0) {
+      // Prev: shift last offer to the front
+      setOffers((prev) => [prev[prev.length - 1], ...prev.slice(0, prev.length - 1)]);
+    }
+    setOffset(0); // Reset translation offset instantly
   };
 
   return (
@@ -44,16 +61,17 @@ export default function SummerOffer() {
           </div>
         </div>
 
-        {/* Banners Row with CSS Transition */}
+        {/* Banners Row with Seamless Transition */}
         <div className={styles.scrollContainer}>
           <div 
             className={styles.bannersRow}
             style={{ 
-              transform: `translateX(-${currentIndex * 470}px)`,
-              transition: "transform 0.5s cubic-bezier(0.25, 1, 0.5, 1)"
+              transform: `translateX(${offset}px)`,
+              transition: isTransitioning ? "transform 0.4s cubic-bezier(0.25, 1, 0.5, 1)" : "none"
             }}
+            onTransitionEnd={handleTransitionEnd}
           >
-            {SUMMER_OFFERS.map((offer) => {
+            {offers.map((offer) => {
               const isNarrow = offer.id === "offer-3";
               const cardClass = isNarrow ? styles.narrowCard : styles.wideCard;
               const imgWidth = isNarrow ? 300 : 450;
