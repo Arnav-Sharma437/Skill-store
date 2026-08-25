@@ -11,16 +11,27 @@ export default function SummerOffer() {
   const [offset, setOffset] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
 
+  const getScrollAmount = () => {
+    if (typeof window !== "undefined") {
+      if (window.innerWidth <= 768) {
+        return 340; // 320px card width + 20px gap
+      } else if (window.innerWidth <= 1024) {
+        return 500; // 480px card width + 20px gap
+      }
+    }
+    return 620; // Default: 600px wideCard + 20px gap
+  };
+
   const handleNext = () => {
     if (isTransitioning) return;
     setIsTransitioning(true);
-    setOffset(-620); // Slide left by wide card width (600px) + gap (20px)
+    setOffset(-getScrollAmount());
   };
 
   const handlePrev = () => {
     if (isTransitioning) return;
     setIsTransitioning(true);
-    setOffset(620); // Slide right by wide card width + gap
+    setOffset(getScrollAmount());
   };
 
   const handleTransitionEnd = () => {

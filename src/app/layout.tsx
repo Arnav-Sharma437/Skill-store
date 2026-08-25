@@ -20,6 +20,7 @@ export const metadata: Metadata = {
 };
 
 import { AppProvider } from "@/context/AppContext";
+import BottomNav from "@/components/home/BottomNav";
 
 export default function RootLayout({
   children,
@@ -31,6 +32,7 @@ export default function RootLayout({
       <body>
         <AppProvider>
           {children}
+          <BottomNav />
         </AppProvider>
       </body>
     </html>

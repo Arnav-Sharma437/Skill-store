@@ -360,7 +360,14 @@
 }
 
 @media (max-width: 480px) {
-  .grid {
-    grid-template-columns: 1fr;
+  .grid, .gridAccessories {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  .cardTitle {
+    font-size: 13px !important;
+  }
+  .cardPrice {
+    font-size: 14px !important;
   }
 }
