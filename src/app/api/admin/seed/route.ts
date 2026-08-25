@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/db";
-import { Product, Category, Banner } from "@/lib/schemas";
+import { Product, Category, Banner, Enquiry } from "@/lib/schemas";
 import { HERO_SLIDES, BRAND_CATEGORIES, BEST_SELLERS } from "@/data/home";
 
 export async function GET() {
@@ -155,6 +155,16 @@ export async function GET() {
       });
 
       await Product.insertMany(productSeeds);
+    }
+
+    // 4. Seed Enquiries if empty
+    const enquiryCount = await Enquiry.countDocuments();
+    if (enquiryCount === 0) {
+      await Enquiry.create({
+        name: "Arnav Sharma",
+        email: "arnav@gmail.com",
+        message: "This is a test mail. I wanted to verify the high pressure washer cd400.",
+      });
     }
 
     return NextResponse.json({ success: true, message: "Database seeded successfully!" });

@@ -76,6 +76,23 @@ const BannerSchema: Schema = new Schema(
   { timestamps: true }
 );
 
+// Enquiry Interface
+export interface IEnquiry extends Document {
+  name: string;
+  email: string;
+  message: string;
+  createdAt: Date;
+}
+
+const EnquirySchema: Schema = new Schema(
+  {
+    name: { type: String, required: true },
+    email: { type: String, required: true },
+    message: { type: String, required: true },
+  },
+  { timestamps: true }
+);
+
 // Exports
 export const Product: Model<IProduct> =
   mongoose.models.Product || mongoose.model<IProduct>("Product", ProductSchema);
@@ -85,3 +102,6 @@ export const Category: Model<ICategory> =
 
 export const Banner: Model<IBanner> =
   mongoose.models.Banner || mongoose.model<IBanner>("Banner", BannerSchema);
+
+export const Enquiry: Model<IEnquiry> =
+  mongoose.models.Enquiry || mongoose.model<IEnquiry>("Enquiry", EnquirySchema);
