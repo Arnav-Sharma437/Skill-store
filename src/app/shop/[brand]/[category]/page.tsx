@@ -8,7 +8,7 @@ import Header from "@/components/home/Header";
 import Footer from "@/components/home/Footer";
 import styles from "./CategoryProductsPage.module.css";
 
-// Sample datasets for TUQO / Category pages (default fallback populated for all brands)
+// Sample datasets for TUQO / Category pages
 const INITIAL_DOMESTIC = [
   { id: "dom-1", title: "TUQO Cordless High Pressure Washer CDW400", price: 6299, imageUrl: "/images/products/cdw400.jpg", rating: 5, ratingCount: 241 },
   { id: "dom-2", title: "TUQO High Pressure Washer HW1200", price: 3999, imageUrl: "/images/products/hw2000.jpg", rating: 5, ratingCount: 780 },
@@ -69,18 +69,38 @@ export default function CategoryProductsPage({ params }: PageProps) {
     }));
   };
 
+  // Helper to render stars
+  const renderStars = (rating: number) => {
+    return (
+      <div className={styles.stars}>
+        {[1, 2, 3, 4, 5].map((s) => (
+          <svg
+            key={s}
+            className={styles.starIcon}
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill={s <= rating ? "#ffd300" : "#d1d5db"}
+            stroke={s <= rating ? "#ffd300" : "#d1d5db"}
+            strokeWidth="1"
+          >
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+          </svg>
+        ))}
+      </div>
+    );
+  };
+
   // Filter & Sort Logic for Domestic
   const processedDomestic = useMemo(() => {
     let result = [...INITIAL_DOMESTIC];
 
-    // Filter
     if (filterPrice === "under5k") {
       result = result.filter((p) => p.price < 5000);
     } else if (filterPrice === "above5k") {
       result = result.filter((p) => p.price >= 5000);
     }
 
-    // Sort
     if (sortBy === "priceLowHigh") {
       result.sort((a, b) => a.price - b.price);
     } else if (sortBy === "priceHighLow") {
@@ -96,14 +116,12 @@ export default function CategoryProductsPage({ params }: PageProps) {
   const processedCommercial = useMemo(() => {
     let result = [...INITIAL_COMMERCIAL];
 
-    // Filter
     if (filterPrice === "under15k") {
       result = result.filter((p) => p.price < 15000);
     } else if (filterPrice === "above15k") {
       result = result.filter((p) => p.price >= 15000);
     }
 
-    // Sort
     if (sortBy === "priceLowHigh") {
       result.sort((a, b) => a.price - b.price);
     } else if (sortBy === "priceHighLow") {
@@ -136,49 +154,54 @@ export default function CategoryProductsPage({ params }: PageProps) {
           </div>
         </div>
 
-        {/* Section 1: Domestic High Pressure Washer */}
         <div className="container">
+          {/* Dashboard Premium Filter controls row */}
+          <div className={styles.filterBar}>
+            <div className={styles.resultsCount}>
+              Showing {processedDomestic.length + processedCommercial.length} Products for {categoryName}
+            </div>
+            
+            <div className={styles.controls}>
+              <div className={styles.selectWrapper}>
+                <label htmlFor="price-filter" className="sr-only">Filter by Price</label>
+                <select 
+                  id="price-filter"
+                  value={filterPrice} 
+                  onChange={(e) => setFilterPrice(e.target.value)}
+                  className={styles.select}
+                >
+                  <option value="all">Filter: All Prices</option>
+                  <option value="under5k">Under Rs. 5,000</option>
+                  <option value="above5k">Rs. 5,000 & Above</option>
+                </select>
+              </div>
+              
+              <div className={styles.selectWrapper}>
+                <label htmlFor="sort-select" className="sr-only">Sort by</label>
+                <select 
+                  id="sort-select"
+                  value={sortBy} 
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className={styles.select}
+                >
+                  <option value="default">Sort: Default</option>
+                  <option value="priceLowHigh">Price: Low to High</option>
+                  <option value="priceHighLow">Price: High to Low</option>
+                  <option value="rating">Rating</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Section 1: Domestic Products */}
           <div className={styles.sectionBlock}>
             <div className={styles.sectionHeaderRow}>
               <div className={styles.titleTab}>
                 <h2 className={styles.titleText}>DOMESTIC {categoryName.toUpperCase()}</h2>
               </div>
-              
-              {/* Interactive Sort/Filter Controls */}
-              <div className={styles.controls}>
-                <div className={styles.selectWrapper}>
-                  <label htmlFor="filter-price" className="sr-only">Filter By Price</label>
-                  <select 
-                    id="filter-price"
-                    value={filterPrice} 
-                    onChange={(e) => setFilterPrice(e.target.value)}
-                    className={styles.select}
-                  >
-                    <option value="all">Filter: All Prices</option>
-                    <option value="under5k">Under Rs. 5,000</option>
-                    <option value="above5k">Rs. 5,000 & Above</option>
-                  </select>
-                </div>
-                
-                <div className={styles.selectWrapper}>
-                  <label htmlFor="sort-by" className="sr-only">Sort By</label>
-                  <select 
-                    id="sort-by"
-                    value={sortBy} 
-                    onChange={(e) => setSortBy(e.target.value)}
-                    className={styles.select}
-                  >
-                    <option value="default">Sort: Default</option>
-                    <option value="priceLowHigh">Price: Low to High</option>
-                    <option value="priceHighLow">Price: High to Low</option>
-                    <option value="rating">Rating</option>
-                  </select>
-                </div>
-              </div>
               <div className={styles.headerLine}></div>
             </div>
 
-            {/* Product Cards Grid */}
             <div className={styles.grid}>
               {processedDomestic.map((product) => (
                 <div key={product.id} className={styles.productCard}>
@@ -200,6 +223,13 @@ export default function CategoryProductsPage({ params }: PageProps) {
                         {product.title}
                       </h3>
                     </Link>
+
+                    {/* Ratings row */}
+                    <div className={styles.ratingRow}>
+                      {renderStars(product.rating)}
+                      <span className={styles.reviewsCount}>{product.ratingCount} Reviews</span>
+                    </div>
+
                     <span className={styles.price}>Rs. {product.price.toLocaleString("en-IN")}.00</span>
                     <div className={styles.actionRow}>
                       <button 
@@ -228,7 +258,7 @@ export default function CategoryProductsPage({ params }: PageProps) {
             </div>
           </div>
 
-          {/* Section 2: Commercial High Pressure Washer */}
+          {/* Section 2: Commercial Products */}
           <div className={styles.sectionBlock}>
             <div className={styles.sectionHeaderRow}>
               <div className={styles.titleTab}>
@@ -258,6 +288,13 @@ export default function CategoryProductsPage({ params }: PageProps) {
                         {product.title}
                       </h3>
                     </Link>
+
+                    {/* Ratings row */}
+                    <div className={styles.ratingRow}>
+                      {renderStars(product.rating)}
+                      <span className={styles.reviewsCount}>{product.ratingCount} Reviews</span>
+                    </div>
+
                     <span className={styles.price}>Rs. {product.price.toLocaleString("en-IN")}.00</span>
                     <div className={styles.actionRow}>
                       <button 
@@ -316,6 +353,13 @@ export default function CategoryProductsPage({ params }: PageProps) {
                         {product.title}
                       </h3>
                     </Link>
+
+                    {/* Ratings row */}
+                    <div className={styles.ratingRow}>
+                      {renderStars(product.rating)}
+                      <span className={styles.reviewsCount}>{product.ratingCount} Reviews</span>
+                    </div>
+
                     <span className={styles.price}>Rs. {product.price.toLocaleString("en-IN")}.00</span>
                     <div className={styles.actionRow}>
                       <button 
