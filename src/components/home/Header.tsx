@@ -263,13 +263,13 @@ export default function Header() {
             {isBrandsOpen && (
               <div className={styles.brandsDropdown}>
                 {/* Brand 1: TUQO */}
-                <Link href="/shop?brand=tuqo" className={styles.brandDropdownItem}>
+                <Link href="/shop/tuqo" className={styles.brandDropdownItem}>
                   <svg width="100" height="28" viewBox="0 0 100 28" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <text x="50%" y="55%" dominantBaseline="middle" textAnchor="middle" fontFamily="var(--font-accent)" fontStyle="italic" fontWeight="900" fontSize="18" fill="#000" letterSpacing="-0.5">TUQO</text>
                   </svg>
                 </Link>
                 {/* Brand 2: PUMPKIN */}
-                <Link href="/shop?brand=pumpkin" className={styles.brandDropdownItem}>
+                <Link href="/shop/pumpkin" className={styles.brandDropdownItem}>
                   <svg width="100" height="28" viewBox="0 0 100 28" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <circle cx="12" cy="14" r="5" fill="#ff7a00" />
                     <path d="M12 9C12 7 13 6 13 6" stroke="#4caf50" strokeWidth="1.5" strokeLinecap="round" />
@@ -277,19 +277,19 @@ export default function Header() {
                   </svg>
                 </Link>
                 {/* Brand 3: MITSUKI */}
-                <Link href="/shop?brand=mitsuki" className={styles.brandDropdownItem}>
+                <Link href="/shop/mitsuki" className={styles.brandDropdownItem}>
                   <svg width="100" height="28" viewBox="0 0 100 28" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <text x="50%" y="55%" dominantBaseline="middle" textAnchor="middle" fontFamily="var(--font-sans)" fontWeight="900" fontSize="14" fill="#000" letterSpacing="1">MITSUKI</text>
                   </svg>
                 </Link>
                 {/* Brand 4: METSO */}
-                <Link href="/shop?brand=metso" className={styles.brandDropdownItem}>
+                <Link href="/shop/metso" className={styles.brandDropdownItem}>
                   <svg width="100" height="28" viewBox="0 0 100 28" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <text x="50%" y="55%" dominantBaseline="middle" textAnchor="middle" fontFamily="var(--font-sans)" fontWeight="900" fontSize="14" fill="#000" letterSpacing="0">METSO</text>
                   </svg>
                 </Link>
                 {/* Brand 5: COSTEC */}
-                <Link href="/shop?brand=costec" className={styles.brandDropdownItem}>
+                <Link href="/shop/costec" className={styles.brandDropdownItem}>
                   <svg width="100" height="28" viewBox="0 0 100 28" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <text x="50%" y="55%" dominantBaseline="middle" textAnchor="middle" fontFamily="var(--font-sans)" fontWeight="700" fontSize="13" fill="#000" letterSpacing="0.5">COSTEC</text>
                   </svg>
