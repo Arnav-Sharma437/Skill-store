@@ -672,6 +672,10 @@
   transform: scale(1.05);
 }
 
+.cardHeartActive svg {
+  fill: #132c66;
+}
+
 @media (max-width: 1200px) {
   .productBlock {
     padding: 30px;

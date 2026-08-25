@@ -3,9 +3,11 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useApp } from "@/context/AppContext";
 import styles from "./Header.module.css";
 
 export default function Header() {
+  const { cart, wishlist } = useApp();
   const [searchQuery, setSearchQuery] = useState("");
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [isBrandsOpen, setIsBrandsOpen] = useState(false);
@@ -79,6 +81,9 @@ export default function Header() {
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
               </svg>
+              {wishlist.length > 0 && (
+                <span className={styles.badge}>{wishlist.length}</span>
+              )}
             </Link>
 
             <Link href="/cart" className={styles.actionIcon} aria-label="Shopping Cart">
@@ -87,6 +92,9 @@ export default function Header() {
                 <circle cx="20" cy="21" r="1"></circle>
                 <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
               </svg>
+              {cart.length > 0 && (
+                <span className={styles.badge}>{cart.reduce((total, item) => total + item.quantity, 0)}</span>
+              )}
             </Link>
 
             <Link href="/account" className={styles.actionIcon} aria-label="Account">

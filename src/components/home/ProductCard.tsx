@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useApp } from "@/context/AppContext";
 import styles from "./ProductCard.module.css";
 import { Product } from "@/data/home";
 
@@ -11,16 +12,27 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
-  const [isFavourite, setIsFavourite] = useState(false);
+  const { addToCart, toggleWishlist, isInWishlist } = useApp();
+  const isFavourite = isInWishlist(product.id);
 
   const handleAddToCart = (e: React.FormEvent) => {
     e.preventDefault();
-    alert(`Added to Cart: ${product.title}`);
+    addToCart({
+      id: product.id,
+      title: product.title,
+      price: product.price || 4999,
+      imageUrl: product.imageUrl
+    });
   };
 
   const handleToggleFavourite = (e: React.MouseEvent) => {
     e.preventDefault();
-    setIsFavourite(!isFavourite);
+    toggleWishlist({
+      id: product.id,
+      title: product.title,
+      price: product.price || 4999,
+      imageUrl: product.imageUrl
+    });
   };
 
   // Helper to render the yellow stars

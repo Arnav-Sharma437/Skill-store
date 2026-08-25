@@ -6,6 +6,7 @@ import Image from "next/image";
 import AnnouncementBar from "@/components/home/AnnouncementBar";
 import Header from "@/components/home/Header";
 import Footer from "@/components/home/Footer";
+import { useApp } from "@/context/AppContext";
 import styles from "./CategoryProductsPage.module.css";
 
 // Sample datasets for TUQO / Category pages
@@ -45,11 +46,11 @@ type PageProps = {
 
 export default function CategoryProductsPage({ params }: PageProps) {
   const { brand, category } = use(params);
+  const { addToCart, toggleWishlist, isInWishlist } = useApp();
 
   // States
   const [filterPrice, setFilterPrice] = useState("all");
   const [sortBy, setSortBy] = useState("default");
-  const [favorites, setFavorites] = useState<Record<string, boolean>>({});
 
   const formatTitle = (slug: string) => {
     return slug
@@ -60,14 +61,6 @@ export default function CategoryProductsPage({ params }: PageProps) {
 
   const brandName = brand.toUpperCase();
   const categoryName = formatTitle(category);
-
-  // Toggle favorite
-  const toggleFavorite = (productId: string) => {
-    setFavorites((prev) => ({
-      ...prev,
-      [productId]: !prev[productId],
-    }));
-  };
 
   // Helper to render stars
   const renderStars = (rating: number) => {
@@ -233,7 +226,7 @@ export default function CategoryProductsPage({ params }: PageProps) {
                     <span className={styles.price}>Rs. {product.price.toLocaleString("en-IN")}.00</span>
                     <div className={styles.actionRow}>
                       <button 
-                        onClick={() => alert(`Added to Cart: ${product.title}`)} 
+                        onClick={() => addToCart({ id: product.id, title: product.title, price: product.price, imageUrl: product.imageUrl })} 
                         className={styles.cartButton}
                       >
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -244,10 +237,10 @@ export default function CategoryProductsPage({ params }: PageProps) {
                         <span>Add To Cart</span>
                       </button>
                       <button 
-                        onClick={() => toggleFavorite(product.id)} 
-                        className={`${styles.favouriteButton} ${favorites[product.id] ? styles.favActive : ""}`}
+                        onClick={() => toggleWishlist({ id: product.id, title: product.title, price: product.price, imageUrl: product.imageUrl })} 
+                        className={`${styles.favouriteButton} ${isInWishlist(product.id) ? styles.favActive : ""}`}
                       >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill={favorites[product.id] ? "#132c66" : "none"} stroke="#132c66" strokeWidth="2.5">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill={isInWishlist(product.id) ? "#132c66" : "none"} stroke="#132c66" strokeWidth="2.5">
                           <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                         </svg>
                       </button>
@@ -298,7 +291,7 @@ export default function CategoryProductsPage({ params }: PageProps) {
                     <span className={styles.price}>Rs. {product.price.toLocaleString("en-IN")}.00</span>
                     <div className={styles.actionRow}>
                       <button 
-                        onClick={() => alert(`Added to Cart: ${product.title}`)} 
+                        onClick={() => addToCart({ id: product.id, title: product.title, price: product.price, imageUrl: product.imageUrl })} 
                         className={styles.cartButton}
                       >
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -309,10 +302,10 @@ export default function CategoryProductsPage({ params }: PageProps) {
                         <span>Add To Cart</span>
                       </button>
                       <button 
-                        onClick={() => toggleFavorite(product.id)} 
-                        className={`${styles.favouriteButton} ${favorites[product.id] ? styles.favActive : ""}`}
+                        onClick={() => toggleWishlist({ id: product.id, title: product.title, price: product.price, imageUrl: product.imageUrl })} 
+                        className={`${styles.favouriteButton} ${isInWishlist(product.id) ? styles.favActive : ""}`}
                       >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill={favorites[product.id] ? "#132c66" : "none"} stroke="#132c66" strokeWidth="2.5">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill={isInWishlist(product.id) ? "#132c66" : "none"} stroke="#132c66" strokeWidth="2.5">
                           <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                         </svg>
                       </button>
@@ -363,7 +356,7 @@ export default function CategoryProductsPage({ params }: PageProps) {
                     <span className={styles.price}>Rs. {product.price.toLocaleString("en-IN")}.00</span>
                     <div className={styles.actionRow}>
                       <button 
-                        onClick={() => alert(`Added to Cart: ${product.title}`)} 
+                        onClick={() => addToCart({ id: product.id, title: product.title, price: product.price, imageUrl: product.imageUrl })} 
                         className={styles.cartButton}
                       >
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -374,10 +367,10 @@ export default function CategoryProductsPage({ params }: PageProps) {
                         <span>Add To Cart</span>
                       </button>
                       <button 
-                        onClick={() => toggleFavorite(product.id)} 
-                        className={`${styles.favouriteButton} ${favorites[product.id] ? styles.favActive : ""}`}
+                        onClick={() => toggleWishlist({ id: product.id, title: product.title, price: product.price, imageUrl: product.imageUrl })} 
+                        className={`${styles.favouriteButton} ${isInWishlist(product.id) ? styles.favActive : ""}`}
                       >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill={favorites[product.id] ? "#132c66" : "none"} stroke="#132c66" strokeWidth="2.5">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill={isInWishlist(product.id) ? "#132c66" : "none"} stroke="#132c66" strokeWidth="2.5">
                           <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                         </svg>
                       </button>

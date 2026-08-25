@@ -7,6 +7,8 @@ import AnnouncementBar from "@/components/home/AnnouncementBar";
 import Header from "@/components/home/Header";
 import Footer from "@/components/home/Footer";
 import SummerOffer from "@/components/home/SummerOffer";
+import { useApp } from "@/context/AppContext";
+import { useRouter } from "next/navigation";
 import styles from "./ProductPage.module.css";
 
 // Sample Accessory Products for "Based on your recent views"
@@ -26,11 +28,14 @@ export default function ProductPage({ params }: PageProps) {
   // Using params to trigger suspense/render binding
   use(params);
   
+  const router = useRouter();
+  const { addToCart, toggleWishlist, isInWishlist } = useApp();
+  const isFavourite = isInWishlist("prod-3");
+  
   // States
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState("description");
   const [selectedImage, setSelectedImage] = useState("/images/products/cdw400.jpg");
-  const [isFavourite, setIsFavourite] = useState(false);
 
   // Gallery thumbnails
   const gallery = [
@@ -129,7 +134,12 @@ export default function ProductPage({ params }: PageProps) {
                   TUQO Cordless Pressure Washer | 4000mAh Rechargeable Battery | Type-C Charging | Portable Washer Gun with AdjustableNozzle & 5M Hose for Car, Bike, Cycle,Roof & Floor Cleaning CDW400
                 </h1>
                 <button 
-                  onClick={() => setIsFavourite(!isFavourite)} 
+                  onClick={() => toggleWishlist({
+                    id: "prod-3",
+                    title: "TUQO Cordless High Pressure Washer CDW400",
+                    price: 6299,
+                    imageUrl: "/images/products/cdw400.jpg"
+                  })} 
                   className={styles.shareBtn} 
                   aria-label="Add to wishlist"
                 >
@@ -182,8 +192,29 @@ export default function ProductPage({ params }: PageProps) {
 
               {/* Main Actions */}
               <div className={styles.actionsBlock}>
-                <button className={styles.buyNowBtn}>Buy Now</button>
-                <button className={styles.addToCartBtn}>
+                <button 
+                  onClick={() => {
+                    addToCart({
+                      id: "prod-3",
+                      title: "TUQO Cordless Pressure Washer | 4000mAh Rechargeable Battery | Type-C Charging | Portable Washer Gun",
+                      price: 6299,
+                      imageUrl: "/images/products/cdw400.jpg"
+                    }, quantity);
+                    router.push("/cart");
+                  }}
+                  className={styles.buyNowBtn}
+                >
+                  Buy Now
+                </button>
+                <button 
+                  onClick={() => addToCart({
+                    id: "prod-3",
+                    title: "TUQO Cordless Pressure Washer | 4000mAh Rechargeable Battery | Type-C Charging | Portable Washer Gun",
+                    price: 6299,
+                    imageUrl: "/images/products/cdw400.jpg"
+                  }, quantity)}
+                  className={styles.addToCartBtn}
+                >
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={styles.cartIcon}>
                     <circle cx="9" cy="21" r="1"></circle>
                     <circle cx="20" cy="21" r="1"></circle>
@@ -323,7 +354,10 @@ export default function ProductPage({ params }: PageProps) {
                       <span>{prod.ratingCount} Reviews</span>
                     </div>
                     <div className={styles.cardActions}>
-                      <button className={styles.cardCartBtn}>
+                      <button 
+                        onClick={() => addToCart({ id: prod.id, title: prod.title, price: 499, imageUrl: prod.imageUrl })}
+                        className={styles.cardCartBtn}
+                      >
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                           <circle cx="9" cy="21" r="1"></circle>
                           <circle cx="20" cy="21" r="1"></circle>
@@ -331,8 +365,11 @@ export default function ProductPage({ params }: PageProps) {
                         </svg>
                         <span>Add To Cart</span>
                       </button>
-                      <button className={styles.cardHeartBtn}>
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#132c66" strokeWidth="2.5">
+                      <button 
+                        onClick={() => toggleWishlist({ id: prod.id, title: prod.title, price: 499, imageUrl: prod.imageUrl })}
+                        className={`${styles.cardHeartBtn} ${isInWishlist(prod.id) ? styles.cardHeartActive : ""}`}
+                      >
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill={isInWishlist(prod.id) ? "#132c66" : "none"} stroke="#132c66" strokeWidth="2.5">
                           <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                         </svg>
                       </button>

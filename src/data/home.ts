@@ -10,6 +10,7 @@ export interface Product {
   imageUrl: string;
   rating: number;
   ratingCount: number;
+  price?: number;
 }
 
 export interface SummerOfferBanner {
@@ -62,6 +63,7 @@ export const BEST_SELLERS: Product[] = [
     imageUrl: "/images/products/hw2000.jpg",
     rating: 5,
     ratingCount: 241,
+    price: 4999,
   },
   {
     id: "prod-2",
@@ -69,6 +71,7 @@ export const BEST_SELLERS: Product[] = [
     imageUrl: "/images/products/trigger_gun.jpg",
     rating: 5,
     ratingCount: 780,
+    price: 999,
   },
   {
     id: "prod-3",
@@ -76,6 +79,7 @@ export const BEST_SELLERS: Product[] = [
     imageUrl: "/images/products/cdw400.jpg",
     rating: 4,
     ratingCount: 605,
+    price: 6299,
   },
   {
     id: "prod-4",
@@ -83,6 +87,7 @@ export const BEST_SELLERS: Product[] = [
     imageUrl: "/images/products/nozzle_tips.jpg",
     rating: 4,
     ratingCount: 420,
+    price: 399,
   },
   {
     id: "prod-5",
@@ -90,6 +95,7 @@ export const BEST_SELLERS: Product[] = [
     imageUrl: "/images/products/compressor.jpg",
     rating: 5,
     ratingCount: 241,
+    price: 14500,
   },
 ];
 

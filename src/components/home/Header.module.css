@@ -161,12 +161,35 @@
   background: #ffffff;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
   transition: transform var(--transition-fast) ease, background-color var(--transition-fast) ease;
+  position: relative;
 }
 
 .actionIcon:hover {
   transform: translateY(-2px);
   background: #f3f4f6;
   color: #132c66;
+}
+
+.badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: #ff3b30;
+  color: #ffffff;
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 9px;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  border: 1.5px solid #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+  line-height: 1;
+  z-index: 10;
 }
 
 /* --- Sky Blue Sub-Header Navigation Bar --- */

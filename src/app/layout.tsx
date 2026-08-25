@@ -19,6 +19,8 @@ export const metadata: Metadata = {
   description: "Find the best professional machinery, high-pressure washers, air compressors, and power tool accessories from TUQO and COSTEC.",
 };
 
+import { AppProvider } from "@/context/AppContext";
+
 export default function RootLayout({
   children,
 }: {
@@ -26,7 +28,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${publicSans.variable} ${firaSans.variable}`}>
-      <body>{children}</body>
+      <body>
+        <AppProvider>
+          {children}
+        </AppProvider>
+      </body>
     </html>
   );
 }
