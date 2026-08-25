@@ -56,7 +56,7 @@ export default function Footer() {
           <div className={styles.columnBrand}>
             <div className={styles.logo}>
               <Image 
-                src="/images/logos/Skill Store Logo.png" 
+                src="/images/logos/footer-logo.png" 
                 alt="Skill Store Logo" 
                 width={150} 
                 height={42} 

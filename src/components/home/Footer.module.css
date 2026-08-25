@@ -51,39 +51,39 @@
   height: 28px;
 }
 
-/* Facebook official branding */
+/* Facebook social button styling */
 .socialFacebook {
-  background-color: #1877f2;
-  color: #ffffff !important;
+  background-color: #ffd300;
+  color: #132c66 !important;
   transform: translateY(0);
 }
 
 .socialFacebook:hover {
-  background-color: #166fe5;
+  background-color: #e6be00;
   transform: translateY(-4px) scale(1.05);
 }
 
-/* Instagram official branding */
+/* Instagram social button styling */
 .socialInstagram {
-  background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
-  color: #ffffff !important;
+  background-color: #ffd300;
+  color: #132c66 !important;
   transform: translateY(22px);
 }
 
 .socialInstagram:hover {
-  filter: brightness(1.1);
+  background-color: #e6be00;
   transform: translateY(18px) scale(1.05);
 }
 
-/* WhatsApp official branding */
+/* WhatsApp social button styling */
 .socialWhatsapp {
-  background-color: #25d366;
-  color: #ffffff !important;
+  background-color: #ffd300;
+  color: #132c66 !important;
   transform: translateY(48px);
 }
 
 .socialWhatsapp:hover {
-  background-color: #20ba5a;
+  background-color: #e6be00;
   transform: translateY(44px) scale(1.05);
 }
 
