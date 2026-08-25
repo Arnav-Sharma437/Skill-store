@@ -177,7 +177,7 @@
 .contactText {
   font-family: var(--font-sans);
   font-size: 14px; /* Larger text size */
-  color: #ffffff;
+  color: #ffd300; /* Yellow text matching mockup */
   line-height: 1.45;
   font-weight: 600;
 }
