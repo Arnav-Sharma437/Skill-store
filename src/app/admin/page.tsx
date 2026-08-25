@@ -316,11 +316,11 @@ export default function AdminDashboard() {
       <header className={styles.adminHeader}>
         <div className={styles.brandGroup}>
           <span className={styles.headerTitle}>Dashboard</span>
-          <span className={styles.headerSubtitle}>AEC Management Panel</span>
+          <span className={styles.headerSubtitle}>Skill Store Management Panel</span>
         </div>
         <div className={styles.headerRight}>
           <div className={styles.adminMeta}>
-            <strong>AEC Admin</strong>
+            <strong>Skill Store Admin</strong>
             <span>Administrator</span>
           </div>
           <button onClick={handleSignOut} className={styles.signOutBtn}>
@@ -338,7 +338,7 @@ export default function AdminDashboard() {
       <div className={styles.adminLayout}>
         <aside className={styles.sidebar}>
           <div className={styles.sidebarBrand}>
-            <strong>AEC Admin</strong>
+            <strong>Skill Store Admin</strong>
             <span>Management Panel</span>
           </div>
 
