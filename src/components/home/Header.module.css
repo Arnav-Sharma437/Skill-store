@@ -10,7 +10,21 @@
   height: 80px;
   display: flex;
   align-items: center;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid #132c66;
+  background: #132c66; /* Dark blue background */
+  position: relative;
+  overflow: hidden;
+}
+
+.logoBg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: calc(max(0px, (100vw - var(--container-width)) / 2) + 215px);
+  background: #ffffff;
+  clip-path: polygon(0 0, 100% 0, calc(100% - 45px) 100%, 0 100%);
+  z-index: 1;
 }
 
 .container {
@@ -19,11 +33,15 @@
   justify-content: space-between;
   width: 100%;
   gap: var(--space-4);
+  position: relative;
+  z-index: 2;
 }
 
 .logoLink {
   display: block;
   flex-shrink: 0;
+  position: relative;
+  z-index: 3;
 }
 
 .logo {
@@ -37,8 +55,12 @@
   align-items: center;
   flex-grow: 1;
   max-width: 500px;
-  height: 42px;
+  height: 44px;
   position: relative;
+  background: #ffffff;
+  border-radius: 9999px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
 }
 
 .searchInputWrapper {
@@ -55,10 +77,8 @@
   padding: 0 45px 0 20px;
   font-size: 14px;
   color: #000000;
-  background: #ffffff;
-  border: 1px solid #d1d5db;
-  border-radius: 9999px 0 0 9999px;
-  border-right: none;
+  background: transparent;
+  border: none;
   font-family: var(--font-sans);
 }
 
@@ -67,7 +87,7 @@
 }
 
 .searchInput:focus {
-  border-color: #d1d5db;
+  outline: none;
   box-shadow: none;
 }
 
@@ -84,11 +104,10 @@
 }
 
 .searchButton {
-  width: 46px;
-  height: 42px;
+  width: 54px;
+  height: 100%;
   background: #ffd300; /* Vibrant yellow */
-  border: 1px solid #ffd300;
-  border-radius: 0 9999px 9999px 0;
+  border: none;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -113,13 +132,13 @@
   font-family: var(--font-sans);
   font-weight: 700;
   font-size: 13px;
-  color: #132c66; /* Navy Blue */
+  color: #ffffff; /* White text */
   letter-spacing: 0.5px;
   transition: color var(--transition-fast) ease;
 }
 
 .navLink:hover {
-  color: #38b6ff;
+  color: #ffd300; /* Yellow hover */
 }
 
 /* --- Action Buttons --- */
@@ -135,17 +154,19 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
-  border: 1.5px solid #132c66;
+  border: none;
   background: #ffffff;
-  transition: background var(--transition-fast) ease, color var(--transition-fast) ease;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  transition: transform var(--transition-fast) ease, background-color var(--transition-fast) ease;
 }
 
 .actionIcon:hover {
-  background: #132c66;
-  color: #ffffff;
+  transform: translateY(-2px);
+  background: #f3f4f6;
+  color: #132c66;
 }
 
 /* --- Sky Blue Sub-Header Navigation Bar --- */
@@ -190,8 +211,8 @@
   transition: background var(--transition-fast) ease;
 }
 
-.subTab:hover {
-  background: rgba(255, 255, 255, 0.15);
+.subTab:hover, .activeTab {
+  background: #132c66 !important; /* Dark Blue hover state */
 }
 
 .subTabText {
