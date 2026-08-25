@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import styles from "./ProductCard.module.css";
 import { Product } from "@/data/home";
 
@@ -47,21 +48,25 @@ export default function ProductCard({ product }: ProductCardProps) {
   return (
     <div className={styles.card}>
       {/* Product Image Box */}
-      <div className={styles.imageContainer}>
-        <Image
-          src={product.imageUrl}
-          alt={product.title}
-          width={240}
-          height={180}
-          className={styles.image}
-        />
-      </div>
+      <Link href={`/product/${product.id}`} className={styles.imageLink}>
+        <div className={styles.imageContainer}>
+          <Image
+            src={product.imageUrl}
+            alt={product.title}
+            width={240}
+            height={180}
+            className={styles.image}
+          />
+        </div>
+      </Link>
 
       {/* Product Metadata */}
       <div className={styles.details}>
-        <h3 className={styles.title} title={product.title}>
-          {product.title}
-        </h3>
+        <Link href={`/product/${product.id}`} className={styles.titleLink}>
+          <h3 className={styles.title} title={product.title}>
+            {product.title}
+          </h3>
+        </Link>
 
         {/* Rating Row */}
         <div className={styles.ratingRow}>

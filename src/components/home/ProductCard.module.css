@@ -137,3 +137,14 @@
 .favouriteActive svg {
   fill: #132c66;
 }
+
+.imageLink {
+  display: block;
+  width: 100%;
+  text-decoration: none;
+}
+
+.titleLink {
+  text-decoration: none;
+  display: block;
+}
