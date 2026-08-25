@@ -30,18 +30,28 @@ export interface Brand {
 export const HERO_SLIDES: HeroSlide[] = [
   {
     id: "hero-1",
-    imageUrl: "/images/banners/hero_tuqo.jpg",
-    link: "/shop?brand=tuqo",
+    imageUrl: "/images/banners/Hbanner-1.png",
+    link: "/shop?banner=1",
   },
   {
     id: "hero-2",
-    imageUrl: "/images/banners/hero_tuqo.jpg", // Slide 2
-    link: "/shop?brand=tuqo",
+    imageUrl: "/images/banners/Hbanner-2.png",
+    link: "/shop?banner=2",
   },
   {
     id: "hero-3",
-    imageUrl: "/images/banners/hero_tuqo.jpg", // Slide 3
-    link: "/shop?brand=tuqo",
+    imageUrl: "/images/banners/Hbanner-3.png",
+    link: "/shop?banner=3",
+  },
+  {
+    id: "hero-4",
+    imageUrl: "/images/banners/Hbanner-4.png",
+    link: "/shop?banner=4",
+  },
+  {
+    id: "hero-5",
+    imageUrl: "/images/banners/Hbanner-5.png",
+    link: "/shop?banner=5",
   },
 ];
 
