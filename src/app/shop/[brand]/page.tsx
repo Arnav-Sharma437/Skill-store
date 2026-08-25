@@ -40,13 +40,14 @@ export default async function BrandPage({ params }: PageProps) {
         </div>
 
         <div className="container">
-          {/* Main Title */}
+          {/* Main Title Section */}
           <div className={styles.titleContainer}>
+            <span className={styles.subtitle}>EXPLORE THE RANGE</span>
             <h1 className={styles.title}>CATEGORIES</h1>
             <div className={styles.titleUnderline}></div>
           </div>
 
-          {/* Categories Grid */}
+          {/* Premium Categories Grid */}
           <div className={styles.grid}>
             {brandData.categories.map((category) => (
               <Link 
@@ -65,6 +66,13 @@ export default async function BrandPage({ params }: PageProps) {
                   />
                 </div>
                 <h3 className={styles.categoryName}>{category.name}</h3>
+                <div className={styles.arrowLink}>
+                  <span>EXPLORE</span>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                    <polyline points="12 5 19 12 12 19"></polyline>
+                  </svg>
+                </div>
               </Link>
             ))}
           </div>
