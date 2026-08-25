@@ -30,52 +30,39 @@
   margin: 0;
 }
 
-.arrows {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-
-.arrowBtn {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  border: 1px solid #d1d5db;
-  background: #ffffff;
-  color: #374151;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all var(--transition-fast) ease;
-}
-
-.arrowBtn:hover {
-  background: #f3f4f6;
-  border-color: #9ca3af;
-  color: #000000;
-}
-
-.scrollContainer {
+/* Continuous Marquee Ticker Container */
+.marqueeContainer {
   width: 100%;
   overflow: hidden;
-  padding-bottom: 10px;
+  position: relative;
+  display: flex;
+  padding: 10px 0 20px;
 }
 
-/* Hide scrollbar for Chrome, Safari and Opera */
-.scrollContainer::-webkit-scrollbar {
-  display: none;
+.marqueeTrack {
+  display: flex;
+  width: max-content;
+  animation: scrollProducts 28s linear infinite;
 }
 
-/* Hide scrollbar for IE, Edge and Firefox */
-.scrollContainer {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
+/* Pause animation on hover to allow users to inspect/click product cards */
+.marqueeTrack:hover {
+  animation-play-state: paused;
 }
 
 .productRow {
   display: flex;
   gap: 20px;
+  padding-right: 20px;
+}
+
+@keyframes scrollProducts {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-50%, 0, 0);
+  }
 }
 
 @media (max-width: 768px) {
