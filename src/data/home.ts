@@ -151,57 +151,57 @@ export const BRAND_CATEGORIES: Record<string, { name: string; categories: BrandC
   tuqo: {
     name: "TUQO",
     categories: [
-      { id: "tuqo-1", name: "High Pressure Washer", imageUrl: "/images/products/hw2000.jpg", link: "/shop?category=pressure_washer" },
-      { id: "tuqo-2", name: "Vaccum Cleaner", imageUrl: "/images/products/cdw400.jpg", link: "/shop?category=vaccum" },
-      { id: "tuqo-3", name: "Pressure Washer Accessories", imageUrl: "/images/products/trigger_gun.jpg", link: "/shop?category=spares" },
-      { id: "tuqo-4", name: "Cordless Tools", imageUrl: "/images/products/nozzle_tips.jpg", link: "/shop?category=power_tools" },
-      { id: "tuqo-5", name: "Auto Care Detailing", imageUrl: "/images/products/hw2000.jpg", link: "/shop?category=autocare" },
-      { id: "tuqo-6", name: "Air Compressor", imageUrl: "/images/products/compressor.jpg", link: "/shop?category=compressor" },
-      { id: "tuqo-7", name: "Power Tools", imageUrl: "/images/products/hw2000.jpg", link: "/shop?category=power_tools" },
-      { id: "tuqo-8", name: "Power Tools Accessories", imageUrl: "/images/products/nozzle_tips.jpg", link: "/shop?category=spares" },
-      { id: "tuqo-9", name: "Hand Tools", imageUrl: "/images/products/trigger_gun.jpg", link: "/shop?category=hand_tools" },
-      { id: "tuqo-10", name: "Spares and Accessories", imageUrl: "/images/products/compressor.jpg", link: "/shop?category=spares" },
+      { id: "tuqo-1", name: "High Pressure Washer", imageUrl: "/images/products/hw2000.jpg", link: "/shop/tuqo/high-pressure-washer" },
+      { id: "tuqo-2", name: "Vaccum Cleaner", imageUrl: "/images/products/cdw400.jpg", link: "/shop/tuqo/vaccum-cleaner" },
+      { id: "tuqo-3", name: "Pressure Washer Accessories", imageUrl: "/images/products/trigger_gun.jpg", link: "/shop/tuqo/accessories" },
+      { id: "tuqo-4", name: "Cordless Tools", imageUrl: "/images/products/nozzle_tips.jpg", link: "/shop/tuqo/cordless-tools" },
+      { id: "tuqo-5", name: "Auto Care Detailing", imageUrl: "/images/products/hw2000.jpg", link: "/shop/tuqo/autocare" },
+      { id: "tuqo-6", name: "Air Compressor", imageUrl: "/images/products/compressor.jpg", link: "/shop/tuqo/air-compressor" },
+      { id: "tuqo-7", name: "Power Tools", imageUrl: "/images/products/hw2000.jpg", link: "/shop/tuqo/power-tools" },
+      { id: "tuqo-8", name: "Power Tools Accessories", imageUrl: "/images/products/nozzle_tips.jpg", link: "/shop/tuqo/power-tools-accessories" },
+      { id: "tuqo-9", name: "Hand Tools", imageUrl: "/images/products/trigger_gun.jpg", link: "/shop/tuqo/hand-tools" },
+      { id: "tuqo-10", name: "Spares and Accessories", imageUrl: "/images/products/compressor.jpg", link: "/shop/tuqo/spares" },
     ]
   },
   pumpkin: {
     name: "PUMPKIN",
     categories: [
-      { id: "pumpkin-1", name: "Cordless Tools", imageUrl: "/images/products/nozzle_tips.jpg", link: "/shop?category=power_tools" },
-      { id: "pumpkin-2", name: "Power Tools", imageUrl: "/images/products/hw2000.jpg", link: "/shop?category=power_tools" },
-      { id: "pumpkin-3", name: "Power Tools Accessories", imageUrl: "/images/products/nozzle_tips.jpg", link: "/shop?category=spares" },
-      { id: "pumpkin-4", name: "Hand Tools", imageUrl: "/images/products/trigger_gun.jpg", link: "/shop?category=hand_tools" },
-      { id: "pumpkin-5", name: "Spares and Accessories", imageUrl: "/images/products/compressor.jpg", link: "/shop?category=spares" },
-      { id: "pumpkin-6", name: "Gardening Tools", imageUrl: "/images/products/trigger_gun.jpg", link: "/shop?category=hand_tools" },
+      { id: "pumpkin-1", name: "Cordless Tools", imageUrl: "/images/products/nozzle_tips.jpg", link: "/shop/pumpkin/cordless-tools" },
+      { id: "pumpkin-2", name: "Power Tools", imageUrl: "/images/products/hw2000.jpg", link: "/shop/pumpkin/power-tools" },
+      { id: "pumpkin-3", name: "Power Tools Accessories", imageUrl: "/images/products/nozzle_tips.jpg", link: "/shop/pumpkin/power-tools-accessories" },
+      { id: "pumpkin-4", name: "Hand Tools", imageUrl: "/images/products/trigger_gun.jpg", link: "/shop/pumpkin/hand-tools" },
+      { id: "pumpkin-5", name: "Spares and Accessories", imageUrl: "/images/products/compressor.jpg", link: "/shop/pumpkin/spares" },
+      { id: "pumpkin-6", name: "Gardening Tools", imageUrl: "/images/products/trigger_gun.jpg", link: "/shop/pumpkin/gardening" },
     ]
   },
   mitsuki: {
     name: "MITSUKI",
     categories: [
-      { id: "mitsuki-1", name: "High Pressure Washer", imageUrl: "/images/products/hw2000.jpg", link: "/shop?category=pressure_washer" },
-      { id: "mitsuki-2", name: "Cordless Tools", imageUrl: "/images/products/nozzle_tips.jpg", link: "/shop?category=power_tools" },
-      { id: "mitsuki-3", name: "Power Tools", imageUrl: "/images/products/hw2000.jpg", link: "/shop?category=power_tools" },
-      { id: "mitsuki-4", name: "Power Tools Accessories", imageUrl: "/images/products/nozzle_tips.jpg", link: "/shop?category=spares" },
-      { id: "mitsuki-5", name: "Hand Tools", imageUrl: "/images/products/trigger_gun.jpg", link: "/shop?category=hand_tools" },
-      { id: "mitsuki-6", name: "Spares and Accessories", imageUrl: "/images/products/compressor.jpg", link: "/shop?category=spares" },
+      { id: "mitsuki-1", name: "High Pressure Washer", imageUrl: "/images/products/hw2000.jpg", link: "/shop/mitsuki/high-pressure-washer" },
+      { id: "mitsuki-2", name: "Cordless Tools", imageUrl: "/images/products/nozzle_tips.jpg", link: "/shop/mitsuki/cordless-tools" },
+      { id: "mitsuki-3", name: "Power Tools", imageUrl: "/images/products/hw2000.jpg", link: "/shop/mitsuki/power-tools" },
+      { id: "mitsuki-4", name: "Power Tools Accessories", imageUrl: "/images/products/nozzle_tips.jpg", link: "/shop/mitsuki/power-tools-accessories" },
+      { id: "mitsuki-5", name: "Hand Tools", imageUrl: "/images/products/trigger_gun.jpg", link: "/shop/mitsuki/hand-tools" },
+      { id: "mitsuki-6", name: "Spares and Accessories", imageUrl: "/images/products/compressor.jpg", link: "/shop/mitsuki/spares" },
     ]
   },
   metso: {
     name: "METSO",
     categories: [
-      { id: "metso-1", name: "Hand Tools", imageUrl: "/images/products/trigger_gun.jpg", link: "/shop?category=hand_tools" },
-      { id: "metso-2", name: "Garage Tools", imageUrl: "/images/products/cdw400.jpg", link: "/shop?category=hand_tools" },
-      { id: "metso-3", name: "DIY Tools", imageUrl: "/images/products/nozzle_tips.jpg", link: "/shop?category=hand_tools" },
-      { id: "metso-4", name: "Gardening Tools", imageUrl: "/images/products/trigger_gun.jpg", link: "/shop?category=hand_tools" },
-      { id: "metso-5", name: "Power Tools Accessories Spares", imageUrl: "/images/products/compressor.jpg", link: "/shop?category=spares" },
+      { id: "metso-1", name: "Hand Tools", imageUrl: "/images/products/trigger_gun.jpg", link: "/shop/metso/hand-tools" },
+      { id: "metso-2", name: "Garage Tools", imageUrl: "/images/products/cdw400.jpg", link: "/shop/metso/garage" },
+      { id: "metso-3", name: "DIY Tools", imageUrl: "/images/products/nozzle_tips.jpg", link: "/shop/metso/diy" },
+      { id: "metso-4", name: "Gardening Tools", imageUrl: "/images/products/trigger_gun.jpg", link: "/shop/metso/gardening" },
+      { id: "metso-5", name: "Power Tools Accessories Spares", imageUrl: "/images/products/compressor.jpg", link: "/shop/metso/spares" },
     ]
   },
   costec: {
     name: "COSTEC",
     categories: [
-      { id: "costec-1", name: "Magsafe Mobile Holder", imageUrl: "/images/products/cdw400.jpg", link: "/shop?category=spares" },
-      { id: "costec-2", name: "Magsafe Charger", imageUrl: "/images/products/nozzle_tips.jpg", link: "/shop?category=spares" },
-      { id: "costec-3", name: "Charging Cables", imageUrl: "/images/products/trigger_gun.jpg", link: "/shop?category=spares" },
-      { id: "costec-4", name: "Handheld Fan", imageUrl: "/images/products/compressor.jpg", link: "/shop?category=spares" },
+      { id: "costec-1", name: "Magsafe Mobile Holder", imageUrl: "/images/products/cdw400.jpg", link: "/shop/costec/magsafe-holder" },
+      { id: "costec-2", name: "Magsafe Charger", imageUrl: "/images/products/nozzle_tips.jpg", link: "/shop/costec/magsafe-charger" },
+      { id: "costec-3", name: "Charging Cables", imageUrl: "/images/products/trigger_gun.jpg", link: "/shop/costec/cables" },
+      { id: "costec-4", name: "Handheld Fan", imageUrl: "/images/products/compressor.jpg", link: "/shop/costec/fan" },
     ]
   }
 };
