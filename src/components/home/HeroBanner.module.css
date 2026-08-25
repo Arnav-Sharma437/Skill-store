@@ -32,8 +32,8 @@
 }
 
 .image {
-  object-fit: contain;
-  background-color: #0b0202; /* Seamless dark red/black banner background blend */
+  object-fit: cover;
+  object-position: center;
 }
 
 /* --- Navigation Buttons (White circles with black arrow icon) --- */
