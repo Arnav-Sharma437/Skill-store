@@ -14,13 +14,13 @@ export default function SummerOffer() {
   const handleNext = () => {
     if (isTransitioning) return;
     setIsTransitioning(true);
-    setOffset(-470); // Slide left by wide card width (450px) + gap (20px)
+    setOffset(-620); // Slide left by wide card width (600px) + gap (20px)
   };
 
   const handlePrev = () => {
     if (isTransitioning) return;
     setIsTransitioning(true);
-    setOffset(470); // Slide right by wide card width + gap
+    setOffset(620); // Slide right by wide card width + gap
   };
 
   const handleTransitionEnd = () => {
@@ -73,8 +73,8 @@ export default function SummerOffer() {
           >
             {offers.map((offer) => {
               const cardClass = styles.wideCard;
-              const imgWidth = 450;
-              const imgHeight = 338;
+              const imgWidth = 600;
+              const imgHeight = 370;
               
               return (
                 <Link href={offer.link} key={offer.id} className={`${styles.bannerCard} ${cardClass}`}>
