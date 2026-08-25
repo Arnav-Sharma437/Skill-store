@@ -30,21 +30,31 @@ export default function Footer() {
         {/* Social Icons floating on the curve (styled with original brand colors) */}
         <div className={styles.socialsFloating}>
           <a href="https://facebook.com" className={`${styles.socialCircle} ${styles.socialFacebook}`} aria-label="Facebook">
-            <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12c0 4.84 3.44 8.87 8 9.8V15H8v-3h2V9.5C10 7.57 11.57 6 13.5 6H16v3h-2c-.55 0-1 .45-1 1v2h3v3h-3v6.95c4.56-.93 8-4.96 8-9.75z"/>
-            </svg>
+            <Image 
+              src="/images/logos/fb-icon.png" 
+              alt="Facebook" 
+              width={34} 
+              height={34} 
+              style={{ objectFit: 'contain' }}
+            />
           </a>
           <a href="https://instagram.com" className={`${styles.socialCircle} ${styles.socialInstagram}`} aria-label="Instagram">
-            <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
-              <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
-              <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
-            </svg>
+            <Image 
+              src="/images/logos/insta-icon.png" 
+              alt="Instagram" 
+              width={34} 
+              height={34} 
+              style={{ objectFit: 'contain' }}
+            />
           </a>
           <a href="https://wa.me" className={`${styles.socialCircle} ${styles.socialWhatsapp}`} aria-label="WhatsApp">
-            <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.517 2.266 2.27 3.51 5.276 3.508 8.48-.005 6.66-5.343 11.998-11.956 11.998-2.005-.001-3.973-.502-5.73-1.45L0 24zm6.59-4.846c1.666.988 3.31 1.488 5.347 1.489 5.32 0 9.646-4.326 9.65-9.65.002-2.577-1.002-5.002-2.825-6.827C17.001 2.34 14.57 1.336 12 1.336 6.685 1.336 2.36 5.662 2.356 10.98c-.001 2.046.507 3.7 1.503 5.378L2.83 21.053l4.817-1.261z"/>
-            </svg>
+            <Image 
+              src="/images/logos/wa-icon.png" 
+              alt="WhatsApp" 
+              width={34} 
+              height={34} 
+              style={{ objectFit: 'contain' }}
+            />
           </a>
         </div>
       </div>
