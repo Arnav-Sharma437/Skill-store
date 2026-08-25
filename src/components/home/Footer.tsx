@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import styles from "./Footer.module.css";
 
 export default function Footer() {
@@ -54,8 +55,13 @@ export default function Footer() {
           {/* Column 1: Info & Brand */}
           <div className={styles.columnBrand}>
             <div className={styles.logo}>
-              <span className={styles.logoSkill}>SKILL</span>
-              <span className={styles.logoStore}>STORE</span>
+              <Image 
+                src="/images/logos/Skill Store Logo.png" 
+                alt="Skill Store Logo" 
+                width={150} 
+                height={42} 
+                style={{ objectFit: 'contain' }}
+              />
             </div>
             <p className={styles.slogan}>Elevate Your Expertise With Quality Tools & Power</p>
 

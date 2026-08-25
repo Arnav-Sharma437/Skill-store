@@ -72,10 +72,9 @@ export default function SummerOffer() {
             onTransitionEnd={handleTransitionEnd}
           >
             {offers.map((offer) => {
-              const isNarrow = offer.id === "offer-3";
-              const cardClass = isNarrow ? styles.narrowCard : styles.wideCard;
-              const imgWidth = isNarrow ? 300 : 450;
-              const imgHeight = isNarrow ? 400 : 338;
+              const cardClass = styles.wideCard;
+              const imgWidth = 450;
+              const imgHeight = 338;
               
               return (
                 <Link href={offer.link} key={offer.id} className={`${styles.bannerCard} ${cardClass}`}>

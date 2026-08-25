@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import styles from "./Header.module.css";
 
 export default function Header() {
@@ -25,11 +26,14 @@ export default function Header() {
           {/* Logo */}
           <Link href="/" className={styles.logoLink}>
             <div className={styles.logo}>
-              <svg width="130" height="36" viewBox="0 0 130 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <text x="0" y="19" fontFamily="var(--font-accent)" fontWeight="900" fontSize="22" fill="#132c66" letterSpacing="1">SKILL</text>
-                <text x="0" y="32" fontFamily="var(--font-accent)" fontWeight="900" fontSize="12" fill="#132c66" letterSpacing="4.5">STORE</text>
-                <rect x="75" y="14" width="45" height="2" fill="#ffd300" />
-              </svg>
+              <Image 
+                src="/images/logos/Skill Store Logo.png" 
+                alt="Skill Store Logo" 
+                width={130} 
+                height={36} 
+                style={{ objectFit: 'contain' }}
+                priority
+              />
             </div>
           </Link>
 
