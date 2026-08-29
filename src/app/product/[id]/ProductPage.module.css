@@ -728,6 +728,9 @@
     height: 60px !important;
     flex-shrink: 0;
   }
+  .productTitle {
+    font-size: 20px !important;
+  }
   .priceContainer {
     width: 100% !important;
     max-width: 100% !important;
@@ -736,7 +739,16 @@
     box-sizing: border-box;
   }
   .currentPrice {
-    font-size: 22px !important;
+    font-size: 26px !important;
+  }
+  .originalPrice {
+    font-size: 16px !important;
+  }
+  .savingsTag {
+    font-size: 13px !important;
+  }
+  .reviewsCount {
+    font-size: 14px !important;
   }
   .tabHeaderBar {
     overflow-x: auto;
@@ -746,7 +758,7 @@
   .tabBtn {
     flex-shrink: 0;
     padding: 12px 20px !important;
-    font-size: 13px !important;
+    font-size: 14.5px !important;
   }
   .actionsBlock {
     flex-direction: column;
@@ -755,6 +767,16 @@
   .buyNowBtn, .addToCartBtn {
     width: 100%;
     height: 48px;
+    font-size: 16px !important;
+  }
+  .infoHeading {
+    font-size: 16px !important;
+  }
+  .infoList {
+    font-size: 14.5px !important;
+  }
+  .badgeItem {
+    font-size: 14px !important;
   }
   .recentGrid {
     grid-template-columns: repeat(2, 1fr);
