@@ -273,7 +273,7 @@ export default function Header() {
                 {/* Brand 1: TUQO */}
                 <Link href="/shop/tuqo" className={styles.brandDropdownItem}>
                   <Image 
-                    src="/images/brands/tuqo.svg" 
+                    src="/images/brands/tuqo.png" 
                     alt="TUQO" 
                     width={110} 
                     height={32} 
@@ -283,7 +283,7 @@ export default function Header() {
                 {/* Brand 2: PUMPKIN */}
                 <Link href="/shop/pumpkin" className={styles.brandDropdownItem}>
                   <Image 
-                    src="/images/brands/pumpkin.svg" 
+                    src="/images/brands/pumpkin.png" 
                     alt="PUMPKIN" 
                     width={120} 
                     height={32} 
@@ -293,7 +293,7 @@ export default function Header() {
                 {/* Brand 3: MITSUKI */}
                 <Link href="/shop/mitsuki" className={styles.brandDropdownItem}>
                   <Image 
-                    src="/images/brands/mitsuki.svg" 
+                    src="/images/brands/mitsuki.png" 
                     alt="MITSUKI" 
                     width={110} 
                     height={30} 
@@ -303,7 +303,7 @@ export default function Header() {
                 {/* Brand 4: METSO */}
                 <Link href="/shop/metso" className={styles.brandDropdownItem}>
                   <Image 
-                    src="/images/brands/metso.svg" 
+                    src="/images/brands/metso.png" 
                     alt="METSO" 
                     width={110} 
                     height={32} 
@@ -313,7 +313,7 @@ export default function Header() {
                 {/* Brand 5: COSTEC */}
                 <Link href="/shop/costec" className={styles.brandDropdownItem}>
                   <Image 
-                    src="/images/brands/costec.svg" 
+                    src="/images/brands/costec.png" 
                     alt="COSTEC" 
                     width={110} 
                     height={30} 

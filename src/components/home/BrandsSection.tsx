@@ -11,7 +11,7 @@ export default function BrandsSection() {
       {/* TUQO Logo Card */}
       <Link href="/shop/tuqo" className={styles.brandCard} aria-label="TUQO">
         <Image 
-          src="/images/brands/tuqo.svg" 
+          src="/images/brands/tuqo.png" 
           alt="TUQO" 
           width={130} 
           height={40} 
@@ -22,7 +22,7 @@ export default function BrandsSection() {
       {/* COSTEC Logo Card */}
       <Link href="/shop/costec" className={styles.brandCard} aria-label="COSTEC">
         <Image 
-          src="/images/brands/costec.svg" 
+          src="/images/brands/costec.png" 
           alt="COSTEC" 
           width={130} 
           height={38} 
@@ -33,7 +33,7 @@ export default function BrandsSection() {
       {/* METSO Logo Card */}
       <Link href="/shop/metso" className={styles.brandCard} aria-label="METSO">
         <Image 
-          src="/images/brands/metso.svg" 
+          src="/images/brands/metso.png" 
           alt="METSO" 
           width={130} 
           height={40} 
@@ -44,7 +44,7 @@ export default function BrandsSection() {
       {/* PUMPKIN Logo Card */}
       <Link href="/shop/pumpkin" className={styles.brandCard} aria-label="PUMPKIN">
         <Image 
-          src="/images/brands/pumpkin.svg" 
+          src="/images/brands/pumpkin.png" 
           alt="PUMPKIN" 
           width={140} 
           height={40} 
@@ -55,7 +55,7 @@ export default function BrandsSection() {
       {/* MITSUKI Logo Card */}
       <Link href="/shop/mitsuki" className={styles.brandCard} aria-label="MITSUKI">
         <Image 
-          src="/images/brands/mitsuki.svg" 
+          src="/images/brands/mitsuki.png" 
           alt="MITSUKI" 
           width={130} 
           height={36} 
