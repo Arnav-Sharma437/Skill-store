@@ -113,7 +113,7 @@ export default function Footer() {
               <Link href="/contact" className={styles.link}>CONTACT US</Link>
               <Link href="/privacy" className={styles.link}>PRIVACY POLICY</Link>
               <Link href="/coming-soon?page=Terms%20%26%20Conditions" className={styles.link}>TERMS & CONDITIONS</Link>
-              <Link href="/coming-soon?page=Cancellation%20%26%20Refund" className={styles.link}>CANCELLATION & REFUND POLICY</Link>
+              <Link href="/refunds" className={styles.link}>CANCELLATION & REFUND POLICY</Link>
             </nav>
           </div>
 
