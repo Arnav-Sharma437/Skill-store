@@ -314,12 +314,17 @@
     top: 0;
     left: 0;
     justify-content: center;
-    padding: 20px 0;
+    padding: 24px 0;
   }
   .socialFacebook, .socialInstagram, .socialWhatsapp {
     transform: none !important;
   }
   .curveWrapper {
-    height: 100px;
+    height: auto;
+    background: #ffffff;
+    border-bottom: 3px solid #ffd300;
+  }
+  .curveSvg {
+    display: none;
   }
 }

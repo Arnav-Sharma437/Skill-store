@@ -100,6 +100,7 @@
 @media (max-width: 768px) {
   .heroSection {
     aspect-ratio: 16 / 7;
+    min-height: 160px;
   }
   .navButton {
     width: 36px;

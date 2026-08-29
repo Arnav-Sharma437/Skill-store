@@ -1,5 +1,6 @@
 .card {
   width: 245px;
+  max-width: 100%;
   background: #ffffff;
   border: 1px solid #e5e7eb;
   border-radius: 12px;
@@ -147,4 +148,14 @@
 .titleLink {
   text-decoration: none;
   display: block;
+}
+
+@media (max-width: 480px) {
+  .cartButton span {
+    display: none;
+  }
+  .cartButton {
+    padding: 0;
+    justify-content: center;
+  }
 }
