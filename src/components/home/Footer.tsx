@@ -109,11 +109,11 @@ export default function Footer() {
           <div className={styles.columnLinks}>
             <h4 className={styles.columnTitle}>SERVICE & SUPPORT</h4>
             <nav className={styles.nav}>
-              <Link href="/about" className={styles.link}>ABOUT US</Link>
-              <Link href="/contact" className={styles.link}>CONTACT US</Link>
-              <Link href="/privacy" className={styles.link}>PRIVACY POLICY</Link>
-              <Link href="/terms" className={styles.link}>TERMS & CONDITIONS</Link>
-              <Link href="/refunds" className={styles.link}>CANCELLATION & REFUND POLICY</Link>
+              <Link href="/coming-soon?page=About%20Us" className={styles.link}>ABOUT US</Link>
+              <Link href="/coming-soon?page=Contact%20Us" className={styles.link}>CONTACT US</Link>
+              <Link href="/coming-soon?page=Privacy%20Policy" className={styles.link}>PRIVACY POLICY</Link>
+              <Link href="/coming-soon?page=Terms%20%26%20Conditions" className={styles.link}>TERMS & CONDITIONS</Link>
+              <Link href="/coming-soon?page=Cancellation%20%26%20Refund" className={styles.link}>CANCELLATION & REFUND POLICY</Link>
             </nav>
           </div>
 
@@ -121,10 +121,10 @@ export default function Footer() {
           <div className={styles.columnLinks}>
             <h4 className={styles.columnTitle}>QUICK LINKS</h4>
             <nav className={styles.nav}>
-              <Link href="/shop?category=pressure_washers" className={styles.link}>PRESSURE WASHERS</Link>
-              <Link href="/shop?category=power_tools" className={styles.link}>POWER TOOLS</Link>
-              <Link href="/shop?category=hand_tools" className={styles.link}>HAND TOOLS</Link>
-              <Link href="/shop?category=spares" className={styles.link}>ACCESSORIES & SPARES</Link>
+              <Link href="/coming-soon?page=Pressure%20Washers" className={styles.link}>PRESSURE WASHERS</Link>
+              <Link href="/coming-soon?page=Power%20Tools" className={styles.link}>POWER TOOLS</Link>
+              <Link href="/coming-soon?page=Hand%20Tools" className={styles.link}>HAND TOOLS</Link>
+              <Link href="/coming-soon?page=Accessories%20%26%20Spares" className={styles.link}>ACCESSORIES & SPARES</Link>
             </nav>
           </div>
 
@@ -132,10 +132,10 @@ export default function Footer() {
           <div className={styles.columnLinks}>
             <h4 className={styles.columnTitle}>INFORMATION</h4>
             <nav className={styles.nav}>
-              <Link href="/account" className={styles.link}>MY ACCOUNT</Link>
-              <Link href="/orders" className={styles.link}>ORDER HISTORY</Link>
+              <Link href="/coming-soon?page=My%20Account" className={styles.link}>MY ACCOUNT</Link>
+              <Link href="/coming-soon?page=Order%20History" className={styles.link}>ORDER HISTORY</Link>
               <Link href="/wishlist" className={styles.link}>MY WISHLIST</Link>
-              <Link href="/track" className={styles.link}>TRACKING YOUR ORDER</Link>
+              <Link href="/coming-soon?page=Order%20Tracking" className={styles.link}>TRACKING YOUR ORDER</Link>
             </nav>
           </div>
         </div>

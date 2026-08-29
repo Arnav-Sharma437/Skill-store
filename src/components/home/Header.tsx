@@ -71,8 +71,8 @@ export default function Header() {
           {/* Navigation Links */}
           <nav className={styles.desktopNav}>
             <Link href="/" className={styles.navLink}>HOME</Link>
-            <Link href="/about" className={styles.navLink}>ABOUT</Link>
-            <Link href="/contact" className={styles.navLink}>CONTACT US</Link>
+            <Link href="/coming-soon?page=About%20Us" className={styles.navLink}>ABOUT</Link>
+            <Link href="/coming-soon?page=Contact%20Us" className={styles.navLink}>CONTACT US</Link>
           </nav>
 
           {/* Action Buttons */}
@@ -97,7 +97,7 @@ export default function Header() {
               )}
             </Link>
 
-            <Link href="/account" className={styles.actionIcon} aria-label="Account">
+            <Link href="/coming-soon?page=My%20Account" className={styles.actionIcon} aria-label="Account">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                 <circle cx="12" cy="7" r="4"></circle>
@@ -155,14 +155,14 @@ export default function Header() {
                   {/* Washer Submenu */}
                   {activeSubmenu === "washer" && (
                     <div className={styles.submenuBox}>
-                      <Link href="/shop?category=domestic_washers" className={styles.submenuItem}>DOMESTIC PRESSURE WASHER</Link>
-                      <Link href="/shop?category=professional_washers" className={styles.submenuItem}>PROFESSIONAL PRESSURE WASHER</Link>
+                      <Link href="/coming-soon?page=Domestic%20Washers" className={styles.submenuItem}>DOMESTIC PRESSURE WASHER</Link>
+                      <Link href="/coming-soon?page=Professional%20Washers" className={styles.submenuItem}>PROFESSIONAL PRESSURE WASHER</Link>
                     </div>
                   )}
                 </div>
 
                 {/* 2. Vaccum Cleaner */}
-                <Link href="/shop?category=vaccum" className={styles.dropdownItem} onMouseEnter={() => setActiveSubmenu(null)}>
+                <Link href="/coming-soon?page=Vaccum%20Cleaners" className={styles.dropdownItem} onMouseEnter={() => setActiveSubmenu(null)}>
                   <div className={styles.dropdownLeft}>
                     <span className={styles.menuIcon}>
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -176,7 +176,7 @@ export default function Header() {
                 </Link>
 
                 {/* 3. Autocare Detailing */}
-                <Link href="/shop?category=autocare" className={styles.dropdownItem} onMouseEnter={() => setActiveSubmenu(null)}>
+                <Link href="/coming-soon?page=Autocare%20Detailing" className={styles.dropdownItem} onMouseEnter={() => setActiveSubmenu(null)}>
                   <div className={styles.dropdownLeft}>
                     <span className={styles.menuIcon}>
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -190,7 +190,7 @@ export default function Header() {
                 </Link>
 
                 {/* 4. Accessories & Spares */}
-                <Link href="/shop?category=spares" className={styles.dropdownItem} onMouseEnter={() => setActiveSubmenu(null)}>
+                <Link href="/coming-soon?page=Accessories%20%26%20Spares" className={styles.dropdownItem} onMouseEnter={() => setActiveSubmenu(null)}>
                   <div className={styles.dropdownLeft}>
                     <span className={styles.menuIcon}>
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -222,14 +222,14 @@ export default function Header() {
                   {/* Compressor Submenu */}
                   {activeSubmenu === "compressor" && (
                     <div className={styles.submenuBox}>
-                      <Link href="/shop?category=compressor_oil_free" className={styles.submenuItem}>OIL FREE</Link>
-                      <Link href="/shop?category=compressor_oil_type" className={styles.submenuItem}>OIL TYPE</Link>
+                      <Link href="/coming-soon?page=Oil%20Free%20Compressor" className={styles.submenuItem}>OIL FREE</Link>
+                      <Link href="/coming-soon?page=Oil%20Type%20Compressor" className={styles.submenuItem}>OIL TYPE</Link>
                     </div>
                   )}
                 </div>
 
                 {/* 6. Cordless Tools */}
-                <Link href="/shop?category=cordless" className={styles.dropdownItem} onMouseEnter={() => setActiveSubmenu(null)}>
+                <Link href="/coming-soon?page=Cordless%20Tools" className={styles.dropdownItem} onMouseEnter={() => setActiveSubmenu(null)}>
                   <div className={styles.dropdownLeft}>
                     <span className={styles.menuIcon}>
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
