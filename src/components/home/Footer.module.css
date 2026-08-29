@@ -21,7 +21,7 @@
 .socialsFloating {
   position: absolute;
   top: 25px; /* Shifted down to match curve dip */
-  left: calc((100vw - var(--container-width)) / 2 + var(--container-padding));
+  left: calc((100% - var(--container-width)) / 2 + var(--container-padding));
   display: flex;
   gap: 20px;
   z-index: 10;

@@ -2,26 +2,36 @@
   background: #f8fafc;
   padding-bottom: 70px;
   min-height: 80vh;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
 }
 
 /* Breadcrumb Bar */
 .breadcrumbBar {
   background: linear-gradient(135deg, #132c66 0%, #1e3a8a 100%);
   border-bottom: 2px solid #ffd300;
-  padding: 12px 0;
+  padding: 10px 0;
   font-family: var(--font-sans);
   font-weight: 700;
-  font-size: 12.5px;
+  font-size: 12px;
   color: #ffffff;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 .breadcrumbContent {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
   color: #ffffff;
   text-transform: uppercase;
+  width: 100%;
+  max-width: 100%;
+  line-height: 1.4;
 }
 
 .breadcrumbContent a {
@@ -43,7 +53,7 @@
 .activePath {
   font-weight: 700;
   color: #ffd300;
-  max-width: 350px;
+  max-width: 260px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -54,33 +64,41 @@
   display: grid;
   grid-template-columns: 1.05fr 0.95fr;
   gap: 40px;
-  margin-top: 30px;
+  margin-top: 24px;
   background: #ffffff;
   border-radius: 16px;
-  padding: 36px;
+  padding: 32px;
   border: 1px solid #e2e8f0;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 /* Left Column - Gallery */
 .galleryColumn {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .mainImageWrapper {
   border: 1.5px solid #f1f5f9;
   border-radius: 14px;
-  padding: 24px;
+  padding: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: #ffffff;
   position: relative;
   transition: border-color 0.3s ease;
-  min-height: 380px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .mainImageWrapper:hover {
@@ -94,6 +112,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
 }
 
 .mainImage {
@@ -111,8 +130,8 @@
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  width: 38px;
-  height: 38px;
+  width: 36px;
+  height: 36px;
   background: #ffffff;
   border: 1.5px solid #cbd5e1;
   border-radius: 50%;
@@ -129,11 +148,11 @@
 }
 
 .galleryArrowLeft {
-  left: 12px;
+  left: 10px;
 }
 
 .galleryArrowRight {
-  right: 12px;
+  right: 10px;
 }
 
 .galleryArrowLeft:hover, .galleryArrowRight:hover {
@@ -148,6 +167,9 @@
   justify-content: center;
   gap: 8px;
   width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .thumbNavBtn {
@@ -157,8 +179,9 @@
   font-weight: 800;
   cursor: pointer;
   color: #94a3b8;
-  padding: 4px 8px;
+  padding: 4px 6px;
   transition: color 0.2s ease;
+  flex-shrink: 0;
 }
 
 .thumbNavBtn:hover {
@@ -167,11 +190,14 @@
 
 .thumbnailsGrid {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   overflow-x: auto;
   padding: 4px 2px;
   scrollbar-width: none;
   -ms-overflow-style: none;
+  width: 100%;
+  max-width: 100%;
+  -webkit-overflow-scrolling: touch;
 }
 
 .thumbnailsGrid::-webkit-scrollbar {
@@ -188,8 +214,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 68px;
-  height: 68px;
+  width: 64px;
+  height: 64px;
   flex-shrink: 0;
 }
 
@@ -213,30 +239,36 @@
 .infoColumn {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 18px;
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .headerRow {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 16px;
+  gap: 14px;
+  width: 100%;
 }
 
 .productTitle {
   font-family: var(--font-sans);
   font-weight: 850;
-  font-size: 22px;
+  font-size: 21px;
   color: #132c66;
   line-height: 1.35;
   margin: 0;
   letter-spacing: -0.3px;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .shareBtn {
-  width: 42px;
-  height: 42px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   border: 1.5px solid #e2e8f0;
   background: #ffffff;
@@ -259,13 +291,16 @@
 .priceContainer {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
   font-family: var(--font-sans);
   background: #f8fafc;
-  padding: 12px 18px;
+  padding: 10px 16px;
   border-radius: 10px;
   border: 1px solid #f1f5f9;
   flex-wrap: wrap;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .originalPrice {
@@ -276,7 +311,7 @@
 }
 
 .currentPrice {
-  font-size: 26px;
+  font-size: 24px;
   font-weight: 900;
   color: #132c66;
 }
@@ -287,7 +322,7 @@
   color: #059669;
   background: #ecfdf5;
   border: 1px solid #a7f3d0;
-  padding: 4px 10px;
+  padding: 3px 8px;
   border-radius: 6px;
 }
 
@@ -300,6 +335,7 @@
   font-size: 13px;
   font-weight: 700;
   color: #64748b;
+  flex-wrap: wrap;
 }
 
 .stars {
@@ -318,8 +354,8 @@
 }
 
 .qtyBtn {
-  width: 40px;
-  height: 38px;
+  width: 38px;
+  height: 36px;
   border: none;
   background: #f8fafc;
   font-size: 18px;
@@ -334,8 +370,8 @@
 }
 
 .qtyInput {
-  width: 48px;
-  height: 38px;
+  width: 44px;
+  height: 36px;
   border: none;
   border-left: 1.5px solid #cbd5e1;
   border-right: 1.5px solid #cbd5e1;
@@ -349,16 +385,18 @@
 .actionsBlock {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 14px;
-  margin-top: 4px;
+  gap: 12px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .buyNowBtn, .addToCartBtn {
-  height: 48px;
+  height: 46px;
   border-radius: 8px;
   font-family: var(--font-sans);
   font-weight: 800;
-  font-size: 14.5px;
+  font-size: 14px;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -366,6 +404,7 @@
   gap: 8px;
   transition: all var(--transition-fast) ease;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  width: 100%;
 }
 
 .buyNowBtn {
@@ -395,13 +434,14 @@
 /* Info Section */
 .infoSection {
   border-top: 1px solid #e2e8f0;
-  padding-top: 20px;
+  padding-top: 18px;
+  width: 100%;
 }
 
 .infoHeading {
   font-family: var(--font-sans);
   font-weight: 850;
-  font-size: 13.5px;
+  font-size: 13px;
   color: #132c66;
   margin: 0 0 10px 0;
   letter-spacing: 0.5px;
@@ -415,34 +455,37 @@
   flex-direction: column;
   gap: 8px;
   font-family: var(--font-sans);
-  font-size: 13px;
+  font-size: 12.5px;
   color: #475569;
-  line-height: 1.5;
+  line-height: 1.45;
   font-weight: 600;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 /* Trust Badges */
 .badgesRow {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  display: flex;
+  flex-direction: column;
   gap: 12px;
   border-top: 1px solid #e2e8f0;
-  padding-top: 20px;
+  padding-top: 18px;
+  width: 100%;
 }
 
 .badgeItem {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   font-family: var(--font-sans);
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 750;
   color: #132c66;
 }
 
 .badgeCircle {
-  width: 38px;
-  height: 38px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   border: 1.5px solid #132c66;
   display: flex;
@@ -454,12 +497,15 @@
 
 /* Tabbed Content Navigation */
 .tabsSection {
-  margin-top: 50px;
+  margin-top: 36px;
   border-radius: 12px;
   overflow: hidden;
   border: 1px solid #e2e8f0;
   background: #ffffff;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .tabHeaderBar {
@@ -469,6 +515,10 @@
   overflow-x: auto;
   scrollbar-width: none;
   -ms-overflow-style: none;
+  width: 100%;
+  max-width: 100%;
+  flex-wrap: nowrap;
+  -webkit-overflow-scrolling: touch;
 }
 
 .tabHeaderBar::-webkit-scrollbar {
@@ -476,16 +526,17 @@
 }
 
 .tabBtn {
-  padding: 14px 28px;
+  padding: 12px 20px;
   border: none;
   background: transparent;
   color: #ffffff;
   font-family: var(--font-sans);
   font-weight: 750;
-  font-size: 13.5px;
+  font-size: 13px;
   cursor: pointer;
   transition: all var(--transition-fast) ease;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .tabBtn:hover {
@@ -500,46 +551,61 @@
 }
 
 .tabContentArea {
-  padding: 30px 24px;
+  padding: 24px 20px;
   font-family: var(--font-sans);
-  font-size: 14px;
+  font-size: 13.5px;
   color: #334155;
-  line-height: 1.7;
+  line-height: 1.6;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .descriptionList {
   margin: 0;
-  padding-left: 20px;
+  padding-left: 18px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .descriptionList li {
   margin-bottom: 4px;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .tabPane {
-  padding: 6px 0;
+  padding: 4px 0;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 /* Based on Recent Views Section */
 .recentSection {
-  margin-top: 60px;
+  margin-top: 48px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .sectionHeaderRow {
   display: flex;
   align-items: flex-end;
   border-bottom: 2px solid #132c66;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
   position: relative;
+  width: 100%;
 }
 
 .titleTab {
   background: #132c66;
-  padding: 8px 30px 8px 18px;
-  clip-path: polygon(0 0, 100% 0, calc(100% - 16px) 100%, 0 100%);
+  padding: 8px 24px 8px 16px;
+  clip-path: polygon(0 0, 100% 0, calc(100% - 14px) 100%, 0 100%);
   display: flex;
   align-items: center;
   margin-bottom: -2px;
@@ -548,7 +614,7 @@
 .titleText {
   font-family: var(--font-accent);
   font-weight: 800;
-  font-size: 15px;
+  font-size: 14px;
   color: #ffffff;
   margin: 0;
   letter-spacing: 0.5px;
@@ -562,36 +628,40 @@
 .recentGrid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: 16px;
+  gap: 14px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .recentCard {
   background: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 12px;
-  padding: 14px;
+  padding: 12px;
   display: flex;
   flex-direction: column;
   position: relative;
   overflow: hidden;
   transition: all var(--transition-fast) ease;
+  min-width: 0;
 }
 
 .recentCard:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 20px -4px rgba(19, 44, 102, 0.08);
+  transform: translateY(-3px);
+  box-shadow: 0 10px 18px -4px rgba(19, 44, 102, 0.08);
   border-color: #38b6ff;
 }
 
 .recentImgBox {
   width: 100%;
-  height: 120px;
+  height: 110px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: #f8fafc;
   border-radius: 8px;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 .recentImg {
@@ -603,14 +673,15 @@
 .recentInfo {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
   flex-grow: 1;
+  min-width: 0;
 }
 
 .recentTitle {
   font-family: var(--font-sans);
   font-weight: 750;
-  font-size: 12px;
+  font-size: 11.5px;
   color: #132c66;
   line-height: 1.35;
   margin: 0;
@@ -618,15 +689,16 @@
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  height: 32px;
+  height: 30px;
+  word-break: break-word;
 }
 
 .starsRow {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
   font-family: var(--font-sans);
-  font-size: 10.5px;
+  font-size: 10px;
   font-weight: 600;
   color: #64748b;
 }
@@ -635,23 +707,23 @@
   display: flex;
   gap: 6px;
   margin-top: auto;
-  padding-top: 8px;
+  padding-top: 6px;
 }
 
 .cardCartBtn {
   flex-grow: 1;
-  height: 30px;
+  height: 28px;
   background: #38b6ff;
   border: none;
   border-radius: 6px;
   color: #ffffff;
   font-family: var(--font-sans);
   font-weight: 800;
-  font-size: 10.5px;
+  font-size: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
+  gap: 3px;
   cursor: pointer;
   transition: all var(--transition-fast) ease;
 }
@@ -661,8 +733,8 @@
 }
 
 .cardHeartBtn {
-  width: 30px;
-  height: 30px;
+  width: 28px;
+  height: 28px;
   background: #ffd300;
   border: none;
   border-radius: 6px;
@@ -674,11 +746,6 @@
   flex-shrink: 0;
 }
 
-.cardHeartBtn:hover {
-  background: #e6be00;
-  transform: scale(1.05);
-}
-
 /* ==========================================================================
    Responsive Breakpoints
    ========================================================================== */
@@ -686,7 +753,7 @@
 @media (max-width: 1024px) {
   .productBlock {
     grid-template-columns: 1fr;
-    gap: 30px;
+    gap: 24px;
     padding: 24px;
   }
   .mainImageContainer {
@@ -699,72 +766,69 @@
 
 @media (max-width: 768px) {
   .productBlock {
-    padding: 18px;
-    margin-top: 16px;
+    padding: 16px;
+    margin-top: 14px;
+    border-radius: 12px;
+  }
+  .mainImageWrapper {
+    padding: 12px;
+  }
+  .mainImageContainer {
+    height: 250px;
   }
   .productTitle {
-    font-size: 19px;
+    font-size: 18px;
   }
   .currentPrice {
-    font-size: 23px;
+    font-size: 22px;
   }
   .actionsBlock {
     grid-template-columns: 1fr;
   }
-  .badgesRow {
-    grid-template-columns: 1fr;
-    gap: 10px;
-  }
-  .tabBtn {
-    padding: 12px 18px;
-    font-size: 12.5px;
-  }
-  .tabContentArea {
-    padding: 20px 16px;
-    font-size: 13px;
-  }
   .recentGrid {
     grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
+    gap: 10px;
   }
 }
 
 @media (max-width: 480px) {
   .productBlock {
-    padding: 14px;
-  }
-  .mainImageWrapper {
-    padding: 14px;
-    min-height: 250px;
+    padding: 12px;
+    border-radius: 10px;
   }
   .mainImageContainer {
-    height: 240px;
+    height: 220px;
   }
   .galleryArrowLeft, .galleryArrowRight {
-    width: 32px;
-    height: 32px;
-    font-size: 13px;
+    width: 30px;
+    height: 30px;
+    font-size: 12px;
   }
   .thumbnailCard {
-    width: 54px;
-    height: 54px;
+    width: 52px;
+    height: 52px;
   }
   .productTitle {
-    font-size: 17px;
+    font-size: 16px;
   }
   .priceContainer {
-    padding: 10px 14px;
-    gap: 10px;
+    padding: 8px 12px;
+    gap: 8px;
   }
   .currentPrice {
-    font-size: 21px;
+    font-size: 20px;
   }
   .buyNowBtn, .addToCartBtn {
     height: 44px;
-    font-size: 14px;
+    font-size: 13.5px;
   }
-  .activePath {
-    max-width: 160px;
+  .tabBtn {
+    padding: 10px 14px;
+    font-size: 12px;
+  }
+  .tabContentArea {
+    padding: 16px 12px;
+    font-size: 12.5px;
   }
   .recentGrid {
     grid-template-columns: 1fr;

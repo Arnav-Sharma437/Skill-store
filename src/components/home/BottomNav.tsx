@@ -54,12 +54,12 @@ export default function BottomNav() {
         <span>Wishlist</span>
       </Link>
 
-      <Link href="/admin" className={`${styles.navItem} ${pathname.startsWith("/admin") ? styles.active : ""}`}>
+      <Link href="/account" className={`${styles.navItem} ${pathname.startsWith("/account") ? styles.active : ""}`}>
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
           <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
           <circle cx="12" cy="7" r="4"></circle>
         </svg>
-        <span>Admin</span>
+        <span>Account</span>
       </Link>
     </div>
   );

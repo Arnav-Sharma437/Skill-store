@@ -21,7 +21,7 @@
   top: 0;
   left: 0;
   bottom: 0;
-  width: calc(max(0px, (100vw - var(--container-width)) / 2) + 215px);
+  width: calc(max(0px, (100% - var(--container-width)) / 2) + 215px);
   background: #ffffff;
   clip-path: polygon(0 0, 100% 0, calc(100% - 45px) 100%, 0 100%);
   z-index: 1;
