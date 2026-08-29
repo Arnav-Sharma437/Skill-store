@@ -6,6 +6,15 @@ export interface IUser extends Document {
   email: string;
   password?: string;
   role: "customer" | "admin";
+  addresses?: Array<{
+    id: string;
+    type: string;
+    name: string;
+    phone: string;
+    street: string;
+    city: string;
+    pincode: string;
+  }>;
   createdAt: Date;
   updatedAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
@@ -28,7 +37,7 @@ const UserSchema = new Schema<IUser>(
     },
     password: {
       type: String,
-      required: [true, "Password is required"],
+      required: false,
       minlength: [6, "Password must be at least 6 characters"],
       select: false, // Exclude password from queries by default for safety
     },
@@ -36,6 +45,20 @@ const UserSchema = new Schema<IUser>(
       type: String,
       enum: ["customer", "admin"],
       default: "customer",
+    },
+    addresses: {
+      type: [
+        {
+          id: { type: String, required: true },
+          type: { type: String, default: "Home" },
+          name: { type: String, required: true },
+          phone: { type: String, required: true },
+          street: { type: String, required: true },
+          city: { type: String, required: true },
+          pincode: { type: String, required: true },
+        },
+      ],
+      default: [],
     },
   },
   {

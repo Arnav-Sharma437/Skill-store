@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { SessionProvider } from "next-auth/react";
 
 export interface CartItem {
   id: string;
@@ -100,20 +101,22 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AppContext.Provider
-      value={{
-        cart,
-        wishlist,
-        addToCart,
-        removeFromCart,
-        updateCartQuantity,
-        clearCart,
-        toggleWishlist,
-        isInWishlist,
-      }}
-    >
-      {children}
-    </AppContext.Provider>
+    <SessionProvider>
+      <AppContext.Provider
+        value={{
+          cart,
+          wishlist,
+          addToCart,
+          removeFromCart,
+          updateCartQuantity,
+          clearCart,
+          toggleWishlist,
+          isInWishlist,
+        }}
+      >
+        {children}
+      </AppContext.Provider>
+    </SessionProvider>
   );
 }
 
