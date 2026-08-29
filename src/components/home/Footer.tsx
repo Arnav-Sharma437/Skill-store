@@ -121,10 +121,10 @@ export default function Footer() {
           <div className={styles.columnLinks}>
             <h4 className={styles.columnTitle}>QUICK LINKS</h4>
             <nav className={styles.nav}>
-              <Link href="/coming-soon?page=Pressure%20Washers" className={styles.link}>PRESSURE WASHERS</Link>
-              <Link href="/coming-soon?page=Power%20Tools" className={styles.link}>POWER TOOLS</Link>
-              <Link href="/coming-soon?page=Hand%20Tools" className={styles.link}>HAND TOOLS</Link>
-              <Link href="/coming-soon?page=Accessories%20%26%20Spares" className={styles.link}>ACCESSORIES & SPARES</Link>
+              <Link href="/category/high-pressure-washer" className={styles.link}>PRESSURE WASHERS</Link>
+              <Link href="/category/power-tools" className={styles.link}>POWER TOOLS</Link>
+              <Link href="/category/hand-tools" className={styles.link}>HAND TOOLS</Link>
+              <Link href="/category/accessories-spares" className={styles.link}>ACCESSORIES & SPARES</Link>
             </nav>
           </div>
 
