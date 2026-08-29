@@ -694,15 +694,21 @@
 
 @media (max-width: 768px) {
   .breadcrumbBar {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
+    width: 100%;
+    overflow: hidden;
   }
   .breadcrumbContent {
+    overflow-x: auto;
     white-space: nowrap;
+    width: 100%;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 2px;
   }
   .productBlock {
     padding: 16px;
     gap: 20px;
+    max-width: 100%;
+    overflow: hidden;
   }
   .mainImageContainer {
     height: 280px !important;
@@ -715,6 +721,7 @@
   }
   .thumbnailsWrapper {
     width: 100%;
+    overflow: hidden;
   }
   .thumbnailsGrid {
     overflow-x: auto;
@@ -730,6 +737,7 @@
   }
   .productTitle {
     font-size: 20px !important;
+    line-height: 1.35;
   }
   .priceContainer {
     width: 100% !important;
@@ -750,6 +758,14 @@
   .reviewsCount {
     font-size: 14px !important;
   }
+  .badgesRow {
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: space-between;
+  }
+  .badgeItem {
+    font-size: 13px !important;
+  }
   .tabHeaderBar {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
@@ -759,6 +775,13 @@
     flex-shrink: 0;
     padding: 12px 20px !important;
     font-size: 14.5px !important;
+  }
+  .tabContentArea {
+    padding: 24px 16px !important;
+    font-size: 14px !important;
+  }
+  .descriptionList {
+    gap: 14px !important;
   }
   .actionsBlock {
     flex-direction: column;
@@ -774,9 +797,6 @@
   }
   .infoList {
     font-size: 14.5px !important;
-  }
-  .badgeItem {
-    font-size: 14px !important;
   }
   .recentGrid {
     grid-template-columns: repeat(2, 1fr);
