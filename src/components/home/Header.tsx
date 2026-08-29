@@ -71,7 +71,7 @@ export default function Header() {
           {/* Navigation Links */}
           <nav className={styles.desktopNav}>
             <Link href="/" className={styles.navLink}>HOME</Link>
-            <Link href="/coming-soon?page=About%20Us" className={styles.navLink}>ABOUT</Link>
+            <Link href="/about" className={styles.navLink}>ABOUT</Link>
             <Link href="/contact" className={styles.navLink}>CONTACT US</Link>
           </nav>
 
