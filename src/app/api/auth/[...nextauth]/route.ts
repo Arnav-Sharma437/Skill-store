@@ -15,30 +15,35 @@ export const authOptions: AuthOptions = {
       if (account?.provider === "google") {
         try {
           await dbConnect();
-          const emailAddress = user.email || "";
-          const existingUser = await User.findOne({ email: emailAddress });
-          if (!existingUser) {
-            await User.create({
-              name: user.name || "",
-              email: emailAddress,
-              role: "customer",
-              addresses: [],
-            });
+          const emailAddress = (user.email || "").toLowerCase().trim();
+          if (emailAddress) {
+            const existingUser = await User.findOne({ email: emailAddress });
+            if (!existingUser) {
+              await User.create({
+                name: user.name || "Customer",
+                email: emailAddress,
+                role: "customer",
+                addresses: [],
+              });
+            }
           }
         } catch (error) {
           console.error("Error saving user to MongoDB on sign in:", error);
-          return false;
+          // Return true so user login is not blocked by DB hiccups
+          return true;
         }
       }
       return true;
     },
     async session({ session }) {
       try {
-        await dbConnect();
-        const dbUser = await User.findOne({ email: session.user?.email });
-        if (dbUser) {
-          session.user.id = dbUser._id.toString();
-          session.user.role = dbUser.role;
+        if (session.user?.email) {
+          await dbConnect();
+          const dbUser = await User.findOne({ email: session.user.email.toLowerCase().trim() });
+          if (dbUser) {
+            session.user.id = dbUser._id.toString();
+            session.user.role = dbUser.role || "customer";
+          }
         }
       } catch (error) {
         console.error("Error loading user session from MongoDB:", error);
@@ -46,10 +51,12 @@ export const authOptions: AuthOptions = {
       return session;
     },
   },
-  secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
+  secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || "skill-store-auth-fallback-secret-2026",
   pages: {
     signIn: "/account",
+    error: "/account",
   },
+  debug: process.env.NODE_ENV === "development",
 };
 
 const handler = NextAuth(authOptions);

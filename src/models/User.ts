@@ -80,10 +80,10 @@ const UserSchema = new Schema<IUser>(
 
 // Pre-save middleware to hash passwords automatically
 UserSchema.pre("save", async function (this: IUser) {
-  if (!this.isModified("password")) return;
+  if (!this.isModified("password") || !this.password) return;
 
   const salt = await bcrypt.genSalt(10);
-  this.password = await bcrypt.hash(this.password!, salt);
+  this.password = await bcrypt.hash(this.password, salt);
 });
 
 // Compare input passwords with hashed database passwords

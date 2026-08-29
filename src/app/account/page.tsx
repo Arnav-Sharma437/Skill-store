@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useSession, signIn, signOut } from "next-auth/react";
 import Header from "@/components/home/Header";
 import Footer from "@/components/home/Footer";
@@ -19,9 +20,12 @@ interface Address {
   pincode: string;
 }
 
-export default function AccountPage() {
+function AccountContent() {
   const { data: session, status } = useSession();
   const { wishlist, toggleWishlist } = useApp();
+  const searchParams = useSearchParams();
+  const authError = searchParams.get("error");
+
   const [activeTab, setActiveTab] = useState("overview");
   const [addresses, setAddresses] = useState<Address[] | null>(null);
   
@@ -56,7 +60,7 @@ export default function AccountPage() {
   }, [session]);
 
   const handleGoogleLogin = () => {
-    signIn("google");
+    signIn("google", { callbackUrl: "/account" });
   };
 
   const handleLogout = () => {
@@ -142,353 +146,372 @@ export default function AccountPage() {
 
   if (status === "loading") {
     return (
-      <>
-        <AnnouncementBar />
-        <Header />
-        <main className={styles.main}>
-          <div className={styles.loadingContainer}>
-            <div className={styles.spinner}></div>
-            <p>Verifying secure session...</p>
-          </div>
-        </main>
-        <Footer />
-      </>
+      <div className={styles.loadingContainer}>
+        <div className={styles.spinner}></div>
+        <p>Verifying secure session...</p>
+      </div>
     );
   }
 
   return (
     <>
-      <AnnouncementBar />
-      <Header />
-
-      <main className={styles.main}>
-        {/* Banner Header */}
-        <div className={styles.bannerHeader}>
-          <div className="container">
-            <h1 className={styles.bannerTitle}>My Account</h1>
-            <p className={styles.bannerSubtitle}>
-              {session?.user ? `Welcome back, ${session.user.name}!` : "Sign in to track orders and manage your profile."}
-            </p>
-          </div>
-        </div>
-
+      {/* Banner Header */}
+      <div className={styles.bannerHeader}>
         <div className="container">
-          {!session?.user ? (
-            /* Logged Out view: Login Gate */
-            <div className={styles.loginGate}>
-              <div className={styles.loginCard}>
-                <div className={styles.logoRow}>
-                  <span className={styles.logoSkill}>SKILL</span>
-                  <span className={styles.logoStore}>STORE</span>
-                </div>
-                <h2>Access Your Dashboard</h2>
-                <p>Track order shipments, manage shipping address listings, and sync your favorite items instantly.</p>
-                
-                <button onClick={handleGoogleLogin} className={styles.googleBtn}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
-                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
-                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05" />
-                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
-                  </svg>
-                  <span>Sign In with Google</span>
-                </button>
+          <h1 className={styles.bannerTitle}>My Account</h1>
+          <p className={styles.bannerSubtitle}>
+            {session?.user ? `Welcome back, ${session.user.name}!` : "Sign in to track orders and manage your profile."}
+          </p>
+        </div>
+      </div>
+
+      <div className="container">
+        {!session?.user ? (
+          /* Logged Out view: Login Gate */
+          <div className={styles.loginGate}>
+            <div className={styles.loginCard}>
+              <div className={styles.logoRow}>
+                <span className={styles.logoSkill}>SKILL</span>
+                <span className={styles.logoStore}>STORE</span>
               </div>
+              <h2>Access Your Dashboard</h2>
+              <p>Track order shipments, manage shipping address listings, and sync your favorite items instantly.</p>
+              
+              {authError && (
+                <div className={styles.authErrorBox}>
+                  <strong>Authentication Notice:</strong>{" "}
+                  {authError === "Configuration"
+                    ? "Google OAuth environment variables (GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET) or callback URL may be misconfigured in Google Cloud Console."
+                    : authError === "AccessDenied"
+                    ? "Access was denied or canceled during Google Sign-In. Please try again."
+                    : `Authentication issue encountered: ${authError}. Please try again.`}
+                </div>
+              )}
+
+              <button onClick={handleGoogleLogin} className={styles.googleBtn}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+                  <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+                  <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05" />
+                  <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+                </svg>
+                <span>Sign In with Google</span>
+              </button>
             </div>
-          ) : (
-            /* Logged In view: Account Dashboard */
-            <div className={styles.dashboardLayout}>
-              {/* Left Sidebar */}
-              <aside className={styles.sidebar}>
-                <div className={styles.profileHeader}>
-                  <img src={session.user.image || "https://api.dicebear.com/7.x/adventurer/svg?seed=Store"} alt={session.user.name || "User"} className={styles.avatar} />
-                  <div className={styles.profileMeta}>
-                    <h3>{session.user.name}</h3>
-                    <p>{session.user.email}</p>
+          </div>
+        ) : (
+          /* Logged In view: Account Dashboard */
+          <div className={styles.dashboardLayout}>
+            {/* Left Sidebar */}
+            <aside className={styles.sidebar}>
+              <div className={styles.profileHeader}>
+                <img src={session.user.image || "https://api.dicebear.com/7.x/adventurer/svg?seed=Store"} alt={session.user.name || "User"} className={styles.avatar} />
+                <div className={styles.profileMeta}>
+                  <h3>{session.user.name}</h3>
+                  <p>{session.user.email}</p>
+                </div>
+              </div>
+
+              <nav className={styles.sidebarNav}>
+                <button 
+                  onClick={() => setActiveTab("overview")} 
+                  className={`${styles.navBtn} ${activeTab === "overview" ? styles.activeNavBtn : ""}`}
+                >
+                  Dashboard Overview
+                </button>
+                <button 
+                  onClick={() => setActiveTab("orders")} 
+                  className={`${styles.navBtn} ${activeTab === "orders" ? styles.activeNavBtn : ""}`}
+                >
+                  My Orders
+                </button>
+                <button 
+                  onClick={() => setActiveTab("addresses")} 
+                  className={`${styles.navBtn} ${activeTab === "addresses" ? styles.activeNavBtn : ""}`}
+                >
+                  Address Book
+                </button>
+                <button 
+                  onClick={() => setActiveTab("wishlist")} 
+                  className={`${styles.navBtn} ${activeTab === "wishlist" ? styles.activeNavBtn : ""}`}
+                >
+                  My Wishlist ({wishlist.length})
+                </button>
+                <button onClick={handleLogout} className={`${styles.navBtn} ${styles.logoutBtn}`}>
+                  Sign Out
+                </button>
+              </nav>
+            </aside>
+
+            {/* Right Content Area */}
+            <div className={styles.contentArea}>
+              {/* 1. Overview Tab */}
+              {activeTab === "overview" && (
+                <div className={styles.tabContent}>
+                  <h2>Account Overview</h2>
+                  <p>Manage your account settings, order history, and active deliveries easily.</p>
+
+                  <div className={styles.statsGrid}>
+                    <div className={styles.statCard}>
+                      <h3>{mockOrders.length}</h3>
+                      <p>Total Orders</p>
+                    </div>
+                    <div className={styles.statCard}>
+                      <h3>{wishlist.length}</h3>
+                      <p>Wishlist Items</p>
+                    </div>
+                    <div className={styles.statCard}>
+                      <h3>{addresses?.length || 0}</h3>
+                      <p>Saved Addresses</p>
+                    </div>
+                  </div>
+
+                  <div className={styles.profileSummary}>
+                    <h3>Personal Information</h3>
+                    <div className={styles.profileDetailsRow}>
+                      <div className={styles.profileDetail}>
+                        <strong>Name:</strong>
+                        <span>{session.user.name}</span>
+                      </div>
+                      <div className={styles.profileDetail}>
+                        <strong>Email:</strong>
+                        <span>{session.user.email}</span>
+                      </div>
+                      <div className={styles.profileDetail}>
+                        <strong>Registered Platform:</strong>
+                        <span>Google Sign-In</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
+              )}
 
-                <nav className={styles.sidebarNav}>
-                  <button 
-                    onClick={() => setActiveTab("overview")} 
-                    className={`${styles.navBtn} ${activeTab === "overview" ? styles.activeNavBtn : ""}`}
-                  >
-                    Dashboard Overview
-                  </button>
-                  <button 
-                    onClick={() => setActiveTab("orders")} 
-                    className={`${styles.navBtn} ${activeTab === "orders" ? styles.activeNavBtn : ""}`}
-                  >
-                    My Orders
-                  </button>
-                  <button 
-                    onClick={() => setActiveTab("addresses")} 
-                    className={`${styles.navBtn} ${activeTab === "addresses" ? styles.activeNavBtn : ""}`}
-                  >
-                    Address Book
-                  </button>
-                  <button 
-                    onClick={() => setActiveTab("wishlist")} 
-                    className={`${styles.navBtn} ${activeTab === "wishlist" ? styles.activeNavBtn : ""}`}
-                  >
-                    My Wishlist ({wishlist.length})
-                  </button>
-                  <button onClick={handleLogout} className={`${styles.navBtn} ${styles.logoutBtn}`}>
-                    Sign Out
-                  </button>
-                </nav>
-              </aside>
+              {/* 2. My Orders Tab */}
+              {activeTab === "orders" && (
+                <div className={styles.tabContent}>
+                  <h2>Order History</h2>
+                  <p>Check the delivery status of your recent transactions.</p>
 
-              {/* Right Content Area */}
-              <div className={styles.contentArea}>
-                {/* 1. Overview Tab */}
-                {activeTab === "overview" && (
-                  <div className={styles.tabContent}>
-                    <h2>Account Overview</h2>
-                    <p>Manage your account settings, order history, and active deliveries easily.</p>
-
-                    <div className={styles.statsGrid}>
-                      <div className={styles.statCard}>
-                        <h3>{mockOrders.length}</h3>
-                        <p>Total Orders</p>
-                      </div>
-                      <div className={styles.statCard}>
-                        <h3>{wishlist.length}</h3>
-                        <p>Wishlist Items</p>
-                      </div>
-                      <div className={styles.statCard}>
-                        <h3>{addresses?.length || 0}</h3>
-                        <p>Saved Addresses</p>
-                      </div>
-                    </div>
-
-                    <div className={styles.profileSummary}>
-                      <h3>Personal Information</h3>
-                      <div className={styles.profileDetailsRow}>
-                        <div className={styles.profileDetail}>
-                          <strong>Name:</strong>
-                          <span>{session.user.name}</span>
-                        </div>
-                        <div className={styles.profileDetail}>
-                          <strong>Email:</strong>
-                          <span>{session.user.email}</span>
-                        </div>
-                        <div className={styles.profileDetail}>
-                          <strong>Registered Platform:</strong>
-                          <span>Google Sign-In</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* 2. My Orders Tab */}
-                {activeTab === "orders" && (
-                  <div className={styles.tabContent}>
-                    <h2>Order History</h2>
-                    <p>Check the delivery status of your recent transactions.</p>
-
-                    {mockOrders.length === 0 ? (
-                      <p className={styles.emptyText}>You haven&apos;t placed any orders yet.</p>
-                    ) : (
-                      <div className={styles.ordersTableWrapper}>
-                        <table className={styles.ordersTable}>
-                          <thead>
-                            <tr>
-                              <th>Order ID</th>
-                              <th>Date</th>
-                              <th>Product Description</th>
-                              <th>Total Amount</th>
-                              <th>Status</th>
+                  {mockOrders.length === 0 ? (
+                    <p className={styles.emptyText}>You haven&apos;t placed any orders yet.</p>
+                  ) : (
+                    <div className={styles.ordersTableWrapper}>
+                      <table className={styles.ordersTable}>
+                        <thead>
+                          <tr>
+                            <th>Order ID</th>
+                            <th>Date</th>
+                            <th>Product Description</th>
+                            <th>Total Amount</th>
+                            <th>Status</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {mockOrders.map((order) => (
+                            <tr key={order.id}>
+                              <td className={styles.orderId}>{order.id}</td>
+                              <td>{order.date}</td>
+                              <td>
+                                {order.items.map((it, idx) => (
+                                  <div key={idx}>
+                                    {it.name} <strong>x {it.qty}</strong>
+                                  </div>
+                                ))}
+                              </td>
+                              <td className={styles.orderTotal}>₹{order.total.toLocaleString("en-IN")}</td>
+                              <td>
+                                <span className={`${styles.statusBadge} ${order.status === "Delivered" ? styles.statusDelivered : styles.statusShipped}`}>
+                                  {order.status}
+                                </span>
+                              </td>
                             </tr>
-                          </thead>
-                          <tbody>
-                            {mockOrders.map((order) => (
-                              <tr key={order.id}>
-                                <td className={styles.orderId}>{order.id}</td>
-                                <td>{order.date}</td>
-                                <td>
-                                  {order.items.map((it, idx) => (
-                                    <div key={idx}>
-                                      {it.name} <strong>x {it.qty}</strong>
-                                    </div>
-                                  ))}
-                                </td>
-                                <td className={styles.orderTotal}>₹{order.total.toLocaleString("en-IN")}</td>
-                                <td>
-                                  <span className={`${styles.statusBadge} ${order.status === "Delivered" ? styles.statusDelivered : styles.statusShipped}`}>
-                                    {order.status}
-                                  </span>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* 3. Address Book Tab */}
+              {activeTab === "addresses" && (
+                <div className={styles.tabContent}>
+                  <div className={styles.tabHeaderWithAction}>
+                    <h2>Address Book</h2>
+                    {!showAddressForm && (
+                      <button onClick={() => setShowAddressForm(true)} className={styles.addBtn}>
+                        + Add Address
+                      </button>
                     )}
                   </div>
-                )}
 
-                {/* 3. Address Book Tab */}
-                {activeTab === "addresses" && (
-                  <div className={styles.tabContent}>
-                    <div className={styles.tabHeaderWithAction}>
-                      <h2>Address Book</h2>
-                      {!showAddressForm && (
-                        <button onClick={() => setShowAddressForm(true)} className={styles.addBtn}>
-                          + Add Address
-                        </button>
+                  {showAddressForm ? (
+                    /* Address Add Form */
+                    <form onSubmit={handleAddAddress} className={styles.addressForm}>
+                      <h3>New Shipping Address</h3>
+                      <div className={styles.formRow}>
+                        <div className={styles.formGroup}>
+                          <label htmlFor="address-type">Address Type</label>
+                          <select
+                            id="address-type"
+                            value={newAddress.type}
+                            onChange={(e) => setNewAddress({ ...newAddress, type: e.target.value })}
+                          >
+                            <option value="Home">Home</option>
+                            <option value="Office">Office</option>
+                            <option value="Billing">Billing</option>
+                          </select>
+                        </div>
+                        <div className={styles.formGroup}>
+                          <label htmlFor="address-name">Full Name</label>
+                          <input
+                            id="address-name"
+                            type="text"
+                            placeholder="Arnav Sharma"
+                            value={newAddress.name}
+                            onChange={(e) => setNewAddress({ ...newAddress, name: e.target.value })}
+                            required
+                          />
+                        </div>
+                      </div>
+
+                      <div className={styles.formRow}>
+                        <div className={styles.formGroup}>
+                          <label htmlFor="address-phone">Phone Number</label>
+                          <input
+                            id="address-phone"
+                            type="tel"
+                            placeholder="8754301661"
+                            value={newAddress.phone}
+                            onChange={(e) => setNewAddress({ ...newAddress, phone: e.target.value })}
+                            required
+                          />
+                        </div>
+                        <div className={styles.formGroup}>
+                          <label htmlFor="address-pincode">Pincode</label>
+                          <input
+                            id="address-pincode"
+                            type="text"
+                            placeholder="641004"
+                            value={newAddress.pincode}
+                            onChange={(e) => setNewAddress({ ...newAddress, pincode: e.target.value })}
+                            required
+                          />
+                        </div>
+                      </div>
+
+                      <div className={styles.formGroup}>
+                        <label htmlFor="address-street">Street Address</label>
+                        <input
+                          id="address-street"
+                          type="text"
+                          placeholder="P.r.p Garden Road, Krishnarayapuram Illango Nagar"
+                          value={newAddress.street}
+                          onChange={(e) => setNewAddress({ ...newAddress, street: e.target.value })}
+                          required
+                        />
+                      </div>
+
+                      <div className={styles.formGroup}>
+                        <label htmlFor="address-city">City &amp; State</label>
+                        <input
+                          id="address-city"
+                          type="text"
+                          placeholder="Coimbatore, Tamil Nadu"
+                          value={newAddress.city}
+                          onChange={(e) => setNewAddress({ ...newAddress, city: e.target.value })}
+                          required
+                        />
+                      </div>
+
+                      <div className={styles.formActions}>
+                        <button type="submit" className={styles.saveBtn}>Save Address</button>
+                        <button type="button" onClick={() => setShowAddressForm(false)} className={styles.cancelBtn}>Cancel</button>
+                      </div>
+                    </form>
+                  ) : addresses === null ? (
+                    <p className={styles.emptyText}>Loading your address book...</p>
+                  ) : (
+                    /* Address Lists */
+                    <div className={styles.addressListGrid}>
+                      {addresses.map((addr) => (
+                        <div key={addr.id} className={styles.addressCard}>
+                          <div className={styles.addressCardHeader}>
+                            <span className={styles.typeBadge}>{addr.type}</span>
+                            <button onClick={() => handleDeleteAddress(addr.id)} className={styles.deleteBtn} aria-label="Delete address">
+                              Delete
+                            </button>
+                          </div>
+                          <h3>{addr.name}</h3>
+                          <p>{addr.street}</p>
+                          <p>{addr.city} - {addr.pincode}</p>
+                          <p className={styles.phoneLabel}>Phone: {addr.phone}</p>
+                        </div>
+                      ))}
+                      {addresses.length === 0 && (
+                        <p className={styles.emptyText}>No shipping addresses saved yet.</p>
                       )}
                     </div>
+                  )}
+                </div>
+              )}
 
-                    {showAddressForm ? (
-                      /* Address Add Form */
-                      <form onSubmit={handleAddAddress} className={styles.addressForm}>
-                        <h3>New Shipping Address</h3>
-                        <div className={styles.formRow}>
-                          <div className={styles.formGroup}>
-                            <label htmlFor="address-type">Address Type</label>
-                            <select
-                              id="address-type"
-                              value={newAddress.type}
-                              onChange={(e) => setNewAddress({ ...newAddress, type: e.target.value })}
-                            >
-                              <option value="Home">Home</option>
-                              <option value="Office">Office</option>
-                              <option value="Billing">Billing</option>
-                            </select>
-                          </div>
-                          <div className={styles.formGroup}>
-                            <label htmlFor="address-name">Full Name</label>
-                            <input
-                              id="address-name"
-                              type="text"
-                              placeholder="Arnav Sharma"
-                              value={newAddress.name}
-                              onChange={(e) => setNewAddress({ ...newAddress, name: e.target.value })}
-                              required
-                            />
-                          </div>
-                        </div>
+              {/* 4. Wishlist Tab */}
+              {activeTab === "wishlist" && (
+                <div className={styles.tabContent}>
+                  <h2>My Wishlist</h2>
+                  <p>Your saved favorites are listed here. You can add them straight to your shopping cart.</p>
 
-                        <div className={styles.formRow}>
-                          <div className={styles.formGroup}>
-                            <label htmlFor="address-phone">Phone Number</label>
-                            <input
-                              id="address-phone"
-                              type="tel"
-                              placeholder="8754301661"
-                              value={newAddress.phone}
-                              onChange={(e) => setNewAddress({ ...newAddress, phone: e.target.value })}
-                              required
-                            />
-                          </div>
-                          <div className={styles.formGroup}>
-                            <label htmlFor="address-pincode">Pincode</label>
-                            <input
-                              id="address-pincode"
-                              type="text"
-                              placeholder="641004"
-                              value={newAddress.pincode}
-                              onChange={(e) => setNewAddress({ ...newAddress, pincode: e.target.value })}
-                              required
-                            />
-                          </div>
-                        </div>
-
-                        <div className={styles.formGroup}>
-                          <label htmlFor="address-street">Street Address</label>
-                          <input
-                            id="address-street"
-                            type="text"
-                            placeholder="P.r.p Garden Road, Krishnarayapuram Illango Nagar"
-                            value={newAddress.street}
-                            onChange={(e) => setNewAddress({ ...newAddress, street: e.target.value })}
-                            required
-                          />
-                        </div>
-
-                        <div className={styles.formGroup}>
-                          <label htmlFor="address-city">City &amp; State</label>
-                          <input
-                            id="address-city"
-                            type="text"
-                            placeholder="Coimbatore, Tamil Nadu"
-                            value={newAddress.city}
-                            onChange={(e) => setNewAddress({ ...newAddress, city: e.target.value })}
-                            required
-                          />
-                        </div>
-
-                        <div className={styles.formActions}>
-                          <button type="submit" className={styles.saveBtn}>Save Address</button>
-                          <button type="button" onClick={() => setShowAddressForm(false)} className={styles.cancelBtn}>Cancel</button>
-                        </div>
-                      </form>
-                    ) : addresses === null ? (
-                      <p className={styles.emptyText}>Loading your address book...</p>
-                    ) : (
-                      /* Address Lists */
-                      <div className={styles.addressListGrid}>
-                        {addresses.map((addr) => (
-                          <div key={addr.id} className={styles.addressCard}>
-                            <div className={styles.addressCardHeader}>
-                              <span className={styles.typeBadge}>{addr.type}</span>
-                              <button onClick={() => handleDeleteAddress(addr.id)} className={styles.deleteBtn} aria-label="Delete address">
-                                Delete
+                  {wishlist.length === 0 ? (
+                    <p className={styles.emptyText}>Your wishlist is empty.</p>
+                  ) : (
+                    <div className={styles.wishlistGrid}>
+                      {wishlist.map((item) => (
+                        <div key={item.id} className={styles.wishlistCard}>
+                          <img src={item.imageUrl} alt={item.title} className={styles.wishlistImg} />
+                          <div className={styles.wishlistMeta}>
+                            <h4>{item.title}</h4>
+                            <p className={styles.wishlistPrice}>₹{item.price.toLocaleString("en-IN")}</p>
+                            <div className={styles.wishlistActions}>
+                              <Link href={`/product/prod-3`} className={styles.viewProductBtn}>
+                                View Item
+                              </Link>
+                              <button onClick={() => toggleWishlist(item)} className={styles.removeWishlistBtn}>
+                                Remove
                               </button>
                             </div>
-                            <h3>{addr.name}</h3>
-                            <p>{addr.street}</p>
-                            <p>{addr.city} - {addr.pincode}</p>
-                            <p className={styles.phoneLabel}>Phone: {addr.phone}</p>
                           </div>
-                        ))}
-                        {addresses.length === 0 && (
-                          <p className={styles.emptyText}>No shipping addresses saved yet.</p>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* 4. Wishlist Tab */}
-                {activeTab === "wishlist" && (
-                  <div className={styles.tabContent}>
-                    <h2>My Wishlist</h2>
-                    <p>Your saved favorites are listed here. You can add them straight to your shopping cart.</p>
-
-                    {wishlist.length === 0 ? (
-                      <p className={styles.emptyText}>Your wishlist is empty.</p>
-                    ) : (
-                      <div className={styles.wishlistGrid}>
-                        {wishlist.map((item) => (
-                          <div key={item.id} className={styles.wishlistCard}>
-                            <img src={item.imageUrl} alt={item.title} className={styles.wishlistImg} />
-                            <div className={styles.wishlistMeta}>
-                              <h4>{item.title}</h4>
-                              <p className={styles.wishlistPrice}>₹{item.price.toLocaleString("en-IN")}</p>
-                              <div className={styles.wishlistActions}>
-                                <Link href={`/product/prod-3`} className={styles.viewProductBtn}>
-                                  View Item
-                                </Link>
-                                <button onClick={() => toggleWishlist(item)} className={styles.removeWishlistBtn}>
-                                  Remove
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
-          )}
-        </div>
-      </main>
+          </div>
+        )}
+      </div>
+    </>
+  );
+}
 
+export default function AccountPage() {
+  return (
+    <>
+      <AnnouncementBar />
+      <Header />
+      <main className={styles.main}>
+        <Suspense
+          fallback={
+            <div className={styles.loadingContainer}>
+              <div className={styles.spinner}></div>
+              <p>Loading Account...</p>
+            </div>
+          }
+        >
+          <AccountContent />
+        </Suspense>
+      </main>
       <Footer />
     </>
   );
