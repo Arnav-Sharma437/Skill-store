@@ -83,6 +83,27 @@
   font-weight: 500;
 }
 
+.priceRow {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.price {
+  font-size: 14px;
+  font-weight: 850;
+  color: #132c66;
+  font-family: var(--font-sans);
+}
+
+.originalPrice {
+  font-size: 11px;
+  color: #94a3b8;
+  text-decoration: line-through;
+  font-weight: 600;
+}
+
 .actionRow {
   display: flex;
   align-items: center;

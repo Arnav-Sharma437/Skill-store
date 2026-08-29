@@ -11,6 +11,7 @@ export interface Product {
   rating: number;
   ratingCount: number;
   price?: number;
+  originalPrice?: number;
 }
 
 export interface SummerOfferBanner {
@@ -64,6 +65,7 @@ export const BEST_SELLERS: Product[] = [
     rating: 5,
     ratingCount: 241,
     price: 4999,
+    originalPrice: 6999,
   },
   {
     id: "prod-2",
@@ -72,6 +74,7 @@ export const BEST_SELLERS: Product[] = [
     rating: 5,
     ratingCount: 780,
     price: 999,
+    originalPrice: 1499,
   },
   {
     id: "prod-3",
@@ -80,6 +83,7 @@ export const BEST_SELLERS: Product[] = [
     rating: 4,
     ratingCount: 605,
     price: 6299,
+    originalPrice: 8299,
   },
   {
     id: "prod-4",
@@ -88,6 +92,7 @@ export const BEST_SELLERS: Product[] = [
     rating: 4,
     ratingCount: 420,
     price: 399,
+    originalPrice: 599,
   },
   {
     id: "prod-5",
@@ -96,6 +101,7 @@ export const BEST_SELLERS: Product[] = [
     rating: 5,
     ratingCount: 241,
     price: 14500,
+    originalPrice: 18500,
   },
 ];
 

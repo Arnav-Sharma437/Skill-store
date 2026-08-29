@@ -86,6 +86,14 @@ export default function ProductCard({ product }: ProductCardProps) {
           <span className={styles.reviewCount}>{product.ratingCount} Reviews</span>
         </div>
 
+        {/* Price Row */}
+        <div className={styles.priceRow}>
+          <span className={styles.price}>Rs. {(product.price || 4999).toLocaleString("en-IN")}.00</span>
+          {product.originalPrice && product.originalPrice > (product.price || 4999) && (
+            <span className={styles.originalPrice}>Rs. {product.originalPrice.toLocaleString("en-IN")}</span>
+          )}
+        </div>
+
         {/* Action Row */}
         <div className={styles.actionRow}>
           {/* Add to Cart Button */}
