@@ -247,7 +247,7 @@ export default function CategoryPage({ params }: PageProps) {
                   <div key={product.id} className={styles.productCard}>
                     {discount > 0 && <span className={styles.discountBadge}>{discount}% OFF</span>}
                     
-                    <Link href={`/product/prod-3`} className={styles.imageLink}>
+                    <Link href={`/product/${product.id}`} className={styles.imageLink}>
                       <div className={styles.imageContainer}>
                         <Image
                           src={product.imageUrl}
@@ -263,7 +263,7 @@ export default function CategoryPage({ params }: PageProps) {
                     <div className={styles.cardDetails}>
                       {product.brand && <span className={styles.brandTag}>{product.brand}</span>}
                       
-                      <Link href={`/product/prod-3`} className={styles.titleLink}>
+                      <Link href={`/product/${product.id}`} className={styles.titleLink}>
                         <h3 className={styles.productTitle} title={product.title}>
                           {product.title}
                         </h3>

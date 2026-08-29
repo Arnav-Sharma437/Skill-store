@@ -818,3 +818,100 @@ export const CATEGORIES_DATA: Record<string, CategoryDetail> = {
     ]
   }
 };
+
+export function getProductById(id: string): (CategoryProduct & { categorySlug?: string; categoryName?: string }) | null {
+  for (const cat of Object.values(CATEGORIES_DATA)) {
+    const found = cat.products.find((p) => p.id === id);
+    if (found) {
+      return {
+        ...found,
+        categorySlug: cat.slug,
+        categoryName: cat.name,
+      };
+    }
+  }
+
+  // Fallback defaults for standard prod IDs
+  if (id === "prod-1") {
+    return {
+      id: "prod-1",
+      title: "TUQO High Pressure Washer HW2000 / 140 Bar",
+      price: 4999,
+      originalPrice: 6999,
+      imageUrl: "/images/products/hw2000.jpg",
+      rating: 5,
+      ratingCount: 241,
+      subType: "domestic",
+      brand: "TUQO",
+      categorySlug: "high-pressure-washer",
+      categoryName: "High Pressure Washer",
+      inStock: true
+    };
+  }
+  if (id === "prod-2") {
+    return {
+      id: "prod-2",
+      title: "TUQO HG12 High Pressure Washer Trigger Gun / M22-M14",
+      price: 999,
+      originalPrice: 1499,
+      imageUrl: "/images/products/trigger_gun.jpg",
+      rating: 5,
+      ratingCount: 780,
+      subType: "accessory",
+      brand: "TUQO",
+      categorySlug: "accessories-spares",
+      categoryName: "Accessories & Spares",
+      inStock: true
+    };
+  }
+  if (id === "prod-3") {
+    return {
+      id: "prod-3",
+      title: "TUQO Cordless High Pressure Washer CDW400",
+      price: 6299,
+      originalPrice: 8299,
+      imageUrl: "/images/products/cdw400.jpg",
+      rating: 4,
+      ratingCount: 605,
+      subType: "domestic",
+      brand: "TUQO",
+      categorySlug: "cordless-tools",
+      categoryName: "Cordless Tools",
+      inStock: true
+    };
+  }
+  if (id === "prod-4") {
+    return {
+      id: "prod-4",
+      title: "TUQO DS102 Premium Pressure Washer 4Pcs Nozzle Tips",
+      price: 399,
+      originalPrice: 599,
+      imageUrl: "/images/products/nozzle_tips.jpg",
+      rating: 4,
+      ratingCount: 420,
+      subType: "accessory",
+      brand: "TUQO",
+      categorySlug: "accessories-spares",
+      categoryName: "Accessories & Spares",
+      inStock: true
+    };
+  }
+  if (id === "prod-5") {
+    return {
+      id: "prod-5",
+      title: "TUQO Air Compressor 25 Liters LK25DB - Oil Type",
+      price: 14500,
+      originalPrice: 18500,
+      imageUrl: "/images/products/compressor.jpg",
+      rating: 5,
+      ratingCount: 241,
+      subType: "commercial",
+      brand: "TUQO",
+      categorySlug: "air-compressor",
+      categoryName: "Air Compressor",
+      inStock: true
+    };
+  }
+
+  return null;
+}
