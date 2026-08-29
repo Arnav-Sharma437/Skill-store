@@ -110,7 +110,7 @@ export default function Footer() {
             <h4 className={styles.columnTitle}>SERVICE & SUPPORT</h4>
             <nav className={styles.nav}>
               <Link href="/coming-soon?page=About%20Us" className={styles.link}>ABOUT US</Link>
-              <Link href="/coming-soon?page=Contact%20Us" className={styles.link}>CONTACT US</Link>
+              <Link href="/contact" className={styles.link}>CONTACT US</Link>
               <Link href="/coming-soon?page=Privacy%20Policy" className={styles.link}>PRIVACY POLICY</Link>
               <Link href="/coming-soon?page=Terms%20%26%20Conditions" className={styles.link}>TERMS & CONDITIONS</Link>
               <Link href="/coming-soon?page=Cancellation%20%26%20Refund" className={styles.link}>CANCELLATION & REFUND POLICY</Link>

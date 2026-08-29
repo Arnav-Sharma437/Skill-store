@@ -1,0 +1,252 @@
+.main {
+  background: #f8fafc;
+  padding-bottom: 80px;
+  font-family: var(--font-sans);
+}
+
+/* Banner Header */
+.bannerHeader {
+  background: linear-gradient(135deg, #132c66 0%, #1e3a8a 100%);
+  color: #ffffff;
+  padding: 60px 0;
+  text-align: center;
+  box-shadow: 0 4px 15px rgba(19, 44, 102, 0.15);
+  margin-bottom: 40px;
+}
+
+.bannerTitle {
+  font-family: var(--font-accent);
+  font-weight: 900;
+  font-size: 32px;
+  color: #ffd300;
+  letter-spacing: 0.5px;
+  margin: 0 0 10px 0;
+  text-transform: uppercase;
+}
+
+.bannerSubtitle {
+  font-size: 16px;
+  opacity: 0.85;
+  margin: 0;
+}
+
+/* Contact Layout Grid */
+.contactLayout {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 40px;
+  align-items: start;
+}
+
+.formCard, .detailsCard {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 35px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+}
+
+.formCard h2, .detailsCard h2 {
+  font-family: var(--font-sans);
+  font-weight: 800;
+  font-size: 20px;
+  color: #132c66;
+  margin: 0 0 10px 0;
+}
+
+.formCard p, .detailsCard p {
+  font-size: 14.5px;
+  color: #64748b;
+  line-height: 1.6;
+  margin: 0 0 24px 0;
+}
+
+/* Contact Form */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.inputGroup label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #475569;
+}
+
+.inputGroup input, .inputGroup textarea {
+  border: 1.5px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  outline: none;
+  background: #ffffff;
+  transition: border-color var(--transition-fast) ease;
+}
+
+.inputGroup input:focus, .inputGroup textarea:focus {
+  border-color: #38b6ff;
+}
+
+.submitBtn {
+  height: 48px;
+  background: #ffd300;
+  border: none;
+  border-radius: 8px;
+  color: #132c66;
+  font-weight: 800;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all var(--transition-fast) ease;
+  box-shadow: 0 4px 10px rgba(253, 211, 0, 0.25);
+  margin-top: 10px;
+}
+
+.submitBtn:hover {
+  background: #e6be00;
+  transform: translateY(-1px);
+}
+
+.submitBtn:disabled {
+  background: #cbd5e1;
+  color: #64748b;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Alerts */
+.successAlert {
+  background: #d1fae5;
+  border: 1px solid #10b981;
+  color: #065f46;
+  border-radius: 8px;
+  padding: 14px 18px;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.errorAlert {
+  background: #fee2e2;
+  border: 1px solid #ef4444;
+  color: #991b1b;
+  border-radius: 8px;
+  padding: 14px 18px;
+  font-size: 14px;
+}
+
+/* Details Column */
+.detailsColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.infoList {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.infoItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  border-bottom: 1px solid #f1f5f9;
+  padding-bottom: 20px;
+}
+
+.infoItem:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.iconCircle {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(56, 182, 255, 0.1);
+  border: 1.5px solid rgba(56, 182, 255, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #38b6ff;
+  flex-shrink: 0;
+}
+
+.infoMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.infoMeta h3 {
+  font-size: 14px;
+  font-weight: 750;
+  color: #64748b;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.infoMeta p {
+  font-size: 16px;
+  color: #0f172a;
+  margin: 0;
+}
+
+.infoMeta p strong {
+  font-weight: 750;
+}
+
+.infoMeta p a {
+  color: #132c66;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.infoMeta p a:hover {
+  color: #38b6ff;
+}
+
+.infoMeta span {
+  font-size: 12.5px;
+  color: #64748b;
+}
+
+.addressText {
+  font-size: 15px;
+  color: #0f172a !important;
+  line-height: 1.5;
+  font-weight: 600;
+  margin-top: 2px !important;
+}
+
+/* Responsiveness */
+@media (max-width: 1024px) {
+  .contactLayout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .bannerHeader {
+    padding: 40px 0;
+  }
+  .bannerTitle {
+    font-size: 24px;
+  }
+  .bannerSubtitle {
+    font-size: 14px;
+  }
+  .formCard, .detailsCard {
+    padding: 24px 20px;
+  }
+}
