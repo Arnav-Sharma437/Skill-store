@@ -209,5 +209,13 @@ export const BRAND_CATEGORIES: Record<string, { name: string; categories: BrandC
       { id: "costec-3", name: "Charging Cables", imageUrl: "/images/products/trigger_gun.jpg", link: "/shop/costec/cables" },
       { id: "costec-4", name: "Handheld Fan", imageUrl: "/images/products/compressor.jpg", link: "/shop/costec/fan" },
     ]
+  },
+  ultratouch: {
+    name: "Ultra TOUCH",
+    categories: [
+      { id: "ut-1", name: "Microfiber Towels & Detailing", imageUrl: "/images/products/hw2000.jpg", link: "/shop/ultratouch/detailing" },
+      { id: "ut-2", name: "Car Care Accessories", imageUrl: "/images/products/trigger_gun.jpg", link: "/shop/ultratouch/accessories" },
+      { id: "ut-3", name: "Foam Applicators & Brushes", imageUrl: "/images/products/nozzle_tips.jpg", link: "/shop/ultratouch/brushes" }
+    ]
   }
 };

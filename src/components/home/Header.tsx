@@ -272,35 +272,53 @@ export default function Header() {
               <div className={styles.brandsDropdown}>
                 {/* Brand 1: TUQO */}
                 <Link href="/shop/tuqo" className={styles.brandDropdownItem}>
-                  <svg width="100" height="28" viewBox="0 0 100 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <text x="50%" y="55%" dominantBaseline="middle" textAnchor="middle" fontFamily="var(--font-accent)" fontStyle="italic" fontWeight="900" fontSize="18" fill="#000" letterSpacing="-0.5">TUQO</text>
-                  </svg>
+                  <Image 
+                    src="/images/brands/tuqo.svg" 
+                    alt="TUQO" 
+                    width={110} 
+                    height={32} 
+                    style={{ objectFit: "contain" }}
+                  />
                 </Link>
                 {/* Brand 2: PUMPKIN */}
                 <Link href="/shop/pumpkin" className={styles.brandDropdownItem}>
-                  <svg width="100" height="28" viewBox="0 0 100 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="12" cy="14" r="5" fill="#ff7a00" />
-                    <path d="M12 9C12 7 13 6 13 6" stroke="#4caf50" strokeWidth="1.5" strokeLinecap="round" />
-                    <text x="22" y="18" fontFamily="var(--font-sans)" fontWeight="700" fontSize="11" fill="#000">PUMPKIN</text>
-                  </svg>
+                  <Image 
+                    src="/images/brands/pumpkin.svg" 
+                    alt="PUMPKIN" 
+                    width={120} 
+                    height={32} 
+                    style={{ objectFit: "contain" }}
+                  />
                 </Link>
                 {/* Brand 3: MITSUKI */}
                 <Link href="/shop/mitsuki" className={styles.brandDropdownItem}>
-                  <svg width="100" height="28" viewBox="0 0 100 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <text x="50%" y="55%" dominantBaseline="middle" textAnchor="middle" fontFamily="var(--font-sans)" fontWeight="900" fontSize="14" fill="#000" letterSpacing="1">MITSUKI</text>
-                  </svg>
+                  <Image 
+                    src="/images/brands/mitsuki.svg" 
+                    alt="MITSUKI" 
+                    width={110} 
+                    height={30} 
+                    style={{ objectFit: "contain" }}
+                  />
                 </Link>
                 {/* Brand 4: METSO */}
                 <Link href="/shop/metso" className={styles.brandDropdownItem}>
-                  <svg width="100" height="28" viewBox="0 0 100 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <text x="50%" y="55%" dominantBaseline="middle" textAnchor="middle" fontFamily="var(--font-sans)" fontWeight="900" fontSize="14" fill="#000" letterSpacing="0">METSO</text>
-                  </svg>
+                  <Image 
+                    src="/images/brands/metso.svg" 
+                    alt="METSO" 
+                    width={110} 
+                    height={32} 
+                    style={{ objectFit: "contain" }}
+                  />
                 </Link>
                 {/* Brand 5: COSTEC */}
                 <Link href="/shop/costec" className={styles.brandDropdownItem}>
-                  <svg width="100" height="28" viewBox="0 0 100 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <text x="50%" y="55%" dominantBaseline="middle" textAnchor="middle" fontFamily="var(--font-sans)" fontWeight="700" fontSize="13" fill="#000" letterSpacing="0.5">COSTEC</text>
-                  </svg>
+                  <Image 
+                    src="/images/brands/costec.svg" 
+                    alt="COSTEC" 
+                    width={110} 
+                    height={30} 
+                    style={{ objectFit: "contain" }}
+                  />
                 </Link>
               </div>
             )}
