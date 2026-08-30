@@ -20,6 +20,20 @@ interface Address {
   pincode: string;
 }
 
+interface OrderItem {
+  name: string;
+  qty: number;
+  price: number;
+}
+
+interface Order {
+  id: string;
+  date: string;
+  total: number;
+  status: string;
+  items: OrderItem[];
+}
+
 function AccountContent() {
   const { data: session, status } = useSession();
   const { wishlist, toggleWishlist } = useApp();
@@ -114,35 +128,8 @@ function AccountContent() {
     }
   };
 
-  // Mock Orders list (linked to active user display)
-  const mockOrders = [
-    {
-      id: "ORD-8841",
-      date: "August 24, 2026",
-      total: 6299,
-      status: "Shipped",
-      items: [
-        {
-          name: "TUQO Cordless Pressure Washer CDW400",
-          qty: 1,
-          price: 6299
-        }
-      ]
-    },
-    {
-      id: "ORD-8410",
-      date: "July 12, 2026",
-      total: 12598,
-      status: "Delivered",
-      items: [
-        {
-          name: "TUQO Cordless Pressure Washer CDW400",
-          qty: 2,
-          price: 6299
-        }
-      ]
-    }
-  ];
+  // User Orders list (starts empty for fresh authenticated users)
+  const [orders] = useState<Order[]>([]);
 
   if (status === "loading") {
     return (
@@ -253,7 +240,7 @@ function AccountContent() {
 
                   <div className={styles.statsGrid}>
                     <div className={styles.statCard}>
-                      <h3>{mockOrders.length}</h3>
+                      <h3>{orders.length}</h3>
                       <p>Total Orders</p>
                     </div>
                     <div className={styles.statCard}>
@@ -292,8 +279,21 @@ function AccountContent() {
                   <h2>Order History</h2>
                   <p>Check the delivery status of your recent transactions.</p>
 
-                  {mockOrders.length === 0 ? (
-                    <p className={styles.emptyText}>You haven&apos;t placed any orders yet.</p>
+                  {orders.length === 0 ? (
+                    <div className={styles.emptyOrdersCard}>
+                      <div className={styles.emptyOrdersIcon}>
+                        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#38b6ff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                          <line x1="3" y1="6" x2="21" y2="6"></line>
+                          <path d="M16 10a4 4 0 0 1-8 0"></path>
+                        </svg>
+                      </div>
+                      <h3>No Orders Placed Yet</h3>
+                      <p>Looks like you haven&apos;t placed any orders yet. Browse our high pressure washers, compressors, and tools to get started!</p>
+                      <Link href="/categories" className={styles.startShoppingBtn}>
+                        Explore Catalog
+                      </Link>
+                    </div>
                   ) : (
                     <div className={styles.ordersTableWrapper}>
                       <table className={styles.ordersTable}>
@@ -307,7 +307,7 @@ function AccountContent() {
                           </tr>
                         </thead>
                         <tbody>
-                          {mockOrders.map((order) => (
+                          {orders.map((order) => (
                             <tr key={order.id}>
                               <td className={styles.orderId}>{order.id}</td>
                               <td>{order.date}</td>

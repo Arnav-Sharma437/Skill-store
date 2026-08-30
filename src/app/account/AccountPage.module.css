@@ -618,6 +618,62 @@
   font-size: 14px;
 }
 
+.emptyOrdersCard {
+  background: #f8fafc;
+  border: 1.5px dashed #cbd5e1;
+  border-radius: 14px;
+  padding: 45px 24px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+.emptyOrdersIcon {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: #eaf6fc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.emptyOrdersCard h3 {
+  font-size: 18px;
+  font-weight: 800;
+  color: #132c66;
+  margin: 0 0 8px 0;
+}
+
+.emptyOrdersCard p {
+  font-size: 13.5px;
+  color: #64748b;
+  max-width: 440px;
+  line-height: 1.5;
+  margin: 0 0 20px 0;
+}
+
+.startShoppingBtn {
+  background: #132c66;
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 13.5px;
+  padding: 10px 24px;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: all var(--transition-fast) ease;
+}
+
+.startShoppingBtn:hover {
+  background: #38b6ff;
+  color: #ffffff;
+  transform: translateY(-2px);
+}
+
 /* Loading Session State */
 .loadingContainer {
   display: flex;
