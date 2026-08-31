@@ -6,44 +6,62 @@ import styles from "./Footer.module.css";
 export default function Footer() {
   return (
     <footer className={styles.footer}>
-      {/* Deeper Concave Curved SVG Separator with a thick Sky Blue stroke */}
-      <div className={styles.curveWrapper}>
-        <svg viewBox="0 0 1440 160" fill="none" xmlns="http://www.w3.org/2000/svg" className={styles.curveSvg} preserveAspectRatio="none">
-          {/* Thick sky-blue line */}
-          <path d="M0,10 C480,150 960,150 1440,10" stroke="#38b6ff" strokeWidth="10" fill="none"/>
-          {/* Solid navy blue fill below line */}
-          <path d="M0,15 C480,154 960,154 1440,15 L1440,160 L0,160 Z" fill="#132c66"/>
-        </svg>
+      {/* Sleek Top Social Connect & Brand Bar */}
+      <div className={styles.topBar}>
+        <div className={`${styles.topBarContainer} container`}>
+          <div className={styles.topBarText}>
+            <span className={styles.topBarBadge}>OFFICIAL SOCIAL CHANNELS</span>
+            <p className={styles.topBarHeading}>Connect with Skill Store for machinery demos, spare parts &amp; updates</p>
+          </div>
 
-        {/* Social Icons floating on the curve (styled with original brand colors) */}
-        <div className={styles.socialsFloating}>
-          <a href="https://facebook.com" className={`${styles.socialCircle} ${styles.socialFacebook}`} aria-label="Facebook">
-            <Image 
-              src="/images/logos/fb-icon.png" 
-              alt="Facebook" 
-              width={34} 
-              height={34} 
-              style={{ objectFit: 'contain' }}
-            />
-          </a>
-          <a href="https://instagram.com" className={`${styles.socialCircle} ${styles.socialInstagram}`} aria-label="Instagram">
-            <Image 
-              src="/images/logos/insta-icon.png" 
-              alt="Instagram" 
-              width={34} 
-              height={34} 
-              style={{ objectFit: 'contain' }}
-            />
-          </a>
-          <a href="https://wa.me" className={`${styles.socialCircle} ${styles.socialWhatsapp}`} aria-label="WhatsApp">
-            <Image 
-              src="/images/logos/wa-icon.png" 
-              alt="WhatsApp" 
-              width={34} 
-              height={34} 
-              style={{ objectFit: 'contain' }}
-            />
-          </a>
+          {/* Social Icons Row */}
+          <div className={styles.socialsRow}>
+            <a 
+              href="https://facebook.com" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className={`${styles.socialCircle} ${styles.socialFacebook}`} 
+              aria-label="Facebook"
+            >
+              <Image 
+                src="/images/logos/fb-icon.png" 
+                alt="Facebook" 
+                width={26} 
+                height={26} 
+                style={{ objectFit: 'contain' }}
+              />
+            </a>
+            <a 
+              href="https://instagram.com" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className={`${styles.socialCircle} ${styles.socialInstagram}`} 
+              aria-label="Instagram"
+            >
+              <Image 
+                src="/images/logos/insta-icon.png" 
+                alt="Instagram" 
+                width={26} 
+                height={26} 
+                style={{ objectFit: 'contain' }}
+              />
+            </a>
+            <a 
+              href="https://wa.me/919500694111" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className={`${styles.socialCircle} ${styles.socialWhatsapp}`} 
+              aria-label="WhatsApp Support"
+            >
+              <Image 
+                src="/images/logos/wa-icon.png" 
+                alt="WhatsApp" 
+                width={26} 
+                height={26} 
+                style={{ objectFit: 'contain' }}
+              />
+            </a>
+          </div>
         </div>
       </div>
 
@@ -61,7 +79,7 @@ export default function Footer() {
                 style={{ objectFit: 'contain' }}
               />
             </div>
-            <p className={styles.slogan}>Elevate Your Expertise With Quality Tools & Power</p>
+            <p className={styles.slogan}>Elevate Your Expertise With Quality Tools &amp; Power</p>
 
             <div className={styles.contactList}>
               <div className={styles.contactItem}>
@@ -95,13 +113,13 @@ export default function Footer() {
 
           {/* Column 2: Service & Support */}
           <div className={styles.columnLinks}>
-            <h4 className={styles.columnTitle}>SERVICE & SUPPORT</h4>
+            <h4 className={styles.columnTitle}>SERVICE &amp; SUPPORT</h4>
             <nav className={styles.nav}>
               <Link href="/about" className={styles.link}>ABOUT US</Link>
               <Link href="/contact" className={styles.link}>CONTACT US</Link>
               <Link href="/privacy" className={styles.link}>PRIVACY POLICY</Link>
-              <Link href="/terms" className={styles.link}>TERMS & CONDITIONS</Link>
-              <Link href="/refunds" className={styles.link}>CANCELLATION & REFUND POLICY</Link>
+              <Link href="/terms" className={styles.link}>TERMS &amp; CONDITIONS</Link>
+              <Link href="/refunds" className={styles.link}>CANCELLATION &amp; REFUND POLICY</Link>
             </nav>
           </div>
 
@@ -112,7 +130,7 @@ export default function Footer() {
               <Link href="/category/high-pressure-washer" className={styles.link}>PRESSURE WASHERS</Link>
               <Link href="/category/power-tools" className={styles.link}>POWER TOOLS</Link>
               <Link href="/category/hand-tools" className={styles.link}>HAND TOOLS</Link>
-              <Link href="/category/accessories-spares" className={styles.link}>ACCESSORIES & SPARES</Link>
+              <Link href="/category/accessories-spares" className={styles.link}>ACCESSORIES &amp; SPARES</Link>
             </nav>
           </div>
 
