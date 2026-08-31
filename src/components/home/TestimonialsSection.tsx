@@ -69,9 +69,8 @@ const TESTIMONIALS: Testimonial[] = [
 
 export default function TestimonialsSection() {
   const [activeIndex, setActiveIndex] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
   const total = TESTIMONIALS.length;
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleNext = React.useCallback(() => {
     setActiveIndex((prev) => (prev + 1) % total);
@@ -81,17 +80,16 @@ export default function TestimonialsSection() {
     setActiveIndex((prev) => (prev - 1 + total) % total);
   };
 
-  // Auto-rotation every 4.5 seconds
+  // Continuous Auto-rotation every 3.5 seconds
   useEffect(() => {
-    if (!isPaused) {
-      timeoutRef.current = setTimeout(() => {
-        handleNext();
-      }, 4500);
-    }
+    timerRef.current = setInterval(() => {
+      handleNext();
+    }, 3500);
+
     return () => {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [activeIndex, isPaused, handleNext]);
+  }, [handleNext]);
 
   // Calculate card position relative to active card
   const getCardClass = (index: number) => {
@@ -103,11 +101,7 @@ export default function TestimonialsSection() {
   };
 
   return (
-    <section 
-      className={styles.section}
-      onMouseEnter={() => setIsPaused(true)}
-      onMouseLeave={() => setIsPaused(false)}
-    >
+    <section className={styles.section}>
       <div className="container">
         {/* Header */}
         <div className={styles.headerRow}>
