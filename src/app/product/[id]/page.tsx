@@ -146,7 +146,9 @@ export default function ProductPage({ params }: PageProps) {
             <div className={styles.galleryColumn}>
               <div className={styles.mainImageWrapper}>
                 <button onClick={handlePrevImage} className={styles.galleryArrowLeft} aria-label="Previous image">
-                  &lt;
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="15 18 9 12 15 6"></polyline>
+                  </svg>
                 </button>
                 <div className={styles.mainImageContainer}>
                   <Image
@@ -160,19 +162,21 @@ export default function ProductPage({ params }: PageProps) {
                   />
                 </div>
                 <button onClick={handleNextImage} className={styles.galleryArrowRight} aria-label="Next image">
-                  &gt;
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                  </svg>
                 </button>
               </div>
 
-              {/* Thumbnails row */}
+              {/* Thumbnails row (Auto / touch scrollable strip without manual arrow clutter) */}
               <div className={styles.thumbnailsWrapper}>
-                <button className={styles.thumbNavBtn} onClick={handlePrevImage}>&lt;</button>
                 <div className={styles.thumbnailsGrid}>
                   {gallery.map((img, index) => (
                     <button
                       key={index}
                       onClick={() => setSelectedImage(img)}
                       className={`${styles.thumbnailCard} ${selectedImage === img ? styles.activeThumbnail : ""}`}
+                      aria-label={`View image ${index + 1}`}
                     >
                       <Image
                         src={img}
@@ -185,7 +189,6 @@ export default function ProductPage({ params }: PageProps) {
                     </button>
                   ))}
                 </div>
-                <button className={styles.thumbNavBtn} onClick={handleNextImage}>&gt;</button>
               </div>
             </div>
 
