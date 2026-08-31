@@ -19,9 +19,33 @@
 .breadcrumbContent {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   color: #ffffff;
   text-transform: uppercase;
+  flex-wrap: wrap;
+}
+
+.backBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  color: #ffffff;
+  padding: 4px 10px;
+  border-radius: 16px;
+  font-size: 11.5px;
+  font-weight: 800;
+  cursor: pointer;
+  margin-right: 6px;
+  transition: all var(--transition-fast) ease;
+}
+
+.backBtn:hover {
+  background: #132c66;
+  color: #ffd300;
+  border-color: #132c66;
+  transform: translateX(-2px);
 }
 
 .breadcrumbContent a {

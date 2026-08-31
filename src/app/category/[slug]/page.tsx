@@ -3,6 +3,7 @@
 import React, { useState, useMemo, use } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import AnnouncementBar from "@/components/home/AnnouncementBar";
 import Header from "@/components/home/Header";
 import Footer from "@/components/home/Footer";
@@ -16,6 +17,7 @@ type PageProps = {
 
 export default function CategoryPage({ params }: PageProps) {
   const { slug } = use(params);
+  const router = useRouter();
   const { addToCart, toggleWishlist, isInWishlist } = useApp();
 
   const [filterType, setFilterType] = useState("all");
@@ -171,11 +173,26 @@ export default function CategoryPage({ params }: PageProps) {
         </div>
 
         <div className="container">
-          {/* Category Banner */}
+          {/* Category Banner with Merged Filters & Back Option */}
           <div className={styles.categoryBanner}>
-            <span className={styles.bannerSubtitle}>{categoryDetail.subtitle}</span>
+            {/* Top Action Row with Back Button */}
+            <div className={styles.bannerTopRow}>
+              <button 
+                onClick={() => router.back()} 
+                className={styles.backBtn}
+                aria-label="Go to previous page"
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
+                <span>Back</span>
+              </button>
+              <span className={styles.bannerSubtitle}>{categoryDetail.subtitle}</span>
+            </div>
+
             <h1 className={styles.bannerTitle}>{categoryDetail.name}</h1>
             <p className={styles.bannerDesc}>{categoryDetail.description}</p>
+            
             {categoryDetail.subCategories && categoryDetail.subCategories.length > 0 && (
               <div className={styles.subCatPills}>
                 {categoryDetail.subCategories.map((sub) => (
@@ -185,55 +202,55 @@ export default function CategoryPage({ params }: PageProps) {
                 ))}
               </div>
             )}
-          </div>
 
-          {/* Filter & Sorting Controls */}
-          <div className={styles.filterBar}>
-            <div className={styles.resultsCount}>
-              Showing {filteredProducts.length} of {categoryDetail.products.length} Products
-            </div>
-
-            <div className={styles.controls}>
-              <div className={styles.selectWrapper}>
-                <select
-                  value={filterType}
-                  onChange={(e) => setFilterType(e.target.value)}
-                  className={styles.select}
-                  aria-label="Filter by Type"
-                >
-                  <option value="all">Category: All Types</option>
-                  <option value="domestic">Domestic</option>
-                  <option value="commercial">Commercial / Industrial</option>
-                  <option value="accessory">Accessories &amp; Spares</option>
-                </select>
+            {/* Merged Filter & Sorting Controls Strip directly inside Banner */}
+            <div className={styles.bannerFilterRow}>
+              <div className={styles.resultsCount}>
+                Showing <strong className={styles.countHighlight}>{filteredProducts.length}</strong> of {categoryDetail.products.length} Products
               </div>
 
-              <div className={styles.selectWrapper}>
-                <select
-                  value={filterPrice}
-                  onChange={(e) => setFilterPrice(e.target.value)}
-                  className={styles.select}
-                  aria-label="Filter by Price"
-                >
-                  <option value="all">Price: All Ranges</option>
-                  <option value="under5k">Under Rs. 5,000</option>
-                  <option value="5kto15k">Rs. 5,000 - Rs. 15,000</option>
-                  <option value="above15k">Above Rs. 15,000</option>
-                </select>
-              </div>
+              <div className={styles.controls}>
+                <div className={styles.selectWrapper}>
+                  <select
+                    value={filterType}
+                    onChange={(e) => setFilterType(e.target.value)}
+                    className={styles.select}
+                    aria-label="Filter by Type"
+                  >
+                    <option value="all">Category: All Types</option>
+                    <option value="domestic">Domestic</option>
+                    <option value="commercial">Commercial / Industrial</option>
+                    <option value="accessory">Accessories &amp; Spares</option>
+                  </select>
+                </div>
 
-              <div className={styles.selectWrapper}>
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  className={styles.select}
-                  aria-label="Sort products"
-                >
-                  <option value="default">Sort: Featured</option>
-                  <option value="priceLowHigh">Price: Low to High</option>
-                  <option value="priceHighLow">Price: High to Low</option>
-                  <option value="rating">Highest Rated</option>
-                </select>
+                <div className={styles.selectWrapper}>
+                  <select
+                    value={filterPrice}
+                    onChange={(e) => setFilterPrice(e.target.value)}
+                    className={styles.select}
+                    aria-label="Filter by Price"
+                  >
+                    <option value="all">Price: All Ranges</option>
+                    <option value="under5k">Under Rs. 5,000</option>
+                    <option value="5kto15k">Rs. 5,000 - Rs. 15,000</option>
+                    <option value="above15k">Above Rs. 15,000</option>
+                  </select>
+                </div>
+
+                <div className={styles.selectWrapper}>
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className={styles.select}
+                    aria-label="Sort products"
+                  >
+                    <option value="default">Sort: Featured</option>
+                    <option value="priceLowHigh">Price: Low to High</option>
+                    <option value="priceHighLow">Price: High to Low</option>
+                    <option value="rating">Highest Rated</option>
+                  </select>
+                </div>
               </div>
             </div>
           </div>
@@ -260,66 +277,53 @@ export default function CategoryPage({ params }: PageProps) {
                       </div>
                     </Link>
 
-                    <div className={styles.cardDetails}>
-                      {product.brand && <span className={styles.brandTag}>{product.brand}</span>}
-                      
+                    <div className={styles.content}>
+                      <div className={styles.ratingRow}>
+                        {renderStars(product.rating)}
+                        <span className={styles.reviewCount}>({product.ratingCount})</span>
+                      </div>
+
                       <Link href={`/product/${product.id}`} className={styles.titleLink}>
                         <h3 className={styles.productTitle} title={product.title}>
                           {product.title}
                         </h3>
                       </Link>
 
-                      <div className={styles.ratingRow}>
-                        {renderStars(product.rating)}
-                        <span className={styles.reviewsCount}>({product.ratingCount})</span>
+                      <div className={styles.priceRow}>
+                        <div className={styles.prices}>
+                          <span className={styles.currentPrice}>
+                            ₹{product.price.toLocaleString("en-IN")}
+                          </span>
+                          {product.originalPrice > product.price && (
+                            <span className={styles.originalPrice}>
+                              ₹{product.originalPrice.toLocaleString("en-IN")}
+                            </span>
+                          )}
+                        </div>
                       </div>
 
-                      <div className={styles.priceBlock}>
-                        <span className={styles.price}>Rs. {product.price.toLocaleString("en-IN")}.00</span>
-                        {product.originalPrice > product.price && (
-                          <span className={styles.originalPrice}>Rs. {product.originalPrice.toLocaleString("en-IN")}</span>
-                        )}
-                      </div>
-
-                      <div className={styles.actionRow}>
+                      <div className={styles.actionButtons}>
                         <button
-                          onClick={() =>
-                            addToCart({
-                              id: product.id,
-                              title: product.title,
-                              price: product.price,
-                              imageUrl: product.imageUrl,
-                            })
-                          }
+                          type="button"
+                          onClick={() => addToCart(product)}
                           className={styles.cartButton}
+                          aria-label={`Add ${product.title} to cart`}
                         >
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                             <circle cx="9" cy="21" r="1"></circle>
                             <circle cx="20" cy="21" r="1"></circle>
                             <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
                           </svg>
-                          <span>Add To Cart</span>
+                          <span>Add to Cart</span>
                         </button>
+                        
                         <button
-                          onClick={() =>
-                            toggleWishlist({
-                              id: product.id,
-                              title: product.title,
-                              price: product.price,
-                              imageUrl: product.imageUrl,
-                            })
-                          }
-                          className={`${styles.favouriteButton} ${isInWishlist(product.id) ? styles.favActive : ""}`}
-                          aria-label="Toggle Wishlist"
+                          type="button"
+                          onClick={() => toggleWishlist(product)}
+                          className={`${styles.wishlistButton} ${isInWishlist(product.id) ? styles.wishlistActive : ""}`}
+                          aria-label={`Add ${product.title} to wishlist`}
                         >
-                          <svg
-                            width="14"
-                            height="14"
-                            viewBox="0 0 24 24"
-                            fill={isInWishlist(product.id) ? "#ef4444" : "none"}
-                            stroke={isInWishlist(product.id) ? "#ef4444" : "#132c66"}
-                            strokeWidth="2.5"
-                          >
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill={isInWishlist(product.id) ? "#ef4444" : "none"} stroke={isInWishlist(product.id) ? "#ef4444" : "currentColor"} strokeWidth="2">
                             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                           </svg>
                         </button>
@@ -330,9 +334,19 @@ export default function CategoryPage({ params }: PageProps) {
               })}
             </div>
           ) : (
-            <div className={styles.emptyBlock}>
+            <div className={styles.noResults}>
               <h3>No products found</h3>
-              <p>Try changing your filter options to view available machinery and tools.</p>
+              <p>Try clearing or adjusting your filters to find what you are looking for.</p>
+              <button
+                onClick={() => {
+                  setFilterType("all");
+                  setFilterPrice("all");
+                  setSortBy("default");
+                }}
+                className={styles.resetBtn}
+              >
+                Reset All Filters
+              </button>
             </div>
           )}
         </div>

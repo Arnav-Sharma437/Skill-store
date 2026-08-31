@@ -3,6 +3,7 @@
 import React, { useState, useMemo, use } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import AnnouncementBar from "@/components/home/AnnouncementBar";
 import Header from "@/components/home/Header";
 import Footer from "@/components/home/Footer";
@@ -16,6 +17,7 @@ type PageProps = {
 
 export default function CategoryProductsPage({ params }: PageProps) {
   const { brand, category } = use(params);
+  const router = useRouter();
   const { addToCart, toggleWishlist, isInWishlist } = useApp();
 
   const [filterPrice, setFilterPrice] = useState("all");
@@ -240,6 +242,16 @@ export default function CategoryProductsPage({ params }: PageProps) {
         <div className={styles.breadcrumbBar}>
           <div className="container">
             <div className={styles.breadcrumbContent}>
+              <button 
+                onClick={() => router.back()} 
+                className={styles.backBtn}
+                aria-label="Go to previous page"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
+                <span>Back</span>
+              </button>
               <Link href="/">HOME</Link>
               <span className={styles.separator}>/</span>
               <Link href={`/shop/${brand.toLowerCase()}`}>{brandName}</Link>
