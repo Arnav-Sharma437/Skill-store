@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 import Link from "next/link";
 import Image from "next/image";
@@ -67,30 +69,61 @@ export default function BrandShowcase() {
           </div>
         </div>
 
-        {/* Brand Showcase Cards Grid */}
-        <div className={styles.brandsGrid}>
-          {brands.map((brand) => (
-            <Link href={`/shop/${brand.slug}`} key={brand.slug} className={styles.brandCard}>
-              <div className={styles.logoContainer}>
-                <Image
-                  src={brand.logo}
-                  alt={`${brand.name} Logo`}
-                  width={brand.width}
-                  height={brand.height}
-                  className={styles.brandLogo}
-                  style={{ objectFit: "contain" }}
-                />
-              </div>
-              <p className={styles.tagline}>{brand.tagline}</p>
-              <div className={styles.shopBrandBtn}>
-                <span>Shop {brand.name}</span>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <line x1="5" y1="12" x2="19" y2="12"></line>
-                  <polyline points="12 5 19 12 12 19"></polyline>
-                </svg>
-              </div>
-            </Link>
-          ))}
+        {/* Brand Showcase Cards Continuous Scrolling Marquee */}
+        <div className={styles.brandsMarqueeContainer}>
+          <div className={styles.brandsMarqueeTrack}>
+            {/* Copy 1 */}
+            <div className={styles.brandsRow}>
+              {brands.map((brand) => (
+                <Link href={`/shop/${brand.slug}`} key={`${brand.slug}-1`} className={styles.brandCard}>
+                  <div className={styles.logoContainer}>
+                    <Image
+                      src={brand.logo}
+                      alt={`${brand.name} Logo`}
+                      width={brand.width}
+                      height={brand.height}
+                      className={styles.brandLogo}
+                      style={{ objectFit: "contain" }}
+                    />
+                  </div>
+                  <p className={styles.tagline}>{brand.tagline}</p>
+                  <div className={styles.shopBrandBtn}>
+                    <span>Shop {brand.name}</span>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <line x1="5" y1="12" x2="19" y2="12"></line>
+                      <polyline points="12 5 19 12 12 19"></polyline>
+                    </svg>
+                  </div>
+                </Link>
+              ))}
+            </div>
+
+            {/* Copy 2 (for infinite loop) */}
+            <div className={styles.brandsRow} aria-hidden="true">
+              {brands.map((brand) => (
+                <Link href={`/shop/${brand.slug}`} key={`${brand.slug}-2`} className={styles.brandCard}>
+                  <div className={styles.logoContainer}>
+                    <Image
+                      src={brand.logo}
+                      alt={`${brand.name} Logo`}
+                      width={brand.width}
+                      height={brand.height}
+                      className={styles.brandLogo}
+                      style={{ objectFit: "contain" }}
+                    />
+                  </div>
+                  <p className={styles.tagline}>{brand.tagline}</p>
+                  <div className={styles.shopBrandBtn}>
+                    <span>Shop {brand.name}</span>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <line x1="5" y1="12" x2="19" y2="12"></line>
+                      <polyline points="12 5 19 12 12 19"></polyline>
+                    </svg>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* Animated Brand Trust Marquee Bar */}

@@ -18,22 +18,22 @@ export default function BestSellerSection() {
           {/* Bottom underline of the tab row */}
           <div className={styles.headerLine}></div>
         </div>
-      </div>
 
-      {/* Product Cards Row with Continuous Scrolling Marquee */}
-      <div className={styles.marqueeContainer}>
-        <div className={styles.marqueeTrack}>
-          {/* First list copy */}
-          <div className={styles.productRow}>
-            {BEST_SELLERS.map((product) => (
-              <ProductCard key={`${product.id}-1`} product={product} />
-            ))}
-          </div>
-          {/* Duplicated list copy for seamless infinite loop */}
-          <div className={styles.productRow}>
-            {BEST_SELLERS.map((product) => (
-              <ProductCard key={`${product.id}-2`} product={product} />
-            ))}
+        {/* Product Cards Row with Continuous Scrolling Marquee (Opposite / Rightwards) inside container */}
+        <div className={styles.marqueeContainer}>
+          <div className={styles.marqueeTrack}>
+            {/* First list copy */}
+            <div className={styles.productRow}>
+              {BEST_SELLERS.map((product) => (
+                <ProductCard key={`${product.id}-1`} product={product} />
+              ))}
+            </div>
+            {/* Duplicated list copy for seamless infinite loop */}
+            <div className={styles.productRow} aria-hidden="true">
+              {BEST_SELLERS.map((product) => (
+                <ProductCard key={`${product.id}-2`} product={product} />
+              ))}
+            </div>
           </div>
         </div>
       </div>

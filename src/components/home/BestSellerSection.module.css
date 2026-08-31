@@ -1,14 +1,15 @@
 .section {
   padding: 40px 0;
   background: #ffffff;
+  overflow: hidden;
 }
 
 .headerRow {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  border-bottom: 2px solid #132c66; /* Match tab bottom line */
-  margin-bottom: 24px;
+  border-bottom: 2px solid #132c66;
+  margin-bottom: 20px;
   position: relative;
 }
 
@@ -18,11 +19,11 @@
   clip-path: polygon(0 0, 100% 0, calc(100% - 20px) 100%, 0 100%);
   display: flex;
   align-items: center;
-  margin-bottom: -2px; /* Pull down to overlay border */
+  margin-bottom: -2px;
 }
 
 .title {
-  font-family: var(--font-accent); /* Fira Sans */
+  font-family: var(--font-accent);
   font-weight: 700;
   font-size: 18px;
   letter-spacing: 0.5px;
@@ -30,19 +31,25 @@
   margin: 0;
 }
 
-/* Continuous Marquee Ticker Container */
+.headerLine {
+  flex-grow: 1;
+}
+
+/* Continuous Marquee Ticker Container (Scrolling Rightwards) inside Container */
 .marqueeContainer {
   width: 100%;
   overflow: hidden;
   position: relative;
   display: flex;
   padding: 10px 0 20px;
+  mask-image: linear-gradient(to right, transparent 0%, black 2%, black 98%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 2%, black 98%, transparent 100%);
 }
 
 .marqueeTrack {
   display: flex;
   width: max-content;
-  animation: scrollProducts 28s linear infinite;
+  animation: scrollProductsRight 32s linear infinite;
 }
 
 /* Pause animation on hover to allow users to inspect/click product cards */
@@ -56,12 +63,13 @@
   padding-right: 20px;
 }
 
-@keyframes scrollProducts {
+/* Opposite direction: scrolls Rightwards */
+@keyframes scrollProductsRight {
   0% {
-    transform: translate3d(0, 0, 0);
+    transform: translate3d(-50%, 0, 0);
   }
   100% {
-    transform: translate3d(-50%, 0, 0);
+    transform: translate3d(0, 0, 0);
   }
 }
 
@@ -72,5 +80,9 @@
   .titleTab {
     padding: 6px 25px 6px 15px;
     clip-path: polygon(0 0, 100% 0, calc(100% - 15px) 100%, 0 100%);
+  }
+  .productRow {
+    gap: 14px;
+    padding-right: 14px;
   }
 }
