@@ -49,7 +49,7 @@
 .marqueeTrack {
   display: flex;
   width: max-content;
-  animation: scrollOffersLeft 34s linear infinite;
+  animation: scrollOffersRight 34s linear infinite;
 }
 
 /* Pause animation on hover */
@@ -63,12 +63,12 @@
   padding-right: 24px;
 }
 
-@keyframes scrollOffersLeft {
+@keyframes scrollOffersRight {
   0% {
-    transform: translate3d(0, 0, 0);
+    transform: translate3d(-50%, 0, 0);
   }
   100% {
-    transform: translate3d(-50%, 0, 0);
+    transform: translate3d(0, 0, 0);
   }
 }
 
