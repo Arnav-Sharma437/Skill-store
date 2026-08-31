@@ -1,22 +1,88 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo, useRef, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useApp } from "@/context/AppContext";
+import { searchProductsAndCategories } from "@/data/categories";
 import styles from "./Header.module.css";
 
 export default function Header() {
   const { cart, wishlist } = useApp();
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [isBrandsOpen, setIsBrandsOpen] = useState(false);
   const [activeSubmenu, setActiveSubmenu] = useState<string | null>(null);
+  
+  const searchContainerRef = useRef<HTMLDivElement | null>(null);
+
+  // Live Instant Search Preview
+  const liveResults = useMemo(() => {
+    if (!searchQuery.trim() || searchQuery.trim().length < 2) {
+      return { products: [], categories: [] };
+    }
+    const res = searchProductsAndCategories(searchQuery);
+    return {
+      products: res.products.slice(0, 4),
+      categories: res.categories.slice(0, 3)
+    };
+  }, [searchQuery]);
+
+  // Close search preview on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(e.target as Node)) {
+        setIsSearchFocused(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      alert(`Searching for: ${searchQuery}`);
+      setIsSearchFocused(false);
+      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+    }
+  };
+
+  const handleVoiceSearch = () => {
+    if (typeof window !== "undefined") {
+      const windowObj = window as unknown as {
+        SpeechRecognition?: new () => {
+          lang: string;
+          onresult: (e: { results: { [key: number]: { [key: number]: { transcript: string } } } }) => void;
+          start: () => void;
+        };
+        webkitSpeechRecognition?: new () => {
+          lang: string;
+          onresult: (e: { results: { [key: number]: { [key: number]: { transcript: string } } } }) => void;
+          start: () => void;
+        };
+      };
+
+      const SpeechRecognition = windowObj.SpeechRecognition || windowObj.webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        try {
+          const recognition = new SpeechRecognition();
+          recognition.lang = "en-IN";
+          recognition.onresult = (event) => {
+            const transcript = event.results[0][0].transcript;
+            setSearchQuery(transcript);
+            setIsSearchFocused(false);
+            router.push(`/search?q=${encodeURIComponent(transcript.trim())}`);
+          };
+          recognition.start();
+        } catch {
+          alert("Voice search is active. Please speak now...");
+        }
+      } else {
+        alert("Voice search is not supported in this browser. Please type your search query.");
+      }
     }
   };
 
@@ -40,33 +106,129 @@ export default function Header() {
             </div>
           </Link>
 
-          {/* Search Bar */}
-          <form onSubmit={handleSearchSubmit} className={styles.searchForm}>
-            <div className={styles.searchInputWrapper}>
-              <input
-                type="text"
-                placeholder="Search Products and Categories"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className={styles.searchInput}
-                aria-label="Search"
-              />
-              <button type="button" className={styles.micButton} aria-label="Voice Search">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#777" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
-                  <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-                  <line x1="12" y1="19" x2="12" y2="23"></line>
-                  <line x1="8" y1="23" x2="16" y2="23"></line>
+          {/* Search Bar with Live Suggestions Dropdown */}
+          <div className={styles.searchWrapper} ref={searchContainerRef}>
+            <form onSubmit={handleSearchSubmit} className={styles.searchForm}>
+              <div className={styles.searchInputWrapper}>
+                <input
+                  type="text"
+                  placeholder="Search Products, Washers, Compressors..."
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setIsSearchFocused(true);
+                  }}
+                  onFocus={() => setIsSearchFocused(true)}
+                  className={styles.searchInput}
+                  aria-label="Search"
+                />
+                <button 
+                  type="button" 
+                  onClick={handleVoiceSearch} 
+                  className={styles.micButton} 
+                  aria-label="Voice Search"
+                  title="Voice Search"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#777" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                    <line x1="12" y1="19" x2="12" y2="23"></line>
+                    <line x1="8" y1="23" x2="16" y2="23"></line>
+                  </svg>
+                </button>
+              </div>
+              <button type="submit" className={styles.searchButton} aria-label="Submit search">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                 </svg>
               </button>
-            </div>
-            <button type="submit" className={styles.searchButton} aria-label="Submit search">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="11" cy="11" r="8"></circle>
-                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-              </svg>
-            </button>
-          </form>
+            </form>
+
+            {/* Instant Live Search Results Popup */}
+            {isSearchFocused && searchQuery.trim().length >= 2 && (
+              <div className={styles.liveSearchDropdown}>
+                {/* Category matches */}
+                {liveResults.categories.length > 0 && (
+                  <div className={styles.liveSection}>
+                    <span className={styles.liveSectionTitle}>CATEGORIES</span>
+                    <div className={styles.liveCategoriesList}>
+                      {liveResults.categories.map((cat) => (
+                        <Link 
+                          key={cat.slug} 
+                          href={`/category/${cat.slug}`}
+                          onClick={() => setIsSearchFocused(false)}
+                          className={styles.liveCatItem}
+                        >
+                          <span>{cat.name}</span>
+                          <span className={styles.liveCatCount}>({cat.count} items)</span>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Product matches */}
+                {liveResults.products.length > 0 ? (
+                  <div className={styles.liveSection}>
+                    <span className={styles.liveSectionTitle}>MATCHING PRODUCTS</span>
+                    <div className={styles.liveProductsList}>
+                      {liveResults.products.map((prod) => (
+                        <Link
+                          key={prod.id}
+                          href={`/product/${prod.id}`}
+                          onClick={() => setIsSearchFocused(false)}
+                          className={styles.liveProductItem}
+                        >
+                          <div className={styles.liveProdImgBox}>
+                            <Image 
+                              src={prod.imageUrl} 
+                              alt={prod.title} 
+                              width={40} 
+                              height={40} 
+                              style={{ objectFit: 'contain' }}
+                            />
+                          </div>
+                          <div className={styles.liveProdInfo}>
+                            <h4 className={styles.liveProdTitle}>{prod.title}</h4>
+                            <div className={styles.liveProdMeta}>
+                              <span className={styles.liveProdPrice}>₹{prod.price.toLocaleString("en-IN")}</span>
+                              {prod.originalPrice > prod.price && (
+                                <span className={styles.liveProdOriginal}>₹{prod.originalPrice.toLocaleString("en-IN")}</span>
+                              )}
+                              <span className={styles.liveProdBrand}>{prod.brand || "TUQO"}</span>
+                            </div>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className={styles.liveNoResults}>
+                    <p>No instant matches found. Press &ldquo;Enter&rdquo; to search the entire store catalog.</p>
+                  </div>
+                )}
+
+                {/* View All Search CTA */}
+                <div className={styles.liveSearchFooter}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsSearchFocused(false);
+                      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+                    }}
+                    className={styles.viewAllResultsBtn}
+                  >
+                    <span>View all matching results for &ldquo;{searchQuery}&rdquo;</span>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <line x1="5" y1="12" x2="19" y2="12"></line>
+                      <polyline points="12 5 19 12 12 19"></polyline>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* Navigation Links */}
           <nav className={styles.desktopNav}>
@@ -178,43 +340,15 @@ export default function Header() {
                   <div className={styles.dropdownLeft}>
                     <span className={styles.menuIcon}>
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <path d="M12 2a4 4 0 0 1 4 4v2a4 4 0 0 1-8 0V6a4 4 0 0 1 4-4z"></path>
-                        <path d="M6 16h12"></path>
+                        <ellipse cx="12" cy="12" rx="9" ry="6"></ellipse>
+                        <path d="M12 6v12"></path>
                       </svg>
                     </span>
                     <span>VACCUM CLEANER</span>
                   </div>
                 </Link>
 
-                {/* 3. Autocare Detailing */}
-                <Link href="/category/autocare-detailing" className={styles.dropdownItem} onMouseEnter={() => setActiveSubmenu(null)}>
-                  <div className={styles.dropdownLeft}>
-                    <span className={styles.menuIcon}>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12.5V16c0 .6.4 1 1 1h2"></path>
-                        <circle cx="7" cy="17" r="2"></circle>
-                        <circle cx="17" cy="17" r="2"></circle>
-                      </svg>
-                    </span>
-                    <span>AUTOCARE DETAILING</span>
-                  </div>
-                </Link>
-
-                {/* 4. Accessories & Spares */}
-                <Link href="/category/accessories-spares" className={styles.dropdownItem} onMouseEnter={() => setActiveSubmenu(null)}>
-                  <div className={styles.dropdownLeft}>
-                    <span className={styles.menuIcon}>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <circle cx="12" cy="12" r="3"></circle>
-                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-                      </svg>
-                    </span>
-                    <span>ACCESSORIES & SPARES</span>
-                  </div>
-                </Link>
-
-                {/* 5. Air Compressor */}
+                {/* 3. Air Compressor */}
                 <div 
                   className={`${styles.dropdownItem} ${activeSubmenu === "compressor" ? styles.dropdownItemActive : ""}`}
                   onMouseEnter={() => setActiveSubmenu("compressor")}
@@ -222,9 +356,9 @@ export default function Header() {
                   <Link href="/category/air-compressor" className={styles.dropdownLeft}>
                     <span className={styles.menuIcon}>
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <path d="M12 8V12l3 3"></path>
-                        <path d="M16 4h4"></path>
+                        <circle cx="12" cy="12" r="9"></circle>
+                        <line x1="12" y1="7" x2="12" y2="12"></line>
+                        <line x1="12" y1="12" x2="16" y2="14"></line>
                       </svg>
                     </span>
                     <span>AIR COMPRESSOR</span>
@@ -237,13 +371,13 @@ export default function Header() {
                   {activeSubmenu === "compressor" && (
                     <div className={styles.submenuBox}>
                       <Link href="/category/oil-free-compressor" className={styles.submenuItem}>
-                        <span>OIL FREE</span>
+                        <span>OIL FREE COMPRESSOR</span>
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                           <polyline points="9 18 15 12 9 6"></polyline>
                         </svg>
                       </Link>
                       <Link href="/category/oil-type-compressor" className={styles.submenuItem}>
-                        <span>OIL TYPE</span>
+                        <span>OIL TYPE COMPRESSOR</span>
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                           <polyline points="9 18 15 12 9 6"></polyline>
                         </svg>
@@ -252,23 +386,73 @@ export default function Header() {
                   )}
                 </div>
 
+                {/* 4. Autocare & Detailing Products */}
+                <Link href="/category/autocare-detailing" className={styles.dropdownItem} onMouseEnter={() => setActiveSubmenu(null)}>
+                  <div className={styles.dropdownLeft}>
+                    <span className={styles.menuIcon}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"></path>
+                        <circle cx="7" cy="17" r="2"></circle>
+                        <path d="M9 17h6"></path>
+                        <circle cx="17" cy="17" r="2"></circle>
+                      </svg>
+                    </span>
+                    <span>AUTOCARE &amp; DETAILING</span>
+                  </div>
+                </Link>
+
+                {/* 5. Accessories & Spares */}
+                <Link href="/category/accessories-spares" className={styles.dropdownItem} onMouseEnter={() => setActiveSubmenu(null)}>
+                  <div className={styles.dropdownLeft}>
+                    <span className={styles.menuIcon}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                      </svg>
+                    </span>
+                    <span>ACCESSORIES &amp; SPARES</span>
+                  </div>
+                </Link>
+
                 {/* 6. Cordless Tools */}
                 <Link href="/category/cordless-tools" className={styles.dropdownItem} onMouseEnter={() => setActiveSubmenu(null)}>
                   <div className={styles.dropdownLeft}>
                     <span className={styles.menuIcon}>
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M18 4H6a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h4v8a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2v-8h4a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"></path>
-                        <circle cx="10" cy="8" r="1"></circle>
+                        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
                       </svg>
                     </span>
                     <span>CORDLESS TOOLS</span>
                   </div>
                 </Link>
+
+                {/* 7. Power Tools */}
+                <Link href="/category/power-tools" className={styles.dropdownItem} onMouseEnter={() => setActiveSubmenu(null)}>
+                  <div className={styles.dropdownLeft}>
+                    <span className={styles.menuIcon}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
+                      </svg>
+                    </span>
+                    <span>POWER TOOLS</span>
+                  </div>
+                </Link>
+
+                {/* 8. Hand Tools */}
+                <Link href="/category/hand-tools" className={styles.dropdownItem} onMouseEnter={() => setActiveSubmenu(null)}>
+                  <div className={styles.dropdownLeft}>
+                    <span className={styles.menuIcon}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M18 2l4 4-10 10H8v-4L18 2z"></path>
+                        <path d="M14 6l4 4"></path>
+                      </svg>
+                    </span>
+                    <span>HAND TOOLS</span>
+                  </div>
+                </Link>
               </div>
             )}
           </div>
-
-          <div className={styles.subDivider}></div>
 
           {/* Shop By Brands Trigger */}
           <div 
@@ -276,73 +460,50 @@ export default function Header() {
             onMouseEnter={() => setIsBrandsOpen(true)}
             onMouseLeave={() => setIsBrandsOpen(false)}
           >
-            <div className={`${styles.subTab} ${isBrandsOpen ? styles.activeTab : ""}`}>
+            <Link href="/#brands" className={`${styles.subTab} ${isBrandsOpen ? styles.activeTab : ""}`}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="8" y1="6" x2="21" y2="6"></line>
-                <line x1="8" y1="12" x2="21" y2="12"></line>
-                <line x1="8" y1="18" x2="21" y2="18"></line>
-                <line x1="3" y1="6" x2="3.01" y2="6"></line>
-                <line x1="3" y1="12" x2="3.01" y2="12"></line>
-                <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
               </svg>
               <span className={styles.subTabText}>SHOP BY BRANDS</span>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={`${styles.chevron} ${isBrandsOpen ? styles.chevronRotate : ""}`}>
                 <polyline points="6 9 12 15 18 9"></polyline>
               </svg>
-            </div>
+            </Link>
 
-            {/* Brands Dropdown Menu (White Box) */}
+            {/* Brands Dropdown Menu */}
             {isBrandsOpen && (
               <div className={styles.brandsDropdown}>
-                {/* Brand 1: TUQO */}
-                <Link href="/shop/tuqo" className={styles.brandDropdownItem}>
-                  <Image 
-                    src="/images/brands/tuqo.png" 
-                    alt="TUQO" 
-                    width={110} 
-                    height={32} 
-                    style={{ objectFit: "contain" }}
-                  />
+                <Link href="/shop/tuqo" className={styles.brandItem}>
+                  <Image src="/images/logos/tuqo.jpg" alt="TUQO" width={40} height={20} style={{ objectFit: 'contain' }} />
+                  <span>TUQO</span>
                 </Link>
-                {/* Brand 2: PUMPKIN */}
-                <Link href="/shop/pumpkin" className={styles.brandDropdownItem}>
-                  <Image 
-                    src="/images/brands/pumpkin.png" 
-                    alt="PUMPKIN" 
-                    width={120} 
-                    height={32} 
-                    style={{ objectFit: "contain" }}
-                  />
+                <Link href="/shop/aimex" className={styles.brandItem}>
+                  <Image src="/images/logos/aimex.jpg" alt="AIMEX" width={40} height={20} style={{ objectFit: 'contain' }} />
+                  <span>AIMEX</span>
                 </Link>
-                {/* Brand 3: MITSUKI */}
-                <Link href="/shop/mitsuki" className={styles.brandDropdownItem}>
-                  <Image 
-                    src="/images/brands/mitsuki.png" 
-                    alt="MITSUKI" 
-                    width={110} 
-                    height={30} 
-                    style={{ objectFit: "contain" }}
-                  />
+                <Link href="/shop/cheston" className={styles.brandItem}>
+                  <Image src="/images/logos/cheston.jpg" alt="CHESTON" width={40} height={20} style={{ objectFit: 'contain' }} />
+                  <span>CHESTON</span>
                 </Link>
-                {/* Brand 4: METSO */}
-                <Link href="/shop/metso" className={styles.brandDropdownItem}>
-                  <Image 
-                    src="/images/brands/metso.png" 
-                    alt="METSO" 
-                    width={110} 
-                    height={32} 
-                    style={{ objectFit: "contain" }}
-                  />
+                <Link href="/shop/dongcheng" className={styles.brandItem}>
+                  <Image src="/images/logos/dongcheng.jpg" alt="DONGCHENG" width={40} height={20} style={{ objectFit: 'contain' }} />
+                  <span>DONGCHENG</span>
                 </Link>
-                {/* Brand 5: COSTEC */}
-                <Link href="/shop/costec" className={styles.brandDropdownItem}>
-                  <Image 
-                    src="/images/brands/costec.png" 
-                    alt="COSTEC" 
-                    width={110} 
-                    height={30} 
-                    style={{ objectFit: "contain" }}
-                  />
+                <Link href="/shop/hikoki" className={styles.brandItem}>
+                  <Image src="/images/logos/hikoki.jpg" alt="HIKOKI" width={40} height={20} style={{ objectFit: 'contain' }} />
+                  <span>HIKOKI</span>
+                </Link>
+                <Link href="/shop/ingco" className={styles.brandItem}>
+                  <Image src="/images/logos/ingco.jpg" alt="INGCO" width={40} height={20} style={{ objectFit: 'contain' }} />
+                  <span>INGCO</span>
+                </Link>
+                <Link href="/shop/makita" className={styles.brandItem}>
+                  <Image src="/images/logos/makita.jpg" alt="MAKITA" width={40} height={20} style={{ objectFit: 'contain' }} />
+                  <span>MAKITA</span>
+                </Link>
+                <Link href="/shop/pumpkin" className={styles.brandItem}>
+                  <Image src="/images/logos/pumpkin.jpg" alt="PUMPKIN" width={40} height={20} style={{ objectFit: 'contain' }} />
+                  <span>PUMPKIN</span>
                 </Link>
               </div>
             )}

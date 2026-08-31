@@ -915,3 +915,79 @@ export function getProductById(id: string): (CategoryProduct & { categorySlug?: 
 
   return null;
 }
+
+// Get all unique products across all categories
+export function getAllCatalogProducts(): CategoryProduct[] {
+  const seen = new Set<string>();
+  const allProducts: CategoryProduct[] = [];
+
+  Object.values(CATEGORIES_DATA).forEach((cat) => {
+    cat.products.forEach((prod) => {
+      if (!seen.has(prod.id)) {
+        seen.add(prod.id);
+        allProducts.push(prod);
+      }
+    });
+  });
+
+  return allProducts;
+}
+
+export interface SearchResult {
+  products: CategoryProduct[];
+  categories: { name: string; slug: string; count: number }[];
+}
+
+// Global Search across products, brands, tags, and categories
+export function searchProductsAndCategories(rawQuery: string): SearchResult {
+  const q = rawQuery.trim().toLowerCase();
+  if (!q) return { products: [], categories: [] };
+
+  const allProducts = getAllCatalogProducts();
+  const matchedProducts: CategoryProduct[] = [];
+  const seenIds = new Set<string>();
+
+  // Split multi-word queries for smart token matching
+  const tokens = q.split(/\s+/).filter(Boolean);
+
+  allProducts.forEach((p) => {
+    const title = p.title.toLowerCase();
+    const brand = (p.brand || "").toLowerCase();
+    const subType = (p.subType || "").toLowerCase();
+
+    const isMatch = tokens.every(
+      (tok) => title.includes(tok) || brand.includes(tok) || subType.includes(tok)
+    );
+
+    if (isMatch && !seenIds.has(p.id)) {
+      seenIds.add(p.id);
+      matchedProducts.push(p);
+    }
+  });
+
+  // Matching Categories
+  const matchedCategories: { name: string; slug: string; count: number }[] = [];
+  Object.values(CATEGORIES_DATA).forEach((cat) => {
+    const catName = cat.name.toLowerCase();
+    const catDesc = cat.description.toLowerCase();
+    const catSlug = cat.slug.toLowerCase();
+
+    if (
+      catName.includes(q) ||
+      catDesc.includes(q) ||
+      catSlug.includes(q) ||
+      tokens.some((tok) => catName.includes(tok))
+    ) {
+      matchedCategories.push({
+        name: cat.name,
+        slug: cat.slug,
+        count: cat.products.length
+      });
+    }
+  });
+
+  return {
+    products: matchedProducts,
+    categories: matchedCategories
+  };
+}
