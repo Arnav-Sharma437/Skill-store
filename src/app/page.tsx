@@ -6,7 +6,7 @@ import CategoryShowcase from "@/components/home/CategoryShowcase";
 import BestSellerSection from "@/components/home/BestSellerSection";
 import BrandShowcase from "@/components/home/BrandShowcase";
 import SummerOffer from "@/components/home/SummerOffer";
-import WhyChooseUs from "@/components/home/WhyChooseUs";
+import TestimonialsSection from "@/components/home/TestimonialsSection";
 import Footer from "@/components/home/Footer";
 
 export default function Home() {
@@ -21,7 +21,7 @@ export default function Home() {
         <BestSellerSection />
         <BrandShowcase />
         <SummerOffer />
-        <WhyChooseUs />
+        <TestimonialsSection />
       </main>
       <Footer />
     </>
