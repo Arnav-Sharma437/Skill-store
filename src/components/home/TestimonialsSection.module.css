@@ -80,15 +80,6 @@
   border: 1px solid #e2e8f0;
 }
 
-/* Floating Quote Watermark Icon */
-.quoteIcon {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  color: rgba(19, 44, 102, 0.06);
-  pointer-events: none;
-}
-
 /* Center / Active Card (In Front, Scaled Up, Crisp) */
 .cardCenter {
   transform: translate3d(-50%, -50%, 0) scale(1.08);
