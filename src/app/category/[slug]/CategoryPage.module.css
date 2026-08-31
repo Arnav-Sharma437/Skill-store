@@ -337,17 +337,18 @@
   align-items: baseline;
   gap: 8px;
   margin-top: auto;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
 }
 
 .price {
-  font-size: 16px;
-  font-weight: 900;
+  font-size: 15px;
+  font-weight: 850;
   color: #132c66;
+  font-family: var(--font-sans);
 }
 
 .originalPrice {
-  font-size: 12px;
+  font-size: 11.5px;
   color: #94a3b8;
   text-decoration: line-through;
   font-weight: 600;
@@ -355,50 +356,60 @@
 
 .actionRow {
   display: flex;
+  align-items: center;
   gap: 8px;
+  margin-top: auto;
 }
 
 .cartButton {
-  flex: 1;
+  flex-grow: 1;
   height: 36px;
-  background-color: #38b6ff;
-  color: #ffffff;
+  background: #38b6ff;
   border: none;
   border-radius: 6px;
-  font-size: 12px;
-  font-weight: 800;
-  display: inline-flex;
+  color: #ffffff;
+  font-family: var(--font-sans);
+  font-weight: 750;
+  font-size: 11.5px;
+  display: flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
   cursor: pointer;
-  transition: background-color var(--transition-fast) ease;
+  transition: background var(--transition-fast) ease, transform var(--transition-fast) ease;
 }
 
 .cartButton:hover {
-  background-color: #1d9ee6;
+  background: #1d9bf0;
+  transform: translateY(-1px);
 }
 
 .favouriteButton {
   width: 36px;
   height: 36px;
-  border: 1.5px solid #cbd5e1;
-  background: #ffffff;
+  background: #ffd300;
+  border: none;
   border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all var(--transition-fast) ease;
+  flex-shrink: 0;
+  transition: background var(--transition-fast) ease, transform var(--transition-fast) ease;
 }
 
 .favouriteButton:hover {
-  border-color: #132c66;
+  background: #e6be00;
+  transform: scale(1.06);
 }
 
-.favActive {
-  background-color: #fee2e2;
-  border-color: #ef4444;
+.favouriteActive {
+  background: #fee2e2 !important;
+}
+
+.favouriteActive svg {
+  fill: #ef4444 !important;
+  stroke: #ef4444 !important;
 }
 
 /* Empty State */

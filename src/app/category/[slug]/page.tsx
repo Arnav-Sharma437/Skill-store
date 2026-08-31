@@ -277,10 +277,10 @@ export default function CategoryPage({ params }: PageProps) {
                       </div>
                     </Link>
 
-                    <div className={styles.content}>
+                    <div className={styles.cardDetails}>
                       <div className={styles.ratingRow}>
                         {renderStars(product.rating)}
-                        <span className={styles.reviewCount}>({product.ratingCount})</span>
+                        <span className={styles.reviewsCount}>({product.ratingCount} Reviews)</span>
                       </div>
 
                       <Link href={`/product/${product.id}`} className={styles.titleLink}>
@@ -289,20 +289,18 @@ export default function CategoryPage({ params }: PageProps) {
                         </h3>
                       </Link>
 
-                      <div className={styles.priceRow}>
-                        <div className={styles.prices}>
-                          <span className={styles.currentPrice}>
-                            ₹{product.price.toLocaleString("en-IN")}
+                      <div className={styles.priceBlock}>
+                        <span className={styles.price}>
+                          ₹{product.price.toLocaleString("en-IN")}.00
+                        </span>
+                        {product.originalPrice > product.price && (
+                          <span className={styles.originalPrice}>
+                            ₹{product.originalPrice.toLocaleString("en-IN")}
                           </span>
-                          {product.originalPrice > product.price && (
-                            <span className={styles.originalPrice}>
-                              ₹{product.originalPrice.toLocaleString("en-IN")}
-                            </span>
-                          )}
-                        </div>
+                        )}
                       </div>
 
-                      <div className={styles.actionButtons}>
+                      <div className={styles.actionRow}>
                         <button
                           type="button"
                           onClick={() => addToCart(product)}
@@ -320,10 +318,10 @@ export default function CategoryPage({ params }: PageProps) {
                         <button
                           type="button"
                           onClick={() => toggleWishlist(product)}
-                          className={`${styles.wishlistButton} ${isInWishlist(product.id) ? styles.wishlistActive : ""}`}
+                          className={`${styles.favouriteButton} ${isInWishlist(product.id) ? styles.favouriteActive : ""}`}
                           aria-label={`Add ${product.title} to wishlist`}
                         >
-                          <svg width="15" height="15" viewBox="0 0 24 24" fill={isInWishlist(product.id) ? "#ef4444" : "none"} stroke={isInWishlist(product.id) ? "#ef4444" : "currentColor"} strokeWidth="2">
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill={isInWishlist(product.id) ? "#132c66" : "none"} stroke="#132c66" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                           </svg>
                         </button>
