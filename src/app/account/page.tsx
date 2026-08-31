@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, Suspense } from "react";
+import React, { useState, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useSession, signIn, signOut } from "next-auth/react";
@@ -9,16 +9,6 @@ import Footer from "@/components/home/Footer";
 import AnnouncementBar from "@/components/home/AnnouncementBar";
 import { useApp } from "@/context/AppContext";
 import styles from "./AccountPage.module.css";
-
-interface Address {
-  id: string;
-  type: string;
-  name: string;
-  phone: string;
-  street: string;
-  city: string;
-  pincode: string;
-}
 
 interface OrderItem {
   name: string;
@@ -41,37 +31,6 @@ function AccountContent() {
   const authError = searchParams.get("error");
 
   const [activeTab, setActiveTab] = useState("overview");
-  const [addresses, setAddresses] = useState<Address[] | null>(null);
-  
-  // Address Form State
-  const [newAddress, setNewAddress] = useState({
-    type: "Home",
-    name: "",
-    phone: "",
-    street: "",
-    city: "",
-    pincode: ""
-  });
-  const [showAddressForm, setShowAddressForm] = useState(false);
-
-  // Fetch addresses when session is loaded
-  useEffect(() => {
-    if (session?.user?.email) {
-      fetch("/api/user/addresses")
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.success) {
-            setAddresses(data.addresses);
-          } else {
-            setAddresses([]);
-          }
-        })
-        .catch((err) => {
-          console.error("Error fetching addresses:", err);
-          setAddresses([]);
-        });
-    }
-  }, [session]);
 
   const handleGoogleLogin = () => {
     signIn("google", { callbackUrl: "/account" });
@@ -79,53 +38,6 @@ function AccountContent() {
 
   const handleLogout = () => {
     signOut({ callbackUrl: "/account" });
-  };
-
-  const handleAddAddress = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newAddress.name || !newAddress.phone || !newAddress.street || !newAddress.city || !newAddress.pincode) return;
-
-    const addressToAdd = {
-      id: `addr-${Date.now()}`,
-      ...newAddress
-    };
-
-    try {
-      const res = await fetch("/api/user/addresses", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(addressToAdd),
-      });
-      const data = await res.json();
-      if (data.success) {
-        setAddresses(data.addresses);
-        setShowAddressForm(false);
-        setNewAddress({
-          type: "Home",
-          name: "",
-          phone: "",
-          street: "",
-          city: "",
-          pincode: ""
-        });
-      }
-    } catch (err) {
-      console.error("Error adding address:", err);
-    }
-  };
-
-  const handleDeleteAddress = async (id: string) => {
-    try {
-      const res = await fetch(`/api/user/addresses?id=${id}`, {
-        method: "DELETE",
-      });
-      const data = await res.json();
-      if (data.success) {
-        setAddresses(data.addresses);
-      }
-    } catch (err) {
-      console.error("Error deleting address:", err);
-    }
   };
 
   // User Orders list (starts empty for fresh authenticated users)
@@ -162,7 +74,7 @@ function AccountContent() {
                 <span className={styles.logoStore}>STORE</span>
               </div>
               <h2>Access Your Dashboard</h2>
-              <p>Track order shipments, manage shipping address listings, and sync your favorite items instantly.</p>
+              <p>Track order shipments, view order history, and sync your favorite items instantly.</p>
               
               {authError && (
                 <div className={styles.authErrorBox}>
@@ -213,12 +125,6 @@ function AccountContent() {
                   My Orders
                 </button>
                 <button 
-                  onClick={() => setActiveTab("addresses")} 
-                  className={`${styles.navBtn} ${activeTab === "addresses" ? styles.activeNavBtn : ""}`}
-                >
-                  Address Book
-                </button>
-                <button 
                   onClick={() => setActiveTab("wishlist")} 
                   className={`${styles.navBtn} ${activeTab === "wishlist" ? styles.activeNavBtn : ""}`}
                 >
@@ -246,10 +152,6 @@ function AccountContent() {
                     <div className={styles.statCard}>
                       <h3>{wishlist.length}</h3>
                       <p>Wishlist Items</p>
-                    </div>
-                    <div className={styles.statCard}>
-                      <h3>{addresses?.length || 0}</h3>
-                      <p>Saved Addresses</p>
                     </div>
                   </div>
 
@@ -333,130 +235,7 @@ function AccountContent() {
                 </div>
               )}
 
-              {/* 3. Address Book Tab */}
-              {activeTab === "addresses" && (
-                <div className={styles.tabContent}>
-                  <div className={styles.tabHeaderWithAction}>
-                    <h2>Address Book</h2>
-                    {!showAddressForm && (
-                      <button onClick={() => setShowAddressForm(true)} className={styles.addBtn}>
-                        + Add Address
-                      </button>
-                    )}
-                  </div>
-
-                  {showAddressForm ? (
-                    /* Address Add Form */
-                    <form onSubmit={handleAddAddress} className={styles.addressForm}>
-                      <h3>New Shipping Address</h3>
-                      <div className={styles.formRow}>
-                        <div className={styles.formGroup}>
-                          <label htmlFor="address-type">Address Type</label>
-                          <select
-                            id="address-type"
-                            value={newAddress.type}
-                            onChange={(e) => setNewAddress({ ...newAddress, type: e.target.value })}
-                          >
-                            <option value="Home">Home</option>
-                            <option value="Office">Office</option>
-                            <option value="Billing">Billing</option>
-                          </select>
-                        </div>
-                        <div className={styles.formGroup}>
-                          <label htmlFor="address-name">Full Name</label>
-                          <input
-                            id="address-name"
-                            type="text"
-                            placeholder="Arnav Sharma"
-                            value={newAddress.name}
-                            onChange={(e) => setNewAddress({ ...newAddress, name: e.target.value })}
-                            required
-                          />
-                        </div>
-                      </div>
-
-                      <div className={styles.formRow}>
-                        <div className={styles.formGroup}>
-                          <label htmlFor="address-phone">Phone Number</label>
-                          <input
-                            id="address-phone"
-                            type="tel"
-                            placeholder="8754301661"
-                            value={newAddress.phone}
-                            onChange={(e) => setNewAddress({ ...newAddress, phone: e.target.value })}
-                            required
-                          />
-                        </div>
-                        <div className={styles.formGroup}>
-                          <label htmlFor="address-pincode">Pincode</label>
-                          <input
-                            id="address-pincode"
-                            type="text"
-                            placeholder="641004"
-                            value={newAddress.pincode}
-                            onChange={(e) => setNewAddress({ ...newAddress, pincode: e.target.value })}
-                            required
-                          />
-                        </div>
-                      </div>
-
-                      <div className={styles.formGroup}>
-                        <label htmlFor="address-street">Street Address</label>
-                        <input
-                          id="address-street"
-                          type="text"
-                          placeholder="P.r.p Garden Road, Krishnarayapuram Illango Nagar"
-                          value={newAddress.street}
-                          onChange={(e) => setNewAddress({ ...newAddress, street: e.target.value })}
-                          required
-                        />
-                      </div>
-
-                      <div className={styles.formGroup}>
-                        <label htmlFor="address-city">City &amp; State</label>
-                        <input
-                          id="address-city"
-                          type="text"
-                          placeholder="Coimbatore, Tamil Nadu"
-                          value={newAddress.city}
-                          onChange={(e) => setNewAddress({ ...newAddress, city: e.target.value })}
-                          required
-                        />
-                      </div>
-
-                      <div className={styles.formActions}>
-                        <button type="submit" className={styles.saveBtn}>Save Address</button>
-                        <button type="button" onClick={() => setShowAddressForm(false)} className={styles.cancelBtn}>Cancel</button>
-                      </div>
-                    </form>
-                  ) : addresses === null ? (
-                    <p className={styles.emptyText}>Loading your address book...</p>
-                  ) : (
-                    /* Address Lists */
-                    <div className={styles.addressListGrid}>
-                      {addresses.map((addr) => (
-                        <div key={addr.id} className={styles.addressCard}>
-                          <div className={styles.addressCardHeader}>
-                            <span className={styles.typeBadge}>{addr.type}</span>
-                            <button onClick={() => handleDeleteAddress(addr.id)} className={styles.deleteBtn} aria-label="Delete address">
-                              Delete
-                            </button>
-                          </div>
-                          <h3>{addr.name}</h3>
-                          <p>{addr.street}</p>
-                          <p>{addr.city} - {addr.pincode}</p>
-                          <p className={styles.phoneLabel}>Phone: {addr.phone}</p>
-                        </div>
-                      ))}
-                      {addresses.length === 0 && (
-                        <p className={styles.emptyText}>No shipping addresses saved yet.</p>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* 4. Wishlist Tab */}
+              {/* 3. Wishlist Tab */}
               {activeTab === "wishlist" && (
                 <div className={styles.tabContent}>
                   <h2>My Wishlist</h2>
