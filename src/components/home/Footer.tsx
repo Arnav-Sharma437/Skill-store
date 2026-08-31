@@ -1,21 +1,9 @@
-"use client";
-
-import React, { useState } from "react";
+import React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import styles from "./Footer.module.css";
 
 export default function Footer() {
-  const [email, setEmail] = useState("");
-
-  const handleSubscribe = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (email.trim()) {
-      alert(`Subscribed: ${email}`);
-      setEmail("");
-    }
-  };
-
   return (
     <footer className={styles.footer}>
       {/* Deeper Concave Curved SVG Separator with a thick Sky Blue stroke */}
@@ -137,27 +125,6 @@ export default function Footer() {
               <Link href="/wishlist" className={styles.link}>MY WISHLIST</Link>
               <Link href="/coming-soon?page=Order%20Tracking" className={styles.link}>TRACKING YOUR ORDER</Link>
             </nav>
-          </div>
-        </div>
-
-        {/* Newsletter Subscription Row */}
-        <div className={`${styles.newsletterContainer} container`}>
-          <div className={styles.newsletterInner}>
-            <h4 className={styles.newsletterTitle}>SUBSCRIBE NEWSLETTER</h4>
-            <form onSubmit={handleSubscribe} className={styles.newsletterForm}>
-              <input
-                type="email"
-                placeholder="XXXXXXXX@EMAIL.COM"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className={styles.newsletterInput}
-                required
-                aria-label="Email address"
-              />
-              <button type="submit" className={styles.newsletterBtn}>
-                SUBSCRIBE
-              </button>
-            </form>
           </div>
         </div>
       </div>
