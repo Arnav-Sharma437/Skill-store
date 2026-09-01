@@ -561,42 +561,67 @@
   padding-left: 24px;
 }
 
-/* --- Brands Dropdown Menu (White Box) --- */
+/* --- Brands Dropdown Menu (Premium Navy Theme) --- */
 .brandsDropdown {
   position: absolute;
   top: 100%;
   left: 50%;
   transform: translateX(-50%);
-  width: 240px;
-  background: #ffffff;
+  width: 280px;
+  background: #0f2352;
   border-radius: 0 0 10px 10px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid rgba(56, 182, 255, 0.2);
   border-top: 2px solid #ffd300;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.35), 0 8px 10px -6px rgba(0, 0, 0, 0.2);
   z-index: 100;
-  padding: 6px 0;
+  padding: 8px;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  gap: 6px;
 }
 
 .brandDropdownItem {
-  width: 100%;
-  padding: 10px 16px;
   display: flex;
-  justify-content: center;
   align-items: center;
-  border-bottom: 1px solid #f1f5f9;
+  gap: 12px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  text-decoration: none;
   transition: all var(--transition-fast) ease;
 }
 
-.brandDropdownItem:last-child {
-  border-bottom: none;
+.brandDropdownItem:hover {
+  background: #1e40af;
+  border-color: #ffd300;
+  transform: translateX(3px);
 }
 
-.brandDropdownItem:hover {
-  background: #f8fafc;
-  transform: scale(1.03);
+.brandLogoBox {
+  width: 85px;
+  height: 32px;
+  background: #ffffff;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 6px;
+  flex-shrink: 0;
+}
+
+.brandName {
+  font-size: 12px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  font-family: var(--font-sans);
+  transition: color var(--transition-fast) ease;
+}
+
+.brandDropdownItem:hover .brandName {
+  color: #ffd300;
 }
 
 /* --- Responsive Adjustments --- */

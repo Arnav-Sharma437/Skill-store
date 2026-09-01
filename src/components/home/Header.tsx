@@ -473,37 +473,41 @@ export default function Header() {
             {/* Brands Dropdown Menu */}
             {isBrandsOpen && (
               <div className={styles.brandsDropdown}>
-                <Link href="/shop/tuqo" className={styles.brandItem}>
-                  <Image src="/images/logos/tuqo.jpg" alt="TUQO" width={40} height={20} style={{ objectFit: 'contain' }} />
-                  <span>TUQO</span>
+                <Link href="/shop/tuqo" className={styles.brandDropdownItem}>
+                  <div className={styles.brandLogoBox}>
+                    <Image src="/images/brands/tuqo.png" alt="TUQO" width={75} height={24} style={{ objectFit: 'contain' }} />
+                  </div>
+                  <span className={styles.brandName}>TUQO</span>
                 </Link>
-                <Link href="/shop/aimex" className={styles.brandItem}>
-                  <Image src="/images/logos/aimex.jpg" alt="AIMEX" width={40} height={20} style={{ objectFit: 'contain' }} />
-                  <span>AIMEX</span>
+                <Link href="/shop/pumpkin" className={styles.brandDropdownItem}>
+                  <div className={styles.brandLogoBox}>
+                    <Image src="/images/brands/pumpkin.png" alt="PUMPKIN" width={75} height={24} style={{ objectFit: 'contain' }} />
+                  </div>
+                  <span className={styles.brandName}>PUMPKIN</span>
                 </Link>
-                <Link href="/shop/cheston" className={styles.brandItem}>
-                  <Image src="/images/logos/cheston.jpg" alt="CHESTON" width={40} height={20} style={{ objectFit: 'contain' }} />
-                  <span>CHESTON</span>
+                <Link href="/shop/mitsuki" className={styles.brandDropdownItem}>
+                  <div className={styles.brandLogoBox}>
+                    <Image src="/images/brands/mitsuki.png" alt="MITSUKI" width={75} height={24} style={{ objectFit: 'contain' }} />
+                  </div>
+                  <span className={styles.brandName}>MITSUKI</span>
                 </Link>
-                <Link href="/shop/dongcheng" className={styles.brandItem}>
-                  <Image src="/images/logos/dongcheng.jpg" alt="DONGCHENG" width={40} height={20} style={{ objectFit: 'contain' }} />
-                  <span>DONGCHENG</span>
+                <Link href="/shop/metso" className={styles.brandDropdownItem}>
+                  <div className={styles.brandLogoBox}>
+                    <Image src="/images/brands/metso.png" alt="METSO" width={75} height={24} style={{ objectFit: 'contain' }} />
+                  </div>
+                  <span className={styles.brandName}>METSO</span>
                 </Link>
-                <Link href="/shop/hikoki" className={styles.brandItem}>
-                  <Image src="/images/logos/hikoki.jpg" alt="HIKOKI" width={40} height={20} style={{ objectFit: 'contain' }} />
-                  <span>HIKOKI</span>
+                <Link href="/shop/costec" className={styles.brandDropdownItem}>
+                  <div className={styles.brandLogoBox}>
+                    <Image src="/images/brands/costec.png" alt="COSTEC" width={75} height={24} style={{ objectFit: 'contain' }} />
+                  </div>
+                  <span className={styles.brandName}>COSTEC</span>
                 </Link>
-                <Link href="/shop/ingco" className={styles.brandItem}>
-                  <Image src="/images/logos/ingco.jpg" alt="INGCO" width={40} height={20} style={{ objectFit: 'contain' }} />
-                  <span>INGCO</span>
-                </Link>
-                <Link href="/shop/makita" className={styles.brandItem}>
-                  <Image src="/images/logos/makita.jpg" alt="MAKITA" width={40} height={20} style={{ objectFit: 'contain' }} />
-                  <span>MAKITA</span>
-                </Link>
-                <Link href="/shop/pumpkin" className={styles.brandItem}>
-                  <Image src="/images/logos/pumpkin.jpg" alt="PUMPKIN" width={40} height={20} style={{ objectFit: 'contain' }} />
-                  <span>PUMPKIN</span>
+                <Link href="/shop/ultratouch" className={styles.brandDropdownItem}>
+                  <div className={styles.brandLogoBox}>
+                    <Image src="/images/brands/ultratouch.svg" alt="Ultra TOUCH" width={75} height={24} style={{ objectFit: 'contain' }} />
+                  </div>
+                  <span className={styles.brandName}>Ultra TOUCH</span>
                 </Link>
               </div>
             )}
