@@ -303,11 +303,11 @@ export default function Header() {
                 >
                   <Link href="/category/high-pressure-washer" className={styles.dropdownLeft}>
                     <span className={styles.menuIcon}>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M7 16H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h3"></path>
-                        <path d="M12 12h10"></path>
-                        <path d="M18 8l4 4-4 4"></path>
-                        <path d="M7 6v12a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2H9a2 2 0 0 0-2 2z"></path>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="5" y="6" width="10" height="14" rx="2"></rect>
+                        <path d="M10 2v4"></path>
+                        <path d="M15 10h4l2 4v4"></path>
+                        <path d="M7 14h6"></path>
                       </svg>
                     </span>
                     <span>HIGH PRESSURE WASHER</span>
@@ -339,26 +339,58 @@ export default function Header() {
                 <Link href="/category/vaccum-cleaner" className={styles.dropdownItem} onMouseEnter={() => setActiveSubmenu(null)}>
                   <div className={styles.dropdownLeft}>
                     <span className={styles.menuIcon}>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <ellipse cx="12" cy="12" rx="9" ry="6"></ellipse>
-                        <path d="M12 6v12"></path>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="4" y="10" width="10" height="10" rx="3"></rect>
+                        <path d="M14 13h3a3 3 0 0 1 3 3v4"></path>
+                        <path d="M9 10V5a2 2 0 0 0-2-2H5"></path>
+                        <circle cx="7" cy="16" r="1.5"></circle>
                       </svg>
                     </span>
                     <span>VACCUM CLEANER</span>
                   </div>
                 </Link>
 
-                {/* 3. Air Compressor */}
+                {/* 3. Autocare Detailing */}
+                <Link href="/category/autocare-detailing" className={styles.dropdownItem} onMouseEnter={() => setActiveSubmenu(null)}>
+                  <div className={styles.dropdownLeft}>
+                    <span className={styles.menuIcon}>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"></path>
+                        <circle cx="7" cy="17" r="2"></circle>
+                        <circle cx="17" cy="17" r="2"></circle>
+                        <path d="M5 2l1 2 2 1-2 1-1 2-1-2-2-1 2-1z"></path>
+                      </svg>
+                    </span>
+                    <span>AUTOCARE DETAILING</span>
+                  </div>
+                </Link>
+
+                {/* 4. Accessories & Spares */}
+                <Link href="/category/accessories-spares" className={styles.dropdownItem} onMouseEnter={() => setActiveSubmenu(null)}>
+                  <div className={styles.dropdownLeft}>
+                    <span className={styles.menuIcon}>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                      </svg>
+                    </span>
+                    <span>ACCESSORIES &amp; SPARES</span>
+                  </div>
+                </Link>
+
+                {/* 5. Air Compressor */}
                 <div 
                   className={`${styles.dropdownItem} ${activeSubmenu === "compressor" ? styles.dropdownItemActive : ""}`}
                   onMouseEnter={() => setActiveSubmenu("compressor")}
                 >
                   <Link href="/category/air-compressor" className={styles.dropdownLeft}>
                     <span className={styles.menuIcon}>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <circle cx="12" cy="12" r="9"></circle>
-                        <line x1="12" y1="7" x2="12" y2="12"></line>
-                        <line x1="12" y1="12" x2="16" y2="14"></line>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="3" y="9" width="18" height="8" rx="4"></rect>
+                        <circle cx="7" cy="19" r="2"></circle>
+                        <circle cx="17" cy="19" r="2"></circle>
+                        <path d="M12 9V5"></path>
+                        <circle cx="12" cy="4" r="2"></circle>
                       </svg>
                     </span>
                     <span>AIR COMPRESSOR</span>
@@ -386,68 +418,18 @@ export default function Header() {
                   )}
                 </div>
 
-                {/* 4. Autocare & Detailing Products */}
-                <Link href="/category/autocare-detailing" className={styles.dropdownItem} onMouseEnter={() => setActiveSubmenu(null)}>
-                  <div className={styles.dropdownLeft}>
-                    <span className={styles.menuIcon}>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"></path>
-                        <circle cx="7" cy="17" r="2"></circle>
-                        <path d="M9 17h6"></path>
-                        <circle cx="17" cy="17" r="2"></circle>
-                      </svg>
-                    </span>
-                    <span>AUTOCARE &amp; DETAILING</span>
-                  </div>
-                </Link>
-
-                {/* 5. Accessories & Spares */}
-                <Link href="/category/accessories-spares" className={styles.dropdownItem} onMouseEnter={() => setActiveSubmenu(null)}>
-                  <div className={styles.dropdownLeft}>
-                    <span className={styles.menuIcon}>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <circle cx="12" cy="12" r="3"></circle>
-                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-                      </svg>
-                    </span>
-                    <span>ACCESSORIES &amp; SPARES</span>
-                  </div>
-                </Link>
-
                 {/* 6. Cordless Tools */}
                 <Link href="/category/cordless-tools" className={styles.dropdownItem} onMouseEnter={() => setActiveSubmenu(null)}>
                   <div className={styles.dropdownLeft}>
                     <span className={styles.menuIcon}>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M14 4H5a1 1 0 0 0-1 1v4a1 1 0 0 0 1 1h9l4-3V5l-4-1z"></path>
+                        <path d="M8 10v7a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2v-7"></path>
+                        <path d="M18 6h3v2h-3"></path>
+                        <rect x="7" y="19" width="8" height="3" rx="1"></rect>
                       </svg>
                     </span>
                     <span>CORDLESS TOOLS</span>
-                  </div>
-                </Link>
-
-                {/* 7. Power Tools */}
-                <Link href="/category/power-tools" className={styles.dropdownItem} onMouseEnter={() => setActiveSubmenu(null)}>
-                  <div className={styles.dropdownLeft}>
-                    <span className={styles.menuIcon}>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
-                      </svg>
-                    </span>
-                    <span>POWER TOOLS</span>
-                  </div>
-                </Link>
-
-                {/* 8. Hand Tools */}
-                <Link href="/category/hand-tools" className={styles.dropdownItem} onMouseEnter={() => setActiveSubmenu(null)}>
-                  <div className={styles.dropdownLeft}>
-                    <span className={styles.menuIcon}>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M18 2l4 4-10 10H8v-4L18 2z"></path>
-                        <path d="M14 6l4 4"></path>
-                      </svg>
-                    </span>
-                    <span>HAND TOOLS</span>
                   </div>
                 </Link>
               </div>

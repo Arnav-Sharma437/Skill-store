@@ -13,7 +13,17 @@ export const metadata = {
 };
 
 export default function CategoriesPage() {
-  const categoriesList = Object.values(CATEGORIES_DATA);
+  const primaryCategorySlugs = [
+    "high-pressure-washer",
+    "vaccum-cleaner",
+    "autocare-detailing",
+    "accessories-spares",
+    "air-compressor",
+    "cordless-tools"
+  ];
+  const categoriesList = primaryCategorySlugs
+    .map((slug) => CATEGORIES_DATA[slug])
+    .filter(Boolean);
 
   // Helper images for top categories
   const getCategoryImage = (slug: string) => {
