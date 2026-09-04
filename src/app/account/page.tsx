@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState, Suspense } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { useSession, signIn, signOut } from "next-auth/react";
 import Header from "@/components/home/Header";
@@ -31,6 +32,31 @@ function AccountContent() {
   const authError = searchParams.get("error");
 
   const [activeTab, setActiveTab] = useState("overview");
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [isLoadingOrders, setIsLoadingOrders] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+    if (session?.user?.email) {
+      Promise.resolve().then(() => {
+        if (isMounted) setIsLoadingOrders(true);
+      });
+      fetch("/api/user/orders")
+        .then((res) => res.json())
+        .then((data) => {
+          if (isMounted && data.success && Array.isArray(data.orders)) {
+            setOrders(data.orders);
+          }
+        })
+        .catch((err) => console.error("Error fetching orders:", err))
+        .finally(() => {
+          if (isMounted) setIsLoadingOrders(false);
+        });
+    }
+    return () => {
+      isMounted = false;
+    };
+  }, [session]);
 
   const handleGoogleLogin = () => {
     signIn("google", { callbackUrl: "/account" });
@@ -39,9 +65,6 @@ function AccountContent() {
   const handleLogout = () => {
     signOut({ callbackUrl: "/account" });
   };
-
-  // User Orders list (starts empty for fresh authenticated users)
-  const [orders] = useState<Order[]>([]);
 
   if (status === "loading") {
     return (
@@ -104,7 +127,14 @@ function AccountContent() {
             {/* Left Sidebar */}
             <aside className={styles.sidebar}>
               <div className={styles.profileHeader}>
-                <img src={session.user.image || "https://api.dicebear.com/7.x/adventurer/svg?seed=Store"} alt={session.user.name || "User"} className={styles.avatar} />
+                <Image
+                  src={session.user.image || "https://api.dicebear.com/7.x/adventurer/svg?seed=Store"}
+                  alt={session.user.name || "User"}
+                  width={60}
+                  height={60}
+                  className={styles.avatar}
+                  unoptimized
+                />
                 <div className={styles.profileMeta}>
                   <h3>{session.user.name}</h3>
                   <p>{session.user.email}</p>
@@ -181,7 +211,12 @@ function AccountContent() {
                   <h2>Order History</h2>
                   <p>Check the delivery status of your recent transactions.</p>
 
-                  {orders.length === 0 ? (
+                  {isLoadingOrders ? (
+                    <div className={styles.loadingContainer}>
+                      <div className={styles.spinner}></div>
+                      <p>Loading your orders...</p>
+                    </div>
+                  ) : orders.length === 0 ? (
                     <div className={styles.emptyOrdersCard}>
                       <div className={styles.emptyOrdersIcon}>
                         <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#38b6ff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -247,7 +282,14 @@ function AccountContent() {
                     <div className={styles.wishlistGrid}>
                       {wishlist.map((item) => (
                         <div key={item.id} className={styles.wishlistCard}>
-                          <img src={item.imageUrl} alt={item.title} className={styles.wishlistImg} />
+                          <Image
+                            src={item.imageUrl}
+                            alt={item.title}
+                            width={100}
+                            height={100}
+                            className={styles.wishlistImg}
+                            style={{ objectFit: "contain" }}
+                          />
                           <div className={styles.wishlistMeta}>
                             <h4>{item.title}</h4>
                             <p className={styles.wishlistPrice}>₹{item.price.toLocaleString("en-IN")}</p>

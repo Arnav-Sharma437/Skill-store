@@ -339,6 +339,181 @@
   box-shadow: 0 10px 15px -3px rgba(230, 190, 0, 0.25);
 }
 
+.checkoutBtnDisabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.btnLoadingContent {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.btnSpinner {
+  width: 18px;
+  height: 18px;
+  border: 2.5px solid rgba(0, 0, 0, 0.2);
+  border-top-color: #000000;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.secureBadgeRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 600;
+  margin-top: 14px;
+}
+
+.errorAlertBox {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+  font-size: 13.5px;
+  font-weight: 600;
+  padding: 14px 18px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+}
+
+/* Order Success State */
+.successState {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 50px 30px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+  border: 1px solid #e2e8f0;
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.successIconContainer {
+  width: 80px;
+  height: 80px;
+  background: #ecfdf5;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.testBadge {
+  display: inline-block;
+  background: #eaf6fc;
+  color: #0284c7;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  padding: 4px 12px;
+  border-radius: 20px;
+  margin-bottom: 12px;
+  border: 1px solid #bae6fd;
+}
+
+.successHeading {
+  font-family: var(--font-sans);
+  font-weight: 900;
+  font-size: 24px;
+  color: #132c66;
+  margin: 0 0 10px 0;
+}
+
+.successText {
+  font-size: 14.5px;
+  color: #64748b;
+  max-width: 500px;
+  line-height: 1.5;
+  margin: 0 0 24px 0;
+}
+
+.successReceiptCard {
+  width: 100%;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  text-align: left;
+}
+
+.receiptRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13.5px;
+  color: #475569;
+}
+
+.receiptRow strong {
+  color: #0f172a;
+  font-weight: 750;
+}
+
+.receiptAmount {
+  color: #132c66 !important;
+  font-size: 16px;
+  font-weight: 900 !important;
+}
+
+.paidStatusBadge {
+  background: #dcfce7;
+  color: #15803d;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.successActions {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.viewOrdersBtn {
+  background: #132c66;
+  color: #ffffff;
+  font-family: var(--font-sans);
+  font-weight: 750;
+  font-size: 13.5px;
+  padding: 13px 26px;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: all var(--transition-fast) ease;
+}
+
+.viewOrdersBtn:hover {
+  background: #1e3a8a;
+  transform: translateY(-2px);
+}
+
 @media (max-width: 1024px) {
   .cartGrid {
     grid-template-columns: 1fr;
@@ -358,5 +533,13 @@
   .itemSubtotal {
     text-align: left;
     min-width: unset;
+  }
+  .successActions {
+    flex-direction: column;
+    width: 100%;
+  }
+  .viewOrdersBtn, .continueShoppingBtn {
+    width: 100%;
+    text-align: center;
   }
 }

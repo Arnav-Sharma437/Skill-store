@@ -105,3 +105,6 @@ export const Banner: Model<IBanner> =
 
 export const Enquiry: Model<IEnquiry> =
   mongoose.models.Enquiry || mongoose.model<IEnquiry>("Enquiry", EnquirySchema);
+
+export { default as Order } from "@/models/Order";
+export type { IOrder, IOrderItem, IShippingAddress } from "@/models/Order";
