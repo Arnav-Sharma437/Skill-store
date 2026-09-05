@@ -4,6 +4,7 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import dbConnect from "@/lib/db/mongodb";
 import Order from "@/models/Order";
 import { verifyPaymentSignature, calculateVerifiedOrder } from "@/lib/razorpay";
+import { createShiprocketOrder, estimatePackageSpecs } from "@/lib/shiprocket";
 
 export async function POST(req: NextRequest) {
   try {
@@ -57,6 +58,8 @@ export async function POST(req: NextRequest) {
         orderId: existingOrder._id.toString(),
         grandTotal: existingOrder.grandTotal,
         paymentStatus: existingOrder.paymentStatus,
+        shiprocketStatus: existingOrder.shiprocketStatus,
+        shiprocketTrackingUrl: existingOrder.shiprocketTrackingUrl,
         message: "Order already verified and recorded.",
       });
     }
@@ -87,6 +90,9 @@ export async function POST(req: NextRequest) {
       100 + Math.random() * 900
     )}`;
 
+    // Estimate package logistics specs
+    const specs = estimatePackageSpecs(verifiedOrder.items);
+
     // 6. Save verified Order into MongoDB
     const newOrder = new Order({
       orderNumber,
@@ -108,9 +114,41 @@ export async function POST(req: NextRequest) {
       razorpaySignature: razorpay_signature,
       shippingAddress: shippingAddress || {},
       receipt: receipt || "",
+      weight: specs.weightKg,
+      dimensions: {
+        length: specs.lengthCm,
+        breadth: specs.breadthCm,
+        height: specs.heightCm,
+      },
+      shiprocketStatus: "pending_shipment",
     });
 
     const createdOrder = await newOrder.save();
+
+    // 7. Automatic Shiprocket Order Creation (Safe & resilient)
+    try {
+      const shiprocketResult = await createShiprocketOrder(createdOrder);
+      if (shiprocketResult.success) {
+        createdOrder.shiprocketOrderId = shiprocketResult.shiprocketOrderId || "";
+        createdOrder.shiprocketShipmentId = shiprocketResult.shipmentId || "";
+        createdOrder.shiprocketAwbCode = shiprocketResult.awbCode || "";
+        createdOrder.shiprocketCourierName = shiprocketResult.courierName || "";
+        createdOrder.shiprocketStatus = shiprocketResult.status || "CREATED";
+        createdOrder.shiprocketTrackingUrl = shiprocketResult.trackingUrl || "";
+        createdOrder.orderStatus = "confirmed";
+        await createdOrder.save();
+      } else {
+        createdOrder.shipmentError = shiprocketResult.error || "Shipment creation failed";
+        createdOrder.shiprocketStatus = "pending_shipment";
+        await createdOrder.save();
+      }
+    } catch (shipErr) {
+      console.error("Automatic Shiprocket creation error:", shipErr);
+      createdOrder.shipmentError =
+        shipErr instanceof Error ? shipErr.message : "Shiprocket network exception";
+      createdOrder.shiprocketStatus = "pending_shipment";
+      await createdOrder.save();
+    }
 
     return NextResponse.json({
       success: true,
@@ -119,6 +157,9 @@ export async function POST(req: NextRequest) {
       grandTotal: createdOrder.grandTotal,
       items: createdOrder.items,
       paymentStatus: "paid",
+      orderStatus: createdOrder.orderStatus,
+      shiprocketStatus: createdOrder.shiprocketStatus,
+      shiprocketTrackingUrl: createdOrder.shiprocketTrackingUrl,
       message: "Payment successfully verified and order confirmed!",
     });
   } catch (error: unknown) {

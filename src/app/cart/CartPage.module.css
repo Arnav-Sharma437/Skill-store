@@ -514,6 +514,99 @@
   transform: translateY(-2px);
 }
 
+.trackShipmentBtn {
+  background: #0284c7;
+  color: #ffffff;
+  font-family: var(--font-sans);
+  font-weight: 750;
+  font-size: 13.5px;
+  padding: 13px 26px;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: all var(--transition-fast) ease;
+}
+
+.trackShipmentBtn:hover {
+  background: #0369a1;
+  transform: translateY(-2px);
+}
+
+.logisticsBadge {
+  background: #e0f2fe;
+  color: #0369a1;
+  font-size: 12px;
+  font-weight: 750;
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+
+/* Delivery Address Card */
+.addressCard {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+  margin-top: 10px;
+}
+
+.addressHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #f1f5f9;
+  padding-bottom: 12px;
+}
+
+.addressHeader h3 {
+  font-family: var(--font-sans);
+  font-size: 16px;
+  font-weight: 800;
+  color: #132c66;
+  margin: 0;
+}
+
+.addressGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fullWidthGroup {
+  grid-column: span 2;
+}
+
+.formGroup label {
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  font-weight: 750;
+  color: #475569;
+}
+
+.formGroup input {
+  height: 42px;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 0 14px;
+  font-size: 14px;
+  color: #1e293b;
+  outline: none;
+  transition: border-color 0.2s;
+  background: #f8fafc;
+}
+
+.formGroup input:focus {
+  border-color: #38b6ff;
+  background: #ffffff;
+}
+
 @media (max-width: 1024px) {
   .cartGrid {
     grid-template-columns: 1fr;
@@ -522,6 +615,12 @@
 }
 
 @media (max-width: 768px) {
+  .addressGrid {
+    grid-template-columns: 1fr;
+  }
+  .fullWidthGroup {
+    grid-column: span 1;
+  }
   .cartItemCard {
     flex-wrap: wrap;
     gap: 16px;
@@ -538,7 +637,7 @@
     flex-direction: column;
     width: 100%;
   }
-  .viewOrdersBtn, .continueShoppingBtn {
+  .viewOrdersBtn, .trackShipmentBtn, .continueShoppingBtn {
     width: 100%;
     text-align: center;
   }

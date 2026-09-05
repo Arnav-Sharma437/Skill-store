@@ -42,6 +42,7 @@ export async function GET() {
         gst: ord.gst,
         status: ord.paymentStatus === "paid" ? (ord.orderStatus || "Confirmed") : ord.paymentStatus,
         paymentStatus: ord.paymentStatus,
+        orderStatus: ord.orderStatus,
         items: (ord.items || []).map((item) => ({
           name: item.title,
           qty: item.quantity,
@@ -49,6 +50,12 @@ export async function GET() {
           imageUrl: item.imageUrl,
         })),
         razorpayPaymentId: ord.razorpayPaymentId,
+        shiprocketOrderId: ord.shiprocketOrderId,
+        shiprocketShipmentId: ord.shiprocketShipmentId,
+        shiprocketAwbCode: ord.shiprocketAwbCode,
+        shiprocketCourierName: ord.shiprocketCourierName,
+        shiprocketStatus: ord.shiprocketStatus,
+        shiprocketTrackingUrl: ord.shiprocketTrackingUrl,
       })),
     });
   } catch (error: unknown) {

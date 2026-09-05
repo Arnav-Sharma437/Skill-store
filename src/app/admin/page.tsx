@@ -41,9 +41,45 @@ interface IEnquiry {
   createdAt: string;
 }
 
+interface IAdminOrder {
+  id: string;
+  orderNumber: string;
+  createdAt: string;
+  userName: string;
+  userEmail: string;
+  userPhone?: string;
+  itemsCount: number;
+  items: Array<{
+    title: string;
+    quantity: number;
+    price: number;
+  }>;
+  subtotal: number;
+  gst: number;
+  grandTotal: number;
+  paymentStatus: string;
+  orderStatus: string;
+  paymentMethod: string;
+  shippingAddress?: {
+    street?: string;
+    city?: string;
+    state?: string;
+    pincode?: string;
+    phone?: string;
+    name?: string;
+  };
+  shiprocketOrderId?: string;
+  shiprocketShipmentId?: string;
+  shiprocketAwbCode?: string;
+  shiprocketCourierName?: string;
+  shiprocketStatus?: string;
+  shiprocketTrackingUrl?: string;
+  shipmentError?: string;
+}
+
 export default function AdminDashboard() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<"analytics" | "products" | "banners">("analytics");
+  const [activeTab, setActiveTab] = useState<"analytics" | "products" | "banners" | "orders">("analytics");
   const [authorized, setAuthorized] = useState(false);
 
   // Data States
@@ -51,6 +87,9 @@ export default function AdminDashboard() {
   const [categories, setCategories] = useState<ICategory[]>([]);
   const [products, setProducts] = useState<IProduct[]>([]);
   const [enquiries, setEnquiries] = useState<IEnquiry[]>([]);
+  const [orders, setOrders] = useState<IAdminOrder[]>([]);
+  const [ordersLoading, setOrdersLoading] = useState(false);
+  const [orderActionLoading, setOrderActionLoading] = useState<string | null>(null);
   
   // loading state
   const [loading, setLoading] = useState(true);
@@ -103,6 +142,65 @@ export default function AdminDashboard() {
     if (json.success) setEnquiries(json.data);
   }, []);
 
+  const fetchOrders = useCallback(async () => {
+    setOrdersLoading(true);
+    try {
+      const res = await fetch("/api/admin/orders");
+      const json = await res.json();
+      if (json.success && Array.isArray(json.data)) {
+        setOrders(json.data);
+      }
+    } catch (e) {
+      console.error("Failed to fetch orders:", e);
+    } finally {
+      setOrdersLoading(false);
+    }
+  }, []);
+
+  const handleRetryShiprocket = async (orderNumber: string) => {
+    setOrderActionLoading(orderNumber);
+    try {
+      const res = await fetch("/api/admin/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId: orderNumber, action: "retry_shiprocket" }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        alert("Shiprocket shipment generated successfully!");
+        fetchOrders();
+      } else {
+        alert(`Shiprocket Error: ${json.error}`);
+      }
+    } catch {
+      alert("Network error retrying Shiprocket dispatch");
+    } finally {
+      setOrderActionLoading(null);
+    }
+  };
+
+  const handleSyncTracking = async (orderNumber: string) => {
+    setOrderActionLoading(orderNumber);
+    try {
+      const res = await fetch("/api/admin/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId: orderNumber, action: "sync_tracking" }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        alert(`Tracking updated: ${json.trackResult?.currentStatus || "Success"}`);
+        fetchOrders();
+      } else {
+        alert(`Sync Error: ${json.error}`);
+      }
+    } catch {
+      alert("Network error syncing tracking status");
+    } finally {
+      setOrderActionLoading(null);
+    }
+  };
+
   const initializeData = useCallback(async () => {
     setLoading(true);
     try {
@@ -110,13 +208,13 @@ export default function AdminDashboard() {
       await fetch("/api/admin/seed");
 
       // 2. Fetch all collections
-      await Promise.all([fetchBanners(), fetchCategories(), fetchProducts(), fetchEnquiries()]);
+      await Promise.all([fetchBanners(), fetchCategories(), fetchProducts(), fetchEnquiries(), fetchOrders()]);
     } catch (e) {
       console.error("Initialization failed", e);
     } finally {
       setLoading(false);
     }
-  }, [fetchBanners, fetchCategories, fetchEnquiries]);
+  }, [fetchBanners, fetchCategories, fetchEnquiries, fetchOrders]);
 
   // Auth check
   useEffect(() => {
@@ -378,6 +476,18 @@ export default function AdminDashboard() {
                 <polyline points="21 15 16 10 5 21"></polyline>
               </svg>
               <span>Hero Banner</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab("orders")}
+              className={`${styles.sidebarTab} ${activeTab === "orders" ? styles.activeTab : ""}`}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className={styles.tabIcon}>
+                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <path d="M16 10a4 4 0 0 1-8 0"></path>
+              </svg>
+              <span>Orders &amp; Logistics</span>
             </button>
           </nav>
 
@@ -787,6 +897,225 @@ export default function AdminDashboard() {
                           </div>
                         ))}
                       </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Tab 4: Orders & Shiprocket Logistics */}
+              {activeTab === "orders" && (
+                <div className={styles.tabContent}>
+                  <div className={styles.flexHeader}>
+                    <div>
+                      <h2>Customer Orders &amp; Logistics</h2>
+                      <p style={{ margin: "4px 0 0 0", color: "#64748b", fontSize: "13.5px" }}>
+                        Manage purchases, Razorpay payments, and Shiprocket dispatch tracking.
+                      </p>
+                    </div>
+                    <button
+                      onClick={fetchOrders}
+                      className={styles.primaryBtn}
+                      style={{ height: "40px", padding: "0 18px", fontSize: "13px" }}
+                      disabled={ordersLoading}
+                    >
+                      {ordersLoading ? "Refreshing..." : "↻ Refresh Orders"}
+                    </button>
+                  </div>
+
+                  {/* Orders Summary Cards */}
+                  <div className={styles.statsGrid}>
+                    <div className={styles.statCard}>
+                      <div className={styles.statInfo}>
+                        <span>Total Orders</span>
+                        <strong>{orders.length}</strong>
+                      </div>
+                      <div className={styles.statIconBox}>
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0f172a" strokeWidth="2.5">
+                          <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                        </svg>
+                      </div>
+                    </div>
+
+                    <div className={styles.statCard} style={{ borderLeft: "4px solid #10b981" }}>
+                      <div className={styles.statInfo}>
+                        <span>Paid &amp; Confirmed</span>
+                        <strong style={{ color: "#10b981" }}>
+                          {orders.filter((o) => o.paymentStatus === "paid").length}
+                        </strong>
+                      </div>
+                      <div className={styles.statIconBox} style={{ background: "#d1fae5" }}>
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2.5">
+                          <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                      </div>
+                    </div>
+
+                    <div className={styles.statCard} style={{ borderLeft: "4px solid #0284c7" }}>
+                      <div className={styles.statInfo}>
+                        <span>Dispatched on Shiprocket</span>
+                        <strong style={{ color: "#0284c7" }}>
+                          {orders.filter((o) => !!o.shiprocketOrderId || !!o.shiprocketAwbCode).length}
+                        </strong>
+                      </div>
+                      <div className={styles.statIconBox} style={{ background: "#e0f2fe" }}>
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0284c7" strokeWidth="2.5">
+                          <rect x="1" y="3" width="15" height="13"></rect>
+                          <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
+                          <circle cx="5.5" cy="18.5" r="2.5"></circle>
+                          <circle cx="18.5" cy="18.5" r="2.5"></circle>
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Orders Table Card */}
+                  <div className={styles.listCard} style={{ marginTop: "24px" }}>
+                    <div className={styles.tableWrapper}>
+                      <table className={styles.adminTable}>
+                        <thead>
+                          <tr>
+                            <th>Order Details</th>
+                            <th>Customer &amp; Address</th>
+                            <th>Items &amp; Amount</th>
+                            <th>Payment</th>
+                            <th>Shiprocket Logistics</th>
+                            <th>Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {orders.length === 0 ? (
+                            <tr>
+                              <td colSpan={6} style={{ textAlign: "center", padding: "40px", color: "#64748b" }}>
+                                {ordersLoading ? "Loading customer orders from database..." : "No orders found in the database yet."}
+                              </td>
+                            </tr>
+                          ) : (
+                            orders.map((o) => (
+                              <tr key={o.id}>
+                                <td>
+                                  <strong style={{ color: "#0f172a", fontSize: "14px" }}>{o.orderNumber}</strong>
+                                  <div style={{ fontSize: "12px", color: "#64748b", marginTop: "2px" }}>
+                                    {new Date(o.createdAt).toLocaleDateString("en-IN", {
+                                      day: "numeric",
+                                      month: "short",
+                                      year: "numeric",
+                                      hour: "2-digit",
+                                      minute: "2-digit",
+                                    })}
+                                  </div>
+                                </td>
+                                <td>
+                                  <div style={{ fontWeight: "700", color: "#1e293b" }}>{o.userName}</div>
+                                  <div style={{ fontSize: "12px", color: "#64748b" }}>{o.userEmail}</div>
+                                  {o.userPhone && <div style={{ fontSize: "12px", color: "#64748b" }}>📞 {o.userPhone}</div>}
+                                  {o.shippingAddress?.city && (
+                                    <div style={{ fontSize: "11.5px", color: "#94a3b8", marginTop: "4px" }}>
+                                      📍 {o.shippingAddress.street ? `${o.shippingAddress.street}, ` : ""}
+                                      {o.shippingAddress.city} {o.shippingAddress.pincode}
+                                    </div>
+                                  )}
+                                </td>
+                                <td>
+                                  <div style={{ fontSize: "13px", fontWeight: "750", color: "#132c66" }}>
+                                    ₹{o.grandTotal.toLocaleString("en-IN")}
+                                  </div>
+                                  <div style={{ fontSize: "12px", color: "#64748b" }}>
+                                    {o.items?.map((it, idx) => (
+                                      <div key={idx}>
+                                        {it.title} <strong>x{it.quantity}</strong>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </td>
+                                <td>
+                                  <span
+                                    style={{
+                                      display: "inline-block",
+                                      fontSize: "11px",
+                                      fontWeight: "800",
+                                      textTransform: "uppercase",
+                                      padding: "3px 8px",
+                                      borderRadius: "4px",
+                                      background: o.paymentStatus === "paid" ? "#dcfce7" : "#fef9c3",
+                                      color: o.paymentStatus === "paid" ? "#15803d" : "#854d0e",
+                                    }}
+                                  >
+                                    {o.paymentStatus}
+                                  </span>
+                                  <div style={{ fontSize: "11px", color: "#94a3b8", marginTop: "4px" }}>
+                                    {o.paymentMethod || "Razorpay"}
+                                  </div>
+                                </td>
+                                <td>
+                                  <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
+                                    <span
+                                      style={{
+                                        display: "inline-block",
+                                        width: "fit-content",
+                                        fontSize: "11px",
+                                        fontWeight: "800",
+                                        textTransform: "uppercase",
+                                        padding: "2px 7px",
+                                        borderRadius: "4px",
+                                        background: o.shiprocketAwbCode ? "#e0f2fe" : "#f1f5f9",
+                                        color: o.shiprocketAwbCode ? "#0369a1" : "#475569",
+                                      }}
+                                    >
+                                      {o.shiprocketStatus || "pending_shipment"}
+                                    </span>
+
+                                    {o.shiprocketAwbCode && (
+                                      <span style={{ fontSize: "11.5px", color: "#1e293b", fontWeight: "600" }}>
+                                        AWB: {o.shiprocketAwbCode} ({o.shiprocketCourierName || "Shiprocket"})
+                                      </span>
+                                    )}
+
+                                    {o.shiprocketTrackingUrl && (
+                                      <a
+                                        href={o.shiprocketTrackingUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        style={{ fontSize: "11.5px", color: "#0284c7", fontWeight: "700" }}
+                                      >
+                                        Live Tracking ↗
+                                      </a>
+                                    )}
+
+                                    {o.shipmentError && (
+                                      <span style={{ fontSize: "11px", color: "#ef4444" }}>
+                                        ⚠️ {o.shipmentError}
+                                      </span>
+                                    )}
+                                  </div>
+                                </td>
+                                <td>
+                                  <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                                    <button
+                                      onClick={() => handleRetryShiprocket(o.orderNumber)}
+                                      disabled={orderActionLoading === o.orderNumber}
+                                      className={styles.editBtn}
+                                      style={{ padding: "6px 12px", fontSize: "12px", width: "100%", textAlign: "center" }}
+                                    >
+                                      {orderActionLoading === o.orderNumber ? "Processing..." : "🚀 Retry Shiprocket"}
+                                    </button>
+
+                                    {(o.shiprocketAwbCode || o.shiprocketShipmentId) && (
+                                      <button
+                                        onClick={() => handleSyncTracking(o.orderNumber)}
+                                        disabled={orderActionLoading === o.orderNumber}
+                                        className={styles.cancelBtn}
+                                        style={{ padding: "4px 10px", fontSize: "11px", width: "100%", textAlign: "center" }}
+                                      >
+                                        ↻ Sync Track
+                                      </button>
+                                    )}
+                                  </div>
+                                </td>
+                              </tr>
+                            ))
+                          )}
+                        </tbody>
+                      </table>
                     </div>
                   </div>
                 </div>

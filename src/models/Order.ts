@@ -19,6 +19,12 @@ export interface IShippingAddress {
   country?: string;
 }
 
+export interface IDimensions {
+  length: number;
+  breadth: number;
+  height: number;
+}
+
 export interface IOrder extends Document {
   orderNumber: string;
   userId?: string;
@@ -39,6 +45,18 @@ export interface IOrder extends Document {
   razorpaySignature?: string;
   shippingAddress?: IShippingAddress;
   receipt?: string;
+
+  // Shiprocket Logistics Details
+  shiprocketOrderId?: string;
+  shiprocketShipmentId?: string;
+  shiprocketAwbCode?: string;
+  shiprocketCourierName?: string;
+  shiprocketStatus?: string;
+  shiprocketTrackingUrl?: string;
+  shipmentError?: string;
+  weight?: number; // In kg
+  dimensions?: IDimensions;
+
   createdAt: Date;
   updatedAt: Date;
 }
@@ -64,6 +82,15 @@ const ShippingAddressSchema = new Schema<IShippingAddress>(
     state: { type: String, default: "" },
     pincode: { type: String, default: "" },
     country: { type: String, default: "India" },
+  },
+  { _id: false }
+);
+
+const DimensionsSchema = new Schema<IDimensions>(
+  {
+    length: { type: Number, default: 20 },
+    breadth: { type: Number, default: 15 },
+    height: { type: Number, default: 10 },
   },
   { _id: false }
 );
@@ -157,6 +184,47 @@ const OrderSchema = new Schema<IOrder>(
     receipt: {
       type: String,
       default: "",
+    },
+
+    // Shiprocket Logistics Integration Fields
+    shiprocketOrderId: {
+      type: String,
+      default: "",
+      index: true,
+    },
+    shiprocketShipmentId: {
+      type: String,
+      default: "",
+      index: true,
+    },
+    shiprocketAwbCode: {
+      type: String,
+      default: "",
+      index: true,
+    },
+    shiprocketCourierName: {
+      type: String,
+      default: "",
+    },
+    shiprocketStatus: {
+      type: String,
+      default: "pending_shipment",
+    },
+    shiprocketTrackingUrl: {
+      type: String,
+      default: "",
+    },
+    shipmentError: {
+      type: String,
+      default: "",
+    },
+    weight: {
+      type: Number,
+      default: 1.5,
+    },
+    dimensions: {
+      type: DimensionsSchema,
+      default: () => ({ length: 20, breadth: 15, height: 10 }),
     },
   },
   {

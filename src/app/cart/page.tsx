@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useSession } from "next-auth/react";
@@ -30,6 +30,8 @@ interface OrderSuccessDetails {
   orderNumber: string;
   grandTotal: number;
   itemsCount: number;
+  shiprocketStatus?: string;
+  shiprocketTrackingUrl?: string;
 }
 
 export default function CartPage() {
@@ -39,6 +41,53 @@ export default function CartPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [orderSuccess, setOrderSuccess] = useState<OrderSuccessDetails | null>(null);
+
+  // Delivery & Shipping Address State
+  const [shippingAddress, setShippingAddress] = useState({
+    name: "",
+    phone: "",
+    street: "",
+    city: "",
+    state: "",
+    pincode: "",
+  });
+
+  // Prefill address from session if available
+  useEffect(() => {
+    let isMounted = true;
+    if (session?.user) {
+      // Fetch saved address from user profile asynchronously
+      fetch("/api/user/addresses")
+        .then((res) => res.json())
+        .then((data) => {
+          if (!isMounted) return;
+          const defaultAddr =
+            data.success && Array.isArray(data.addresses) && data.addresses.length > 0
+              ? data.addresses[0]
+              : null;
+
+          setShippingAddress((prev) => ({
+            name: prev.name || defaultAddr?.name || session.user?.name || "",
+            phone: prev.phone || defaultAddr?.phone || "",
+            street: prev.street || defaultAddr?.street || "",
+            city: prev.city || defaultAddr?.city || "",
+            state: prev.state || defaultAddr?.state || "",
+            pincode: prev.pincode || defaultAddr?.pincode || "",
+          }));
+        })
+        .catch(() => {
+          if (isMounted && session.user?.name) {
+            setShippingAddress((prev) => ({
+              ...prev,
+              name: prev.name || session.user?.name || "",
+            }));
+          }
+        });
+    }
+    return () => {
+      isMounted = false;
+    };
+  }, [session]);
 
   const subtotal = cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
   const gst = Math.round(subtotal * 0.18);
@@ -88,9 +137,11 @@ export default function CartPage() {
           quantity: item.quantity,
         })),
         customerDetails: {
-          name: session?.user?.name || "",
+          name: shippingAddress.name || session?.user?.name || "",
           email: session?.user?.email || "",
+          phone: shippingAddress.phone || "",
         },
+        shippingAddress,
       };
 
       const res = await fetch("/api/razorpay/create-order", {
@@ -126,7 +177,7 @@ export default function CartPage() {
             setIsProcessing(true);
             setCheckoutError(null);
 
-            // 4. Server-side payment signature verification
+            // 4. Server-side payment signature verification & Shiprocket order creation
             const verifyRes = await fetch("/api/razorpay/verify-payment", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -140,9 +191,11 @@ export default function CartPage() {
                 })),
                 receipt: orderData.receipt,
                 customerDetails: {
-                  name: session?.user?.name || orderData.customer?.name || "",
+                  name: shippingAddress.name || session?.user?.name || orderData.customer?.name || "",
                   email: session?.user?.email || orderData.customer?.email || "",
+                  phone: shippingAddress.phone || orderData.customer?.phone || "",
                 },
+                shippingAddress,
               }),
             });
 
@@ -155,6 +208,8 @@ export default function CartPage() {
                 orderNumber: verifyData.orderNumber,
                 grandTotal: verifyData.grandTotal,
                 itemsCount: completedCount,
+                shiprocketStatus: verifyData.shiprocketStatus,
+                shiprocketTrackingUrl: verifyData.shiprocketTrackingUrl,
               });
             } else {
               setCheckoutError(
@@ -172,9 +227,9 @@ export default function CartPage() {
           }
         },
         prefill: {
-          name: session?.user?.name || orderData.customer?.name || "",
+          name: shippingAddress.name || session?.user?.name || orderData.customer?.name || "",
           email: session?.user?.email || orderData.customer?.email || "",
-          contact: orderData.customer?.phone || "",
+          contact: shippingAddress.phone || orderData.customer?.phone || "",
         },
         theme: {
           color: "#132c66",
@@ -239,10 +294,10 @@ export default function CartPage() {
                   <polyline points="22 4 12 14.01 9 11.01"></polyline>
                 </svg>
               </div>
-              <span className={styles.testBadge}>Razorpay Test Mode Payment Verified</span>
+              <span className={styles.testBadge}>Payment &amp; Logistics Verified</span>
               <h2 className={styles.successHeading}>Order Placed Successfully!</h2>
               <p className={styles.successText}>
-                Thank you for choosing Skill Store. Your payment has been securely confirmed and recorded in our database.
+                Thank you for choosing Skill Store. Your payment has been securely confirmed, and your order is recorded in Shiprocket logistics for fulfillment.
               </p>
 
               <div className={styles.successReceiptCard}>
@@ -258,11 +313,15 @@ export default function CartPage() {
                 </div>
                 <div className={styles.receiptRow}>
                   <span>Payment Gateway:</span>
-                  <span>Razorpay Standard Checkout (Test Mode)</span>
+                  <span>Razorpay Standard Checkout</span>
+                </div>
+                <div className={styles.receiptRow}>
+                  <span>Logistics Partner:</span>
+                  <span className={styles.logisticsBadge}>Shiprocket Logistics</span>
                 </div>
                 <div className={styles.receiptRow}>
                   <span>Status:</span>
-                  <span className={styles.paidStatusBadge}>PAID &amp; PROCESSING</span>
+                  <span className={styles.paidStatusBadge}>PAID &amp; CONFIRMED</span>
                 </div>
               </div>
 
@@ -270,6 +329,16 @@ export default function CartPage() {
                 <Link href="/account" className={styles.viewOrdersBtn}>
                   VIEW IN MY ACCOUNT
                 </Link>
+                {orderSuccess.shiprocketTrackingUrl && (
+                  <a
+                    href={orderSuccess.shiprocketTrackingUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={styles.trackShipmentBtn}
+                  >
+                    TRACK SHIPMENT
+                  </a>
+                )}
                 <Link href="/categories" className={styles.continueShoppingBtn}>
                   CONTINUE SHOPPING
                 </Link>
@@ -292,7 +361,7 @@ export default function CartPage() {
             </div>
           ) : (
             <div className={styles.cartGrid}>
-              {/* Left Column: Cart Items List */}
+              {/* Left Column: Cart Items List & Delivery Details */}
               <div className={styles.itemsColumn}>
                 {checkoutError && (
                   <div className={styles.errorAlertBox}>
@@ -369,6 +438,75 @@ export default function CartPage() {
                     </div>
                   </div>
                 ))}
+
+                {/* Delivery & Shipping Address Form Card */}
+                <div className={styles.addressCard}>
+                  <div className={styles.addressHeader}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#132c66" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                      <circle cx="12" cy="10" r="3"></circle>
+                    </svg>
+                    <h3>Delivery &amp; Shipping Details</h3>
+                  </div>
+
+                  <div className={styles.addressGrid}>
+                    <div className={styles.formGroup}>
+                      <label>Recipient Name</label>
+                      <input
+                        type="text"
+                        placeholder="Full Name"
+                        value={shippingAddress.name}
+                        onChange={(e) => setShippingAddress({ ...shippingAddress, name: e.target.value })}
+                      />
+                    </div>
+                    <div className={styles.formGroup}>
+                      <label>Phone Number</label>
+                      <input
+                        type="tel"
+                        placeholder="10-digit Mobile Number"
+                        value={shippingAddress.phone}
+                        onChange={(e) => setShippingAddress({ ...shippingAddress, phone: e.target.value })}
+                      />
+                    </div>
+                    <div className={`${styles.formGroup} ${styles.fullWidthGroup}`}>
+                      <label>Delivery Street Address</label>
+                      <input
+                        type="text"
+                        placeholder="House / Flat / Shop / Street / Area"
+                        value={shippingAddress.street}
+                        onChange={(e) => setShippingAddress({ ...shippingAddress, street: e.target.value })}
+                      />
+                    </div>
+                    <div className={styles.formGroup}>
+                      <label>City / Town</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. New Delhi"
+                        value={shippingAddress.city}
+                        onChange={(e) => setShippingAddress({ ...shippingAddress, city: e.target.value })}
+                      />
+                    </div>
+                    <div className={styles.formGroup}>
+                      <label>State</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Delhi"
+                        value={shippingAddress.state}
+                        onChange={(e) => setShippingAddress({ ...shippingAddress, state: e.target.value })}
+                      />
+                    </div>
+                    <div className={styles.formGroup}>
+                      <label>Pincode</label>
+                      <input
+                        type="text"
+                        placeholder="6-digit Pincode"
+                        maxLength={6}
+                        value={shippingAddress.pincode}
+                        onChange={(e) => setShippingAddress({ ...shippingAddress, pincode: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
 
               {/* Right Column: Checkout Summary */}
@@ -387,7 +525,7 @@ export default function CartPage() {
                   </div>
 
                   <div className={styles.summaryRow}>
-                    <span>Shipping</span>
+                    <span>Express Shipping</span>
                     <span className={styles.freeShipping}>FREE</span>
                   </div>
 
@@ -418,7 +556,7 @@ export default function CartPage() {
                       <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
                       <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                     </svg>
-                    <span>100% Secure Razorpay Payment Gateway</span>
+                    <span>100% Secure Payment &amp; Shiprocket Dispatch</span>
                   </div>
                 </div>
               </div>

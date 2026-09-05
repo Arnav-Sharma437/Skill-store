@@ -19,10 +19,18 @@ interface OrderItem {
 
 interface Order {
   id: string;
+  orderNumber?: string;
   date: string;
   total: number;
   status: string;
+  paymentStatus?: string;
   items: OrderItem[];
+  shiprocketOrderId?: string;
+  shiprocketShipmentId?: string;
+  shiprocketAwbCode?: string;
+  shiprocketCourierName?: string;
+  shiprocketStatus?: string;
+  shiprocketTrackingUrl?: string;
 }
 
 function AccountContent() {
@@ -240,13 +248,14 @@ function AccountContent() {
                             <th>Date</th>
                             <th>Product Description</th>
                             <th>Total Amount</th>
+                            <th>Shipment / Logistics</th>
                             <th>Status</th>
                           </tr>
                         </thead>
                         <tbody>
                           {orders.map((order) => (
                             <tr key={order.id}>
-                              <td className={styles.orderId}>{order.id}</td>
+                              <td className={styles.orderId}>{order.orderNumber || order.id}</td>
                               <td>{order.date}</td>
                               <td>
                                 {order.items.map((it, idx) => (
@@ -256,6 +265,41 @@ function AccountContent() {
                                 ))}
                               </td>
                               <td className={styles.orderTotal}>₹{order.total.toLocaleString("en-IN")}</td>
+                              <td>
+                                {order.shiprocketAwbCode || order.shiprocketTrackingUrl ? (
+                                  <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                                    <span style={{ fontSize: "12px", color: "#0f172a", fontWeight: "700" }}>
+                                      {order.shiprocketCourierName || "Shiprocket Express"}
+                                    </span>
+                                    {order.shiprocketAwbCode && (
+                                      <span style={{ fontSize: "11px", color: "#64748b" }}>
+                                        AWB: {order.shiprocketAwbCode}
+                                      </span>
+                                    )}
+                                    {order.shiprocketTrackingUrl && (
+                                      <a
+                                        href={order.shiprocketTrackingUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        style={{
+                                          fontSize: "11.5px",
+                                          color: "#0284c7",
+                                          fontWeight: "750",
+                                          textDecoration: "underline",
+                                        }}
+                                      >
+                                        Track Package ↗
+                                      </a>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <span style={{ fontSize: "12px", color: "#94a3b8" }}>
+                                    {order.shiprocketStatus === "pending_shipment"
+                                      ? "In Logistics Queue"
+                                      : order.shiprocketStatus || "Processing"}
+                                  </span>
+                                )}
+                              </td>
                               <td>
                                 <span className={`${styles.statusBadge} ${order.status === "Delivered" ? styles.statusDelivered : styles.statusShipped}`}>
                                   {order.status}
