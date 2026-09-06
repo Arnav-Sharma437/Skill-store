@@ -7,6 +7,7 @@ export interface IProduct extends Document {
   price: number;
   originalPrice: number;
   imageUrl: string;
+  videoUrl?: string;
   gallery: string[];
   rating: number;
   ratingCount: number;
@@ -26,6 +27,7 @@ const ProductSchema: Schema = new Schema(
     price: { type: Number, required: true },
     originalPrice: { type: Number, required: true },
     imageUrl: { type: String, required: true },
+    videoUrl: { type: String, default: "" },
     gallery: { type: [String], default: [] },
     rating: { type: Number, default: 5 },
     ratingCount: { type: Number, default: 0 },

@@ -14,14 +14,15 @@ export async function GET(req: NextRequest) {
 
     const query: Record<string, unknown> = {};
 
-    if (brand) query.brand = brand.toLowerCase();
-    if (category) query.category = category.toLowerCase();
-    if (subCategory) query.subCategory = subCategory.toLowerCase();
+    if (brand && brand !== "all") query.brand = brand.toLowerCase();
+    if (category && category !== "all") query.category = category.toLowerCase();
+    if (subCategory && subCategory !== "all") query.subCategory = subCategory.toLowerCase();
     
     if (search) {
       query.$or = [
         { title: { $regex: search, $options: "i" } },
-        { id: { $regex: search, $options: "i" } }
+        { id: { $regex: search, $options: "i" } },
+        { brand: { $regex: search, $options: "i" } }
       ];
     }
 
@@ -43,6 +44,7 @@ export async function POST(req: NextRequest) {
       price,
       originalPrice,
       imageUrl,
+      videoUrl,
       gallery,
       rating,
       ratingCount,
@@ -56,24 +58,31 @@ export async function POST(req: NextRequest) {
     } = body;
 
     if (!id || !title || !price || !imageUrl || !brand || !category) {
-      return NextResponse.json({ success: false, error: "Missing required fields" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "Missing required fields (ID, Title, Price, Image, Brand, Category)" }, { status: 400 });
+    }
+
+    // Check if product ID already exists
+    const existing = await Product.findOne({ id: id.trim() });
+    if (existing) {
+      return NextResponse.json({ success: false, error: `Product with SKU ID "${id}" already exists.` }, { status: 400 });
     }
 
     const newProduct = await Product.create({
-      id,
-      title,
+      id: id.trim(),
+      title: title.trim(),
       price: Number(price),
       originalPrice: Number(originalPrice || price),
-      imageUrl,
-      gallery: gallery || [],
+      imageUrl: imageUrl.trim(),
+      videoUrl: videoUrl ? videoUrl.trim() : "",
+      gallery: Array.isArray(gallery) ? gallery : [],
       rating: Number(rating || 5),
       ratingCount: Number(ratingCount || 0),
-      brand: brand.toLowerCase(),
-      category: category.toLowerCase(),
-      subCategory: subCategory ? subCategory.toLowerCase() : "domestic",
-      description: description || [],
-      specifications: specifications || [],
-      whatsInBox: whatsInBox || [],
+      brand: brand.toLowerCase().trim(),
+      category: category.toLowerCase().trim(),
+      subCategory: subCategory ? subCategory.toLowerCase().trim() : "domestic",
+      description: Array.isArray(description) ? description : (typeof description === "string" ? description.split("\n").filter(Boolean) : []),
+      specifications: Array.isArray(specifications) ? specifications : (typeof specifications === "string" ? specifications.split("\n").filter(Boolean) : []),
+      whatsInBox: Array.isArray(whatsInBox) ? whatsInBox : (typeof whatsInBox === "string" ? whatsInBox.split("\n").filter(Boolean) : []),
       inStock: inStock !== undefined ? inStock : true
     });
 
@@ -94,6 +103,7 @@ export async function PUT(req: NextRequest) {
       price,
       originalPrice,
       imageUrl,
+      videoUrl,
       gallery,
       rating,
       ratingCount,
@@ -110,24 +120,33 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ success: false, error: "Missing product ID" }, { status: 400 });
     }
 
+    const updateFields: Record<string, unknown> = {};
+
+    if (title !== undefined) updateFields.title = title.trim();
+    if (price !== undefined) updateFields.price = Number(price);
+    if (originalPrice !== undefined) updateFields.originalPrice = Number(originalPrice);
+    if (imageUrl !== undefined) updateFields.imageUrl = imageUrl.trim();
+    if (videoUrl !== undefined) updateFields.videoUrl = videoUrl.trim();
+    if (gallery !== undefined) updateFields.gallery = Array.isArray(gallery) ? gallery : [];
+    if (rating !== undefined) updateFields.rating = Number(rating);
+    if (ratingCount !== undefined) updateFields.ratingCount = Number(ratingCount);
+    if (brand !== undefined) updateFields.brand = brand.toLowerCase().trim();
+    if (category !== undefined) updateFields.category = category.toLowerCase().trim();
+    if (subCategory !== undefined) updateFields.subCategory = subCategory.toLowerCase().trim();
+    if (description !== undefined) {
+      updateFields.description = Array.isArray(description) ? description : (typeof description === "string" ? description.split("\n").filter(Boolean) : []);
+    }
+    if (specifications !== undefined) {
+      updateFields.specifications = Array.isArray(specifications) ? specifications : (typeof specifications === "string" ? specifications.split("\n").filter(Boolean) : []);
+    }
+    if (whatsInBox !== undefined) {
+      updateFields.whatsInBox = Array.isArray(whatsInBox) ? whatsInBox : (typeof whatsInBox === "string" ? whatsInBox.split("\n").filter(Boolean) : []);
+    }
+    if (inStock !== undefined) updateFields.inStock = Boolean(inStock);
+
     const updatedProduct = await Product.findOneAndUpdate(
       { id },
-      {
-        title,
-        price: price !== undefined ? Number(price) : undefined,
-        originalPrice: originalPrice !== undefined ? Number(originalPrice) : undefined,
-        imageUrl,
-        gallery,
-        rating: rating !== undefined ? Number(rating) : undefined,
-        ratingCount: ratingCount !== undefined ? Number(ratingCount) : undefined,
-        brand: brand ? brand.toLowerCase() : undefined,
-        category: category ? category.toLowerCase() : undefined,
-        subCategory: subCategory ? subCategory.toLowerCase() : undefined,
-        description,
-        specifications,
-        whatsInBox,
-        inStock
-      },
+      { $set: updateFields },
       { new: true }
     );
 
@@ -158,7 +177,7 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ success: false, error: "Product not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ success: true, data: deleted });
+    return NextResponse.json({ success: true, data: deleted, message: "Product deleted successfully." });
   } catch (error: unknown) {
     const errMessage = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json({ success: false, error: errMessage }, { status: 500 });

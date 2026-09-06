@@ -6,7 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import styles from "./AdminPage.module.css";
 
-// Interface Definitions
+// --- Interfaces ---
 interface IBanner {
   id: string;
   imageUrl: string;
@@ -27,10 +27,17 @@ interface IProduct {
   price: number;
   originalPrice: number;
   imageUrl: string;
+  videoUrl?: string;
+  gallery: string[];
   brand: string;
   category: string;
   subCategory: string;
   inStock: boolean;
+  rating?: number;
+  ratingCount?: number;
+  description?: string[];
+  specifications?: string[];
+  whatsInBox?: string[];
 }
 
 interface IEnquiry {
@@ -50,16 +57,22 @@ interface IAdminOrder {
   userPhone?: string;
   itemsCount: number;
   items: Array<{
+    productId?: string;
     title: string;
     quantity: number;
     price: number;
+    imageUrl?: string;
   }>;
   subtotal: number;
   gst: number;
+  shipping?: number;
   grandTotal: number;
   paymentStatus: string;
   orderStatus: string;
   paymentMethod: string;
+  razorpayOrderId?: string;
+  razorpayPaymentId?: string;
+  receipt?: string;
   shippingAddress?: {
     street?: string;
     city?: string;
@@ -67,6 +80,7 @@ interface IAdminOrder {
     pincode?: string;
     phone?: string;
     name?: string;
+    country?: string;
   };
   shiprocketOrderId?: string;
   shiprocketShipmentId?: string;
@@ -75,12 +89,19 @@ interface IAdminOrder {
   shiprocketStatus?: string;
   shiprocketTrackingUrl?: string;
   shipmentError?: string;
+  weight?: number;
+  dimensions?: {
+    length?: number;
+    breadth?: number;
+    height?: number;
+  };
 }
 
 export default function AdminDashboard() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<"analytics" | "products" | "banners" | "orders">("analytics");
+  const [activeTab, setActiveTab] = useState<"analytics" | "products" | "orders" | "banners">("analytics");
   const [authorized, setAuthorized] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   // Data States
   const [banners, setBanners] = useState<IBanner[]>([]);
@@ -90,56 +111,91 @@ export default function AdminDashboard() {
   const [orders, setOrders] = useState<IAdminOrder[]>([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [orderActionLoading, setOrderActionLoading] = useState<string | null>(null);
-  
-  // loading state
-  const [loading, setLoading] = useState(true);
 
   // Search & Filter States
   const [productSearch, setProductSearch] = useState("");
   const [productCategoryFilter, setProductCategoryFilter] = useState("all");
+  const [productBrandFilter, setProductBrandFilter] = useState("all");
+  const [productStockFilter, setProductStockFilter] = useState("all");
+
+  const [orderSearch, setOrderSearch] = useState("");
+  const [orderStatusFilter, setOrderStatusFilter] = useState("all");
+  const [orderPaymentFilter, setOrderPaymentFilter] = useState("all");
 
   // Modal States
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<IProduct | null>(null);
+  const [viewingProduct, setViewingProduct] = useState<IProduct | null>(null);
+  const [deletingProductId, setDeletingProductId] = useState<string | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<IAdminOrder | null>(null);
 
-  // Form States
-  const [bannerForm, setBannerForm] = useState({ id: "", imageUrl: "", link: "" });
+  // Upload States
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [isUploadingVideo, setIsUploadingVideo] = useState(false);
+  const [isUploadingGallery, setIsUploadingGallery] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
+  // Product Form State
   const [productForm, setProductForm] = useState({
     id: "",
     title: "",
     price: "",
     originalPrice: "",
     imageUrl: "",
+    videoUrl: "",
+    gallery: [] as string[],
     brand: "tuqo",
     category: "high-pressure-washer",
     subCategory: "domestic",
     inStock: true,
+    descriptionText: "",
+    specificationsText: "",
+    whatsInBoxText: "",
   });
 
+  // Banner Form State
+  const [bannerForm, setBannerForm] = useState({ id: "", imageUrl: "", link: "" });
   const [editingBannerId, setEditingBannerId] = useState<string | null>(null);
 
+  // --- Data Fetching Callbacks ---
   const fetchBanners = useCallback(async () => {
-    const res = await fetch("/api/admin/banners");
-    const json = await res.json();
-    if (json.success) setBanners(json.data);
+    try {
+      const res = await fetch("/api/admin/banners");
+      const json = await res.json();
+      if (json.success) setBanners(json.data);
+    } catch (e) {
+      console.error("Error fetching banners:", e);
+    }
   }, []);
 
   const fetchCategories = useCallback(async () => {
-    const res = await fetch("/api/admin/categories");
-    const json = await res.json();
-    if (json.success) setCategories(json.data);
+    try {
+      const res = await fetch("/api/admin/categories");
+      const json = await res.json();
+      if (json.success) setCategories(json.data);
+    } catch (e) {
+      console.error("Error fetching categories:", e);
+    }
   }, []);
 
-  const fetchProducts = async () => {
-    const res = await fetch("/api/admin/products");
-    const json = await res.json();
-    if (json.success) setProducts(json.data);
-  };
+  const fetchProducts = useCallback(async () => {
+    try {
+      const res = await fetch("/api/admin/products");
+      const json = await res.json();
+      if (json.success) setProducts(json.data);
+    } catch (e) {
+      console.error("Error fetching products:", e);
+    }
+  }, []);
 
   const fetchEnquiries = useCallback(async () => {
-    const res = await fetch("/api/admin/enquiries");
-    const json = await res.json();
-    if (json.success) setEnquiries(json.data);
+    try {
+      const res = await fetch("/api/admin/enquiries");
+      const json = await res.json();
+      if (json.success) setEnquiries(json.data);
+    } catch (e) {
+      console.error("Error fetching enquiries:", e);
+    }
   }, []);
 
   const fetchOrders = useCallback(async () => {
@@ -157,6 +213,255 @@ export default function AdminDashboard() {
     }
   }, []);
 
+  const initializeData = useCallback(async () => {
+    setLoading(true);
+    try {
+      await fetch("/api/admin/seed");
+      await Promise.all([
+        fetchBanners(),
+        fetchCategories(),
+        fetchProducts(),
+        fetchEnquiries(),
+        fetchOrders(),
+      ]);
+    } catch (e) {
+      console.error("Initialization failed", e);
+    } finally {
+      setLoading(false);
+    }
+  }, [fetchBanners, fetchCategories, fetchProducts, fetchEnquiries, fetchOrders]);
+
+  // Auth check
+  useEffect(() => {
+    const token = sessionStorage.getItem("skill_store_admin_token");
+    if (token !== "logged_in") {
+      router.push("/admin/login");
+    } else {
+      Promise.resolve().then(() => {
+        setAuthorized(true);
+        initializeData();
+      });
+    }
+  }, [router, initializeData]);
+
+  // Sign out
+  const handleSignOut = () => {
+    sessionStorage.removeItem("skill_store_admin_token");
+    router.push("/admin/login");
+  };
+
+  // --- Upload Handlers ---
+  const handleFileUpload = async (
+    file: File,
+    targetType: "main_image" | "video" | "gallery"
+  ) => {
+    setUploadError(null);
+    if (targetType === "main_image") setIsUploadingImage(true);
+    if (targetType === "video") setIsUploadingVideo(true);
+    if (targetType === "gallery") setIsUploadingGallery(true);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/admin/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "File upload failed");
+      }
+
+      if (targetType === "main_image") {
+        setProductForm((prev) => ({ ...prev, imageUrl: data.url }));
+      } else if (targetType === "video") {
+        setProductForm((prev) => ({ ...prev, videoUrl: data.url }));
+      } else if (targetType === "gallery") {
+        setProductForm((prev) => ({
+          ...prev,
+          gallery: [...prev.gallery, data.url],
+        }));
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Error uploading file";
+      setUploadError(msg);
+      alert(`Upload error: ${msg}`);
+    } finally {
+      if (targetType === "main_image") setIsUploadingImage(false);
+      if (targetType === "video") setIsUploadingVideo(false);
+      if (targetType === "gallery") setIsUploadingGallery(false);
+    }
+  };
+
+  // --- Stock Toggle Handler ---
+  const handleStockToggle = async (product: IProduct) => {
+    const updatedStock = !product.inStock;
+    setProducts((prev) =>
+      prev.map((p) => (p.id === product.id ? { ...p, inStock: updatedStock } : p))
+    );
+
+    try {
+      const res = await fetch("/api/admin/products", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: product.id, inStock: updatedStock }),
+      });
+      const json = await res.json();
+      if (!json.success) {
+        setProducts((prev) =>
+          prev.map((p) => (p.id === product.id ? { ...p, inStock: product.inStock } : p))
+        );
+        alert(`Error toggling stock: ${json.error}`);
+      }
+    } catch {
+      setProducts((prev) =>
+        prev.map((p) => (p.id === product.id ? { ...p, inStock: product.inStock } : p))
+      );
+      alert("Network error toggling stock");
+    }
+  };
+
+  // --- Product CRUD Modals & Actions ---
+  const openAddProductModal = () => {
+    setEditingProduct(null);
+    setUploadError(null);
+    setProductForm({
+      id: "",
+      title: "",
+      price: "",
+      originalPrice: "",
+      imageUrl: "",
+      videoUrl: "",
+      gallery: [],
+      brand: "tuqo",
+      category: "high-pressure-washer",
+      subCategory: "domestic",
+      inStock: true,
+      descriptionText: "",
+      specificationsText: "",
+      whatsInBoxText: "",
+    });
+    setIsProductModalOpen(true);
+  };
+
+  const openEditProductModal = (prod: IProduct) => {
+    setEditingProduct(prod);
+    setUploadError(null);
+    setProductForm({
+      id: prod.id,
+      title: prod.title,
+      price: prod.price ? prod.price.toString() : "",
+      originalPrice: prod.originalPrice ? prod.originalPrice.toString() : "",
+      imageUrl: prod.imageUrl || "",
+      videoUrl: prod.videoUrl || "",
+      gallery: Array.isArray(prod.gallery) ? prod.gallery : [],
+      brand: prod.brand || "tuqo",
+      category: prod.category || "high-pressure-washer",
+      subCategory: prod.subCategory || "domestic",
+      inStock: prod.inStock !== false,
+      descriptionText: Array.isArray(prod.description) ? prod.description.join("\n") : "",
+      specificationsText: Array.isArray(prod.specifications) ? prod.specifications.join("\n") : "",
+      whatsInBoxText: Array.isArray(prod.whatsInBox) ? prod.whatsInBox.join("\n") : "",
+    });
+    setIsProductModalOpen(true);
+  };
+
+  const handleProductSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const method = editingProduct ? "PUT" : "POST";
+
+    const payload = {
+      id: productForm.id.trim(),
+      title: productForm.title.trim(),
+      price: Number(productForm.price),
+      originalPrice: Number(productForm.originalPrice || productForm.price),
+      imageUrl: productForm.imageUrl.trim(),
+      videoUrl: productForm.videoUrl.trim(),
+      gallery: productForm.gallery,
+      brand: productForm.brand.toLowerCase(),
+      category: productForm.category.toLowerCase(),
+      subCategory: productForm.subCategory.toLowerCase(),
+      inStock: productForm.inStock,
+      description: productForm.descriptionText.split("\n").filter((l) => l.trim().length > 0),
+      specifications: productForm.specificationsText.split("\n").filter((l) => l.trim().length > 0),
+      whatsInBox: productForm.whatsInBoxText.split("\n").filter((l) => l.trim().length > 0),
+    };
+
+    try {
+      const res = await fetch("/api/admin/products", {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const json = await res.json();
+      if (json.success) {
+        setIsProductModalOpen(false);
+        fetchProducts();
+      } else {
+        alert(`Error saving product: ${json.error}`);
+      }
+    } catch {
+      alert("Network error saving product.");
+    }
+  };
+
+  const handleDeleteProduct = async (id: string) => {
+    try {
+      const res = await fetch(`/api/admin/products?id=${id}`, { method: "DELETE" });
+      const json = await res.json();
+      if (json.success) {
+        setDeletingProductId(null);
+        fetchProducts();
+      } else {
+        alert(`Error deleting product: ${json.error}`);
+      }
+    } catch {
+      alert("Network error deleting product");
+    }
+  };
+
+  // --- Banner Actions ---
+  const handleBannerSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const method = editingBannerId ? "PUT" : "POST";
+    try {
+      const res = await fetch("/api/admin/banners", {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(bannerForm),
+      });
+      const json = await res.json();
+      if (json.success) {
+        alert(editingBannerId ? "Banner updated!" : "Banner created!");
+        setBannerForm({ id: "", imageUrl: "", link: "" });
+        setEditingBannerId(null);
+        fetchBanners();
+      } else {
+        alert(`Error: ${json.error}`);
+      }
+    } catch {
+      alert("Network error saving banner");
+    }
+  };
+
+  const deleteBanner = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this banner?")) return;
+    try {
+      const res = await fetch(`/api/admin/banners?id=${id}`, { method: "DELETE" });
+      const json = await res.json();
+      if (json.success) {
+        fetchBanners();
+      } else {
+        alert(`Error: ${json.error}`);
+      }
+    } catch {
+      alert("Network error deleting banner");
+    }
+  };
+
+  // --- Shiprocket & Order Actions ---
   const handleRetryShiprocket = async (orderNumber: string) => {
     setOrderActionLoading(orderNumber);
     try {
@@ -169,6 +474,9 @@ export default function AdminDashboard() {
       if (json.success) {
         alert("Shiprocket shipment generated successfully!");
         fetchOrders();
+        if (selectedOrder?.orderNumber === orderNumber) {
+          setSelectedOrder((prev) => (prev ? { ...prev, ...json.data } : null));
+        }
       } else {
         alert(`Shiprocket Error: ${json.error}`);
       }
@@ -191,6 +499,9 @@ export default function AdminDashboard() {
       if (json.success) {
         alert(`Tracking updated: ${json.trackResult?.currentStatus || "Success"}`);
         fetchOrders();
+        if (selectedOrder?.orderNumber === orderNumber) {
+          setSelectedOrder((prev) => (prev ? { ...prev, ...json.data } : null));
+        }
       } else {
         alert(`Sync Error: ${json.error}`);
       }
@@ -201,228 +512,111 @@ export default function AdminDashboard() {
     }
   };
 
-  const initializeData = useCallback(async () => {
-    setLoading(true);
+  const handleOrderStatusChange = async (orderNumber: string, newStatus: string) => {
+    setOrderActionLoading(orderNumber);
     try {
-      // 1. Trigger database seeding if empty
-      await fetch("/api/admin/seed");
-
-      // 2. Fetch all collections
-      await Promise.all([fetchBanners(), fetchCategories(), fetchProducts(), fetchEnquiries(), fetchOrders()]);
-    } catch (e) {
-      console.error("Initialization failed", e);
-    } finally {
-      setLoading(false);
-    }
-  }, [fetchBanners, fetchCategories, fetchEnquiries, fetchOrders]);
-
-  // Auth check
-  useEffect(() => {
-    const token = sessionStorage.getItem("skill_store_admin_token");
-    if (token !== "logged_in") {
-      router.push("/admin/login");
-    } else {
-      Promise.resolve().then(() => {
-        setAuthorized(true);
-        initializeData();
-      });
-    }
-  }, [router, initializeData]);
-
-  // Sign out
-  const handleSignOut = () => {
-    sessionStorage.removeItem("skill_store_admin_token");
-    router.push("/admin/login");
-  };
-
-  // Toggle stock switch handler (instant save to MongoDB!)
-  const handleStockToggle = async (product: IProduct) => {
-    const updatedStock = !product.inStock;
-    
-    // Optimistic Update
-    setProducts((prev) =>
-      prev.map((p) => (p.id === product.id ? { ...p, inStock: updatedStock } : p))
-    );
-
-    try {
-      const res = await fetch("/api/admin/products", {
-        method: "PUT",
+      const res = await fetch("/api/admin/orders", {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: product.id, inStock: updatedStock }),
+        body: JSON.stringify({ orderId: orderNumber, action: "update_status", newStatus }),
       });
       const json = await res.json();
-      if (!json.success) {
-        // Rollback on failure
-        setProducts((prev) =>
-          prev.map((p) => (p.id === product.id ? { ...p, inStock: product.inStock } : p))
-        );
-        alert(`Error toggling stock: ${json.error}`);
+      if (json.success) {
+        fetchOrders();
+        if (selectedOrder?.orderNumber === orderNumber) {
+          setSelectedOrder((prev) => (prev ? { ...prev, orderStatus: newStatus } : null));
+        }
+      } else {
+        alert(`Error updating order status: ${json.error}`);
       }
     } catch {
-      // Rollback
-      setProducts((prev) =>
-        prev.map((p) => (p.id === product.id ? { ...p, inStock: product.inStock } : p))
-      );
-      alert("Network error toggling stock");
+      alert("Network error updating status");
+    } finally {
+      setOrderActionLoading(null);
     }
   };
 
-  // Banner Actions
-  const handleBannerSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const method = editingBannerId ? "PUT" : "POST";
-    const res = await fetch("/api/admin/banners", {
-      method,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(bannerForm),
-    });
-    const json = await res.json();
-    if (json.success) {
-      alert(editingBannerId ? "Banner updated!" : "Banner created!");
-      setBannerForm({ id: "", imageUrl: "", link: "" });
-      setEditingBannerId(null);
-      fetchBanners();
-    } else {
-      alert(`Error: ${json.error}`);
-    }
-  };
-
-  const deleteBanner = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this banner?")) return;
-    const res = await fetch(`/api/admin/banners?id=${id}`, { method: "DELETE" });
-    const json = await res.json();
-    if (json.success) {
-      fetchBanners();
-    } else {
-      alert(`Error: ${json.error}`);
-    }
-  };
-
-  // Product CRUD modal triggers
-  const openAddProductModal = () => {
-    setEditingProduct(null);
-    setProductForm({
-      id: "",
-      title: "",
-      price: "",
-      originalPrice: "",
-      imageUrl: "",
-      brand: "tuqo",
-      category: "high-pressure-washer",
-      subCategory: "domestic",
-      inStock: true,
-    });
-    setIsProductModalOpen(true);
-  };
-
-  const openEditProductModal = (prod: IProduct) => {
-    setEditingProduct(prod);
-    setProductForm({
-      id: prod.id,
-      title: prod.title,
-      price: prod.price.toString(),
-      originalPrice: prod.originalPrice.toString(),
-      imageUrl: prod.imageUrl,
-      brand: prod.brand,
-      category: prod.category,
-      subCategory: prod.subCategory,
-      inStock: prod.inStock,
-    });
-    setIsProductModalOpen(true);
-  };
-
-  const handleProductSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const method = editingProduct ? "PUT" : "POST";
-    const res = await fetch("/api/admin/products", {
-      method,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(productForm),
-    });
-    const json = await res.json();
-    if (json.success) {
-      setIsProductModalOpen(false);
-      fetchProducts();
-    } else {
-      alert(`Error saving product: ${json.error}`);
-    }
-  };
-
-  const handleDeleteProduct = async (id: string) => {
-    if (!confirm("Delete this product from the database?")) return;
-    const res = await fetch(`/api/admin/products?id=${id}`, { method: "DELETE" });
-    const json = await res.json();
-    if (json.success) {
-      fetchProducts();
-    } else {
-      alert(`Error deleting product: ${json.error}`);
-    }
-  };
-
-  // Filtered Products List
+  // --- Filtered Product & Order Datasets ---
   const filteredProducts = useMemo(() => {
-    return products.filter((prod) => {
-      const matchSearch =
-        prod.title.toLowerCase().includes(productSearch.toLowerCase()) ||
-        prod.id.toLowerCase().includes(productSearch.toLowerCase());
-      
-      const matchCategory =
-        productCategoryFilter === "all" || prod.category === productCategoryFilter;
+    return products.filter((p) => {
+      const matchesSearch =
+        (p.title || "").toLowerCase().includes(productSearch.toLowerCase()) ||
+        (p.id || "").toLowerCase().includes(productSearch.toLowerCase()) ||
+        (p.brand || "").toLowerCase().includes(productSearch.toLowerCase());
 
-      return matchSearch && matchCategory;
+      const matchesCat =
+        productCategoryFilter === "all" || p.category === productCategoryFilter;
+
+      const matchesBrand =
+        productBrandFilter === "all" || p.brand?.toLowerCase() === productBrandFilter.toLowerCase();
+
+      const matchesStock =
+        productStockFilter === "all" ||
+        (productStockFilter === "in" && p.inStock) ||
+        (productStockFilter === "out" && !p.inStock);
+
+      return matchesSearch && matchesCat && matchesBrand && matchesStock;
     });
-  }, [products, productSearch, productCategoryFilter]);
+  }, [products, productSearch, productCategoryFilter, productBrandFilter, productStockFilter]);
 
-  // Unique categories list for dropdown selection
-  const uniqueCategories = useMemo(() => {
-    const seen = new Set();
-    return categories.filter((cat) => {
-      const duplicate = seen.has(cat.id);
-      seen.add(cat.id);
-      return !duplicate;
+  const filteredOrders = useMemo(() => {
+    return orders.filter((o) => {
+      const matchesSearch =
+        (o.orderNumber || "").toLowerCase().includes(orderSearch.toLowerCase()) ||
+        (o.userName || "").toLowerCase().includes(orderSearch.toLowerCase()) ||
+        (o.userEmail || "").toLowerCase().includes(orderSearch.toLowerCase()) ||
+        (o.shiprocketAwbCode || "").toLowerCase().includes(orderSearch.toLowerCase());
+
+      const matchesStatus =
+        orderStatusFilter === "all" || o.orderStatus === orderStatusFilter;
+
+      const matchesPayment =
+        orderPaymentFilter === "all" || o.paymentStatus === orderPaymentFilter;
+
+      return matchesSearch && matchesStatus && matchesPayment;
     });
-  }, [categories]);
+  }, [orders, orderSearch, orderStatusFilter, orderPaymentFilter]);
 
-  // Analytics helper calculations
-  const totalProducts = products.length;
-  const inStockCount = products.filter((p) => p.inStock).length;
-  const outOfStockCount = totalProducts - inStockCount;
-  const totalEnquiries = enquiries.length;
+  // --- Analytics Calculations ---
+  const analyticsData = useMemo(() => {
+    const paidOrders = orders.filter((o) => o.paymentStatus === "paid");
+    const totalRevenue = paidOrders.reduce((sum, o) => sum + (o.grandTotal || 0), 0);
+    const avgOrderValue = paidOrders.length > 0 ? Math.round(totalRevenue / paidOrders.length) : 0;
+    const inStock = products.filter((p) => p.inStock).length;
+    const outOfStock = products.length - inStock;
+    const dispatched = orders.filter((o) => !!o.shiprocketAwbCode || !!o.shiprocketOrderId).length;
 
-  const inStockPercentage = totalProducts > 0 ? (inStockCount / totalProducts) * 360 : 360;
-
-  // Products per category breakdown (AEC style visual bar chart)
-  const categoryChartData = useMemo(() => {
-    const counts: Record<string, number> = {};
-    products.forEach((p) => {
-      const catLabel = p.category.replace(/-/g, " ").toUpperCase();
-      counts[catLabel] = (counts[catLabel] || 0) + 1;
-    });
-    return Object.entries(counts).map(([name, count]) => ({ name, count }));
-  }, [products]);
-
-  const maxCategoryCount = useMemo(() => {
-    if (categoryChartData.length === 0) return 1;
-    return Math.max(...categoryChartData.map((d) => d.count));
-  }, [categoryChartData]);
+    return {
+      totalRevenue,
+      paidOrdersCount: paidOrders.length,
+      totalOrdersCount: orders.length,
+      avgOrderValue,
+      inStock,
+      outOfStock,
+      dispatched,
+      totalProducts: products.length,
+    };
+  }, [orders, products]);
 
   if (!authorized) return null;
 
   return (
     <div className={styles.adminWrapper}>
-      {/* Top Header Panel (Matches AEC Admin Panel Header) */}
+      {/* Top Header Bar */}
       <header className={styles.adminHeader}>
         <div className={styles.brandGroup}>
-          <span className={styles.headerTitle}>Dashboard</span>
-          <span className={styles.headerSubtitle}>Skill Store Management Panel</span>
+          <span className={styles.headerTitle}>Skill Store Central Control</span>
+          <span className={styles.headerSubtitle}>Official E-Commerce Backend</span>
         </div>
+
         <div className={styles.headerRight}>
           <div className={styles.adminMeta}>
-            <strong>Skill Store Admin</strong>
-            <span>Administrator</span>
+            <strong>Super Admin</strong>
+            <span>Verified Session</span>
           </div>
+
           <button onClick={handleSignOut} className={styles.signOutBtn}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
               <polyline points="16 17 21 12 16 7"></polyline>
               <line x1="21" y1="12" x2="9" y2="12"></line>
@@ -436,8 +630,8 @@ export default function AdminDashboard() {
       <div className={styles.adminLayout}>
         <aside className={styles.sidebar}>
           <div className={styles.sidebarBrand}>
-            <strong>Skill Store Admin</strong>
-            <span>Management Panel</span>
+            <strong>SKILL STORE</strong>
+            <span>Management Portal</span>
           </div>
 
           <nav className={styles.sidebarNav}>
@@ -451,31 +645,7 @@ export default function AdminDashboard() {
                 <rect x="14" y="12" width="7" height="9"></rect>
                 <rect x="3" y="16" width="7" height="5"></rect>
               </svg>
-              <span>Analytics</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab("products")}
-              className={`${styles.sidebarTab} ${activeTab === "products" ? styles.activeTab : ""}`}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className={styles.tabIcon}>
-                <circle cx="12" cy="12" r="10"></circle>
-                <line x1="2" y1="12" x2="22" y2="12"></line>
-                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
-              </svg>
-              <span>Products</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab("banners")}
-              className={`${styles.sidebarTab} ${activeTab === "banners" ? styles.activeTab : ""}`}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className={styles.tabIcon}>
-                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                <polyline points="21 15 16 10 5 21"></polyline>
-              </svg>
-              <span>Hero Banner</span>
+              <span>Analytics &amp; KPI</span>
             </button>
 
             <button
@@ -488,6 +658,32 @@ export default function AdminDashboard() {
                 <path d="M16 10a4 4 0 0 1-8 0"></path>
               </svg>
               <span>Orders &amp; Logistics</span>
+              {orders.length > 0 && <span className={styles.tabBadge}>{orders.length}</span>}
+            </button>
+
+            <button
+              onClick={() => setActiveTab("products")}
+              className={`${styles.sidebarTab} ${activeTab === "products" ? styles.activeTab : ""}`}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className={styles.tabIcon}>
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="2" y1="12" x2="22" y2="12"></line>
+                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+              </svg>
+              <span>Products Catalogue</span>
+              {products.length > 0 && <span className={styles.tabBadge}>{products.length}</span>}
+            </button>
+
+            <button
+              onClick={() => setActiveTab("banners")}
+              className={`${styles.sidebarTab} ${activeTab === "banners" ? styles.activeTab : ""}`}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className={styles.tabIcon}>
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                <polyline points="21 15 16 10 5 21"></polyline>
+              </svg>
+              <span>Hero Banners</span>
             </button>
           </nav>
 
@@ -497,419 +693,146 @@ export default function AdminDashboard() {
               <polyline points="15 3 21 3 21 9"></polyline>
               <line x1="10" y1="14" x2="21" y2="3"></line>
             </svg>
-            <span>View Website</span>
+            <span>Live Store Preview</span>
           </Link>
         </aside>
 
-        {/* Dashboard Panels */}
+        {/* Dashboard Main Content Area */}
         <main className={styles.dashboardContent}>
           {loading ? (
             <div className={styles.loadingSpinner}>
-              <span>LOADING CATALOGUE DATA...</span>
+              <span>SYNCING E-COMMERCE DATA...</span>
             </div>
           ) : (
             <>
-              {/* Tab 1: Analytics (AEC Style charts and cards) */}
+              {/* ======================================================== */}
+              {/* TAB 1: ANALYTICS & DASHBOARD METRICS                    */}
+              {/* ======================================================== */}
               {activeTab === "analytics" && (
                 <div className={styles.tabContent}>
                   <div className={styles.analyticsIntro}>
-                    <span>Welcome back</span>
-                    <h2>Analytics overview</h2>
-                    <p>Inventory health and recent customer enquiries</p>
+                    <span>Executive Summary</span>
+                    <h2>Store Performance &amp; Analytics</h2>
+                    <p>Real-time revenue, orders pipeline, inventory metrics, and customer enquiries.</p>
                   </div>
 
-                  {/* Summary Cards Grid */}
+                  {/* Top Stats Grid */}
                   <div className={styles.statsGrid}>
-                    <div className={styles.statCard}>
-                      <div className={styles.statInfo}>
-                        <span>Total Products</span>
-                        <strong>{totalProducts}</strong>
-                      </div>
-                      <div className={styles.statIconBox}>
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0f172a" strokeWidth="2.5">
-                          <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
-                          <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
-                          <line x1="12" y1="22.08" x2="12" y2="12"></line>
-                        </svg>
-                      </div>
-                    </div>
-
                     <div className={styles.statCard} style={{ borderLeft: "4px solid #10b981" }}>
                       <div className={styles.statInfo}>
-                        <span>In Stock</span>
-                        <strong style={{ color: "#10b981" }}>{inStockCount}</strong>
+                        <span>Total Revenue (Paid)</span>
+                        <strong style={{ color: "#10b981" }}>₹{analyticsData.totalRevenue.toLocaleString("en-IN")}</strong>
                       </div>
                       <div className={styles.statIconBox} style={{ background: "#d1fae5" }}>
                         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2.5">
-                          <polyline points="20 6 9 17 4 12"></polyline>
+                          <line x1="12" y1="1" x2="12" y2="23"></line>
+                          <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
                         </svg>
                       </div>
                     </div>
 
-                    <div className={styles.statCard} style={{ borderLeft: "4px solid #ef4444" }}>
+                    <div className={styles.statCard} style={{ borderLeft: "4px solid #38b6ff" }}>
                       <div className={styles.statInfo}>
-                        <span>Out of Stock</span>
-                        <strong style={{ color: "#ef4444" }}>{outOfStockCount}</strong>
+                        <span>Total Orders</span>
+                        <strong style={{ color: "#0284c7" }}>{analyticsData.totalOrdersCount}</strong>
                       </div>
-                      <div className={styles.statIconBox} style={{ background: "#fee2e2" }}>
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2.5">
-                          <line x1="18" y1="6" x2="6" y2="18"></line>
-                          <line x1="6" y1="6" x2="18" y2="18"></line>
+                      <div className={styles.statIconBox} style={{ background: "#e0f2fe" }}>
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0284c7" strokeWidth="2.5">
+                          <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                          <line x1="3" y1="6" x2="21" y2="6"></line>
                         </svg>
                       </div>
                     </div>
 
-                    <div className={styles.statCard} style={{ borderLeft: "4px solid #f59e0b" }}>
+                    <div className={styles.statCard} style={{ borderLeft: "4px solid #ffd300" }}>
                       <div className={styles.statInfo}>
-                        <span>Total Enquiries</span>
-                        <strong style={{ color: "#f59e0b" }}>{totalEnquiries}</strong>
+                        <span>Average Order Value</span>
+                        <strong style={{ color: "#b45309" }}>₹{analyticsData.avgOrderValue.toLocaleString("en-IN")}</strong>
                       </div>
                       <div className={styles.statIconBox} style={{ background: "#fef3c7" }}>
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2.5">
-                          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#b45309" strokeWidth="2.5">
+                          <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                          <polyline points="17 6 23 6 23 12"></polyline>
+                        </svg>
+                      </div>
+                    </div>
+
+                    <div className={styles.statCard} style={{ borderLeft: "4px solid #8b5cf6" }}>
+                      <div className={styles.statInfo}>
+                        <span>Shiprocket Dispatches</span>
+                        <strong style={{ color: "#7c3aed" }}>{analyticsData.dispatched}</strong>
+                      </div>
+                      <div className={styles.statIconBox} style={{ background: "#ede9fe" }}>
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" strokeWidth="2.5">
+                          <rect x="1" y="3" width="15" height="13"></rect>
+                          <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
+                          <circle cx="5.5" cy="18.5" r="2.5"></circle>
+                          <circle cx="18.5" cy="18.5" r="2.5"></circle>
                         </svg>
                       </div>
                     </div>
                   </div>
 
-                  {/* Graphical breakdowns */}
-                  <div className={styles.graphsRow}>
-                    {/* Products per category bar chart */}
-                    <div className={styles.graphCard}>
-                      <div className={styles.graphHeader}>
-                        <h3>Products per category</h3>
-                        <span>Catalogue breakdown by category</span>
+                  {/* Stock & Orders Dual Panel */}
+                  <div className={styles.dualPanelGrid}>
+                    {/* Left: Inventory Breakdown */}
+                    <div className={styles.panelCard}>
+                      <h3>Inventory Health</h3>
+                      <div className={styles.inventoryBreakdown}>
+                        <div className={styles.invRow}>
+                          <span className={styles.invDot} style={{ background: "#10b981" }}></span>
+                          <span>In Stock Ready to Ship</span>
+                          <strong>{analyticsData.inStock} items</strong>
+                        </div>
+                        <div className={styles.invRow}>
+                          <span className={styles.invDot} style={{ background: "#ef4444" }}></span>
+                          <span>Out of Stock</span>
+                          <strong style={{ color: "#ef4444" }}>{analyticsData.outOfStock} items</strong>
+                        </div>
+                        <div className={styles.invRow}>
+                          <span className={styles.invDot} style={{ background: "#64748b" }}></span>
+                          <span>Total Catalogued SKUs</span>
+                          <strong>{analyticsData.totalProducts} items</strong>
+                        </div>
                       </div>
-                      <div className={styles.barChartContainer}>
-                        {categoryChartData.map((data, idx) => {
-                          const heightPercent = (data.count / maxCategoryCount) * 100;
-                          return (
-                            <div key={idx} className={styles.barCol}>
-                              <div className={styles.barWrapper}>
-                                <div 
-                                  className={styles.barFill} 
-                                  style={{ height: `${heightPercent}%` }}
-                                  title={`${data.count} Products`}
-                                ></div>
+                      <button onClick={() => setActiveTab("products")} className={styles.panelActionBtn}>
+                        Manage Products Catalogue →
+                      </button>
+                    </div>
+
+                    {/* Right: Recent Customer Enquiries */}
+                    <div className={styles.panelCard}>
+                      <h3>Recent Customer Inquiries ({enquiries.length})</h3>
+                      {enquiries.length === 0 ? (
+                        <p style={{ color: "#64748b", fontSize: "13.5px" }}>No customer messages received yet.</p>
+                      ) : (
+                        <div className={styles.enquiriesList}>
+                          {enquiries.slice(0, 4).map((enq) => (
+                            <div key={enq._id} className={styles.enquiryItem}>
+                              <div className={styles.enquiryTop}>
+                                <strong>{enq.name}</strong>
+                                <span>{enq.email}</span>
                               </div>
-                              <span className={styles.barLabel} title={data.name}>
-                                {data.name.length > 12 ? `${data.name.substring(0, 10)}...` : data.name}
-                              </span>
+                              <p>{enq.message}</p>
                             </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    {/* Stock Distribution Donut */}
-                    <div className={styles.graphCard}>
-                      <div className={styles.graphHeader}>
-                        <h3>Stock distribution</h3>
-                        <span>In stock vs out of stock</span>
-                      </div>
-                      <div className={styles.donutContainer}>
-                        <div 
-                          className={styles.donutChart}
-                          style={{
-                            background: `conic-gradient(#10b981 0deg, #10b981 ${inStockPercentage}deg, #ef4444 ${inStockPercentage}deg, #ef4444 360deg)`
-                          }}
-                        >
-                          <div className={styles.donutCenter}>
-                            <strong>{Math.round((inStockCount / (totalProducts || 1)) * 100)}%</strong>
-                            <span>Available</span>
-                          </div>
-                        </div>
-                        <div className={styles.legend}>
-                          <div className={styles.legendItem}>
-                            <span className={styles.legendDot} style={{ background: "#10b981" }}></span>
-                            <span>In Stock ({inStockCount})</span>
-                          </div>
-                          <div className={styles.legendItem}>
-                            <span className={styles.legendDot} style={{ background: "#ef4444" }}></span>
-                            <span>Out of Stock ({outOfStockCount})</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Customer Enquiries list */}
-                  <div className={styles.enquiriesCard}>
-                    <div className={styles.graphHeader}>
-                      <h3>Recent enquiries</h3>
-                      <span>Last 10 messages from customers</span>
-                    </div>
-
-                    <div className={styles.tableWrapper}>
-                      <table className={styles.adminTable}>
-                        <thead>
-                          <tr>
-                            <th>Date</th>
-                            <th>Name</th>
-                            <th>Message</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {enquiries.slice(0, 10).map((e) => (
-                            <tr key={e._id}>
-                              <td style={{ color: "#64748b", fontWeight: 600 }}>
-                                {new Date(e.createdAt).toLocaleString("en-IN", {
-                                  month: "short",
-                                  day: "numeric",
-                                  year: "numeric",
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                })}
-                              </td>
-                              <td><strong>{e.name}</strong></td>
-                              <td style={{ color: "#334155" }}>{e.message}</td>
-                            </tr>
                           ))}
-                        </tbody>
-                      </table>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
               )}
 
-              {/* Tab 2: Products List (AEC Products Layout) */}
-              {activeTab === "products" && (
-                <div className={styles.tabContent}>
-                  <div className={styles.productsCatalogHeader}>
-                    <div className={styles.catalogInfo}>
-                      <h2>Products</h2>
-                      <span>{products.length} products in catalogue</span>
-                    </div>
-                    <div className={styles.catalogActions}>
-                      <button onClick={initializeData} className={styles.syncBtn}>
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                          <polyline points="23 4 23 10 17 10"></polyline>
-                          <polyline points="1 20 1 14 7 14"></polyline>
-                          <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
-                        </svg>
-                        <span>Sync Catalogue</span>
-                      </button>
-                      <button onClick={openAddProductModal} className={styles.addProductBtn}>
-                        + Add Product
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Filter panel bar */}
-                  <div className={styles.filterBar}>
-                    <div className={styles.searchBox}>
-                      <label htmlFor="search-input" className="sr-only">Search products</label>
-                      <input 
-                        id="search-input"
-                        type="text" 
-                        placeholder="Search products by name or category..." 
-                        value={productSearch}
-                        onChange={(e) => setProductSearch(e.target.value)}
-                        className={styles.searchInput}
-                      />
-                    </div>
-                    
-                    <div className={styles.filterDropdown}>
-                      <label htmlFor="cat-filter" className="sr-only">Filter by category</label>
-                      <select
-                        id="cat-filter"
-                        value={productCategoryFilter}
-                        onChange={(e) => setProductCategoryFilter(e.target.value)}
-                        className={styles.filterSelect}
-                      >
-                        <option value="all">All Categories</option>
-                        {uniqueCategories.map((cat) => (
-                          <option key={cat.id} value={cat.id}>{cat.name}</option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-
-                  {/* Products list table */}
-                  <div className={styles.listCard} style={{ padding: 0 }}>
-                    <div className={styles.tableWrapper}>
-                      <table className={styles.adminTable}>
-                        <thead>
-                          <tr>
-                            <th>Image</th>
-                            <th>Name</th>
-                            <th>Category</th>
-                            <th>Sub-Category</th>
-                            <th>Price</th>
-                            <th>Stock</th>
-                            <th>Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {filteredProducts.map((p) => (
-                            <tr key={p.id}>
-                              <td>
-                                <div className={styles.tableThumbnail}>
-                                  <Image src={p.imageUrl} alt={p.id} width={40} height={40} style={{ objectFit: "contain" }} />
-                                </div>
-                              </td>
-                              <td className={styles.tableNameCell}><strong>{p.title}</strong></td>
-                              <td>{p.category.replace(/-/g, " ").toUpperCase()}</td>
-                              <td>{p.subCategory.toUpperCase()}</td>
-                              <td>₹ {p.price.toLocaleString("en-IN")}</td>
-                              <td>
-                                {/* Premium stock switch toggle control */}
-                                <div className={styles.switchWrapper}>
-                                  <label className={styles.switch}>
-                                    <input 
-                                      type="checkbox" 
-                                      checked={p.inStock} 
-                                      onChange={() => handleStockToggle(p)}
-                                    />
-                                    <span className={styles.slider}></span>
-                                  </label>
-                                  <span className={`${styles.switchLabel} ${p.inStock ? styles.labelIn : styles.labelOut}`}>
-                                    {p.inStock ? "In Stock" : "Out of Stock"}
-                                  </span>
-                                </div>
-                              </td>
-                              <td>
-                                <div className={styles.rowActions}>
-                                  {/* Edit pencil icon */}
-                                  <button onClick={() => openEditProductModal(p)} className={styles.iconActionBtn} title="Edit Product">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                      <path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4Z"></path>
-                                    </svg>
-                                  </button>
-
-                                  {/* View product in front-end icon */}
-                                  <Link href={`/product/${p.id}`} className={styles.iconActionBtn} title="View Details">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                                      <circle cx="12" cy="12" r="3"></circle>
-                                    </svg>
-                                  </Link>
-
-                                  {/* Delete trash icon */}
-                                  <button onClick={() => handleDeleteProduct(p.id)} className={styles.iconActionBtn} style={{ color: "#ef4444" }} title="Delete Product">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                      <polyline points="3 6 5 6 21 6"></polyline>
-                                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                                    </svg>
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Tab 3: Banners */}
-              {activeTab === "banners" && (
-                <div className={styles.tabContent}>
-                  <div className={styles.flexHeader}>
-                    <h2>Homepage Hero Banners</h2>
-                  </div>
-
-                  <div className={styles.gridFormLayout}>
-                    {/* Banner Form */}
-                    <div className={styles.formCard}>
-                      <h3>{editingBannerId ? "Edit Hero Banner" : "Add New Banner"}</h3>
-                      <form onSubmit={handleBannerSubmit} className={styles.form}>
-                        <div className={styles.inputField}>
-                          <label htmlFor="form-banner-id">Banner ID</label>
-                          <input
-                            id="form-banner-id"
-                            type="text"
-                            placeholder="e.g. hero-6"
-                            value={bannerForm.id}
-                            onChange={(e) => setBannerForm({ ...bannerForm, id: e.target.value })}
-                            required
-                            disabled={!!editingBannerId}
-                          />
-                        </div>
-                        <div className={styles.inputField}>
-                          <label htmlFor="form-banner-image">Banner Image URL</label>
-                          <input
-                            id="form-banner-image"
-                            type="text"
-                            placeholder="e.g. /images/banners/Hbanner-6.png"
-                            value={bannerForm.imageUrl}
-                            onChange={(e) => setBannerForm({ ...bannerForm, imageUrl: e.target.value })}
-                            required
-                          />
-                        </div>
-                        <div className={styles.inputField}>
-                          <label htmlFor="form-banner-link">Redirect Link</label>
-                          <input
-                            id="form-banner-link"
-                            type="text"
-                            placeholder="e.g. /shop/tuqo"
-                            value={bannerForm.link}
-                            onChange={(e) => setBannerForm({ ...bannerForm, link: e.target.value })}
-                          />
-                        </div>
-                        <button type="submit" className={styles.submitBtn}>
-                          {editingBannerId ? "UPDATE BANNER" : "CREATE BANNER"}
-                        </button>
-                        {editingBannerId && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setEditingBannerId(null);
-                              setBannerForm({ id: "", imageUrl: "", link: "" });
-                            }}
-                            className={styles.cancelBtn}
-                          >
-                            Cancel
-                          </button>
-                        )}
-                      </form>
-                    </div>
-
-                    {/* Banner List */}
-                    <div className={styles.listCard}>
-                      <h3>Active Banner Slides ({banners.length})</h3>
-                      <div className={styles.bannersList}>
-                        {banners.map((b) => (
-                          <div key={b.id} className={styles.bannerRow}>
-                            <div className={styles.bannerPreview}>
-                              <Image src={b.imageUrl} alt={b.id} width={120} height={50} style={{ objectFit: "cover" }} />
-                            </div>
-                            <div className={styles.bannerInfo}>
-                              <strong>{b.id}</strong>
-                              <span>Link: {b.link}</span>
-                            </div>
-                            <div className={styles.rowActions}>
-                              <button
-                                onClick={() => {
-                                  setEditingBannerId(b.id);
-                                  setBannerForm({ id: b.id, imageUrl: b.imageUrl, link: b.link });
-                                }}
-                                className={styles.editBtn}
-                              >
-                                Edit
-                              </button>
-                              <button onClick={() => deleteBanner(b.id)} className={styles.deleteBtn}>
-                                Delete
-                              </button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Tab 4: Orders & Shiprocket Logistics */}
+              {/* ======================================================== */}
+              {/* TAB 2: ORDERS & SHIPROCKET LOGISTICS                    */}
+              {/* ======================================================== */}
               {activeTab === "orders" && (
                 <div className={styles.tabContent}>
                   <div className={styles.flexHeader}>
                     <div>
-                      <h2>Customer Orders &amp; Logistics</h2>
+                      <h2>Orders &amp; Shiprocket Dispatch</h2>
                       <p style={{ margin: "4px 0 0 0", color: "#64748b", fontSize: "13.5px" }}>
-                        Manage purchases, Razorpay payments, and Shiprocket dispatch tracking.
+                        Manage customer purchases, Razorpay payment verification, and Shiprocket live tracking.
                       </p>
                     </div>
                     <button
@@ -922,75 +845,64 @@ export default function AdminDashboard() {
                     </button>
                   </div>
 
-                  {/* Orders Summary Cards */}
-                  <div className={styles.statsGrid}>
-                    <div className={styles.statCard}>
-                      <div className={styles.statInfo}>
-                        <span>Total Orders</span>
-                        <strong>{orders.length}</strong>
-                      </div>
-                      <div className={styles.statIconBox}>
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0f172a" strokeWidth="2.5">
-                          <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
-                        </svg>
-                      </div>
-                    </div>
+                  {/* Filters Bar */}
+                  <div className={styles.searchFilterGrid}>
+                    <input
+                      type="text"
+                      placeholder="Search order #, customer, email, AWB..."
+                      value={orderSearch}
+                      onChange={(e) => setOrderSearch(e.target.value)}
+                      className={styles.searchInput}
+                    />
 
-                    <div className={styles.statCard} style={{ borderLeft: "4px solid #10b981" }}>
-                      <div className={styles.statInfo}>
-                        <span>Paid &amp; Confirmed</span>
-                        <strong style={{ color: "#10b981" }}>
-                          {orders.filter((o) => o.paymentStatus === "paid").length}
-                        </strong>
-                      </div>
-                      <div className={styles.statIconBox} style={{ background: "#d1fae5" }}>
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2.5">
-                          <polyline points="20 6 9 17 4 12"></polyline>
-                        </svg>
-                      </div>
-                    </div>
+                    <select
+                      value={orderStatusFilter}
+                      onChange={(e) => setOrderStatusFilter(e.target.value)}
+                      className={styles.filterSelect}
+                    >
+                      <option value="all">All Order Statuses</option>
+                      <option value="processing">Processing</option>
+                      <option value="confirmed">Confirmed</option>
+                      <option value="shipped">Shipped</option>
+                      <option value="delivered">Delivered</option>
+                      <option value="cancelled">Cancelled</option>
+                    </select>
 
-                    <div className={styles.statCard} style={{ borderLeft: "4px solid #0284c7" }}>
-                      <div className={styles.statInfo}>
-                        <span>Dispatched on Shiprocket</span>
-                        <strong style={{ color: "#0284c7" }}>
-                          {orders.filter((o) => !!o.shiprocketOrderId || !!o.shiprocketAwbCode).length}
-                        </strong>
-                      </div>
-                      <div className={styles.statIconBox} style={{ background: "#e0f2fe" }}>
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0284c7" strokeWidth="2.5">
-                          <rect x="1" y="3" width="15" height="13"></rect>
-                          <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
-                          <circle cx="5.5" cy="18.5" r="2.5"></circle>
-                          <circle cx="18.5" cy="18.5" r="2.5"></circle>
-                        </svg>
-                      </div>
-                    </div>
+                    <select
+                      value={orderPaymentFilter}
+                      onChange={(e) => setOrderPaymentFilter(e.target.value)}
+                      className={styles.filterSelect}
+                    >
+                      <option value="all">All Payment Statuses</option>
+                      <option value="paid">Paid</option>
+                      <option value="pending">Pending</option>
+                      <option value="failed">Failed</option>
+                    </select>
                   </div>
 
-                  {/* Orders Table Card */}
-                  <div className={styles.listCard} style={{ marginTop: "24px" }}>
+                  {/* Orders Table */}
+                  <div className={styles.listCard} style={{ marginTop: "20px" }}>
                     <div className={styles.tableWrapper}>
                       <table className={styles.adminTable}>
                         <thead>
                           <tr>
-                            <th>Order Details</th>
-                            <th>Customer &amp; Address</th>
-                            <th>Items &amp; Amount</th>
+                            <th>Order Ref &amp; Date</th>
+                            <th>Customer Info</th>
+                            <th>Items &amp; Value</th>
                             <th>Payment</th>
                             <th>Shiprocket Logistics</th>
                             <th>Actions</th>
                           </tr>
                         </thead>
                         <tbody>
-                          {orders.length === 0 ? (
+                          {filteredOrders.length === 0 ? (
                             <tr>
                               <td colSpan={6} style={{ textAlign: "center", padding: "40px", color: "#64748b" }}>
-                                {ordersLoading ? "Loading customer orders from database..." : "No orders found in the database yet."}
+                                {ordersLoading ? "Loading customer orders..." : "No orders found matching criteria."}
                               </td>
                             </tr>
                           ) : (
-                            orders.map((o) => (
+                            filteredOrders.map((o) => (
                               <tr key={o.id}>
                                 <td>
                                   <strong style={{ color: "#0f172a", fontSize: "14px" }}>{o.orderNumber}</strong>
@@ -1005,18 +917,12 @@ export default function AdminDashboard() {
                                   </div>
                                 </td>
                                 <td>
-                                  <div style={{ fontWeight: "700", color: "#1e293b" }}>{o.userName}</div>
+                                  <div style={{ fontWeight: "750", color: "#1e293b" }}>{o.userName}</div>
                                   <div style={{ fontSize: "12px", color: "#64748b" }}>{o.userEmail}</div>
                                   {o.userPhone && <div style={{ fontSize: "12px", color: "#64748b" }}>📞 {o.userPhone}</div>}
-                                  {o.shippingAddress?.city && (
-                                    <div style={{ fontSize: "11.5px", color: "#94a3b8", marginTop: "4px" }}>
-                                      📍 {o.shippingAddress.street ? `${o.shippingAddress.street}, ` : ""}
-                                      {o.shippingAddress.city} {o.shippingAddress.pincode}
-                                    </div>
-                                  )}
                                 </td>
                                 <td>
-                                  <div style={{ fontSize: "13px", fontWeight: "750", color: "#132c66" }}>
+                                  <div style={{ fontSize: "14px", fontWeight: "800", color: "#132c66" }}>
                                     ₹{o.grandTotal.toLocaleString("en-IN")}
                                   </div>
                                   <div style={{ fontSize: "12px", color: "#64748b" }}>
@@ -1063,13 +969,11 @@ export default function AdminDashboard() {
                                     >
                                       {o.shiprocketStatus || "pending_shipment"}
                                     </span>
-
                                     {o.shiprocketAwbCode && (
                                       <span style={{ fontSize: "11.5px", color: "#1e293b", fontWeight: "600" }}>
                                         AWB: {o.shiprocketAwbCode} ({o.shiprocketCourierName || "Shiprocket"})
                                       </span>
                                     )}
-
                                     {o.shiprocketTrackingUrl && (
                                       <a
                                         href={o.shiprocketTrackingUrl}
@@ -1077,38 +981,21 @@ export default function AdminDashboard() {
                                         rel="noopener noreferrer"
                                         style={{ fontSize: "11.5px", color: "#0284c7", fontWeight: "700" }}
                                       >
-                                        Live Tracking ↗
+                                        Live Track ↗
                                       </a>
-                                    )}
-
-                                    {o.shipmentError && (
-                                      <span style={{ fontSize: "11px", color: "#ef4444" }}>
-                                        ⚠️ {o.shipmentError}
-                                      </span>
                                     )}
                                   </div>
                                 </td>
                                 <td>
-                                  <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                                  <div style={{ display: "flex", gap: "6px" }}>
                                     <button
-                                      onClick={() => handleRetryShiprocket(o.orderNumber)}
-                                      disabled={orderActionLoading === o.orderNumber}
-                                      className={styles.editBtn}
-                                      style={{ padding: "6px 12px", fontSize: "12px", width: "100%", textAlign: "center" }}
+                                      onClick={() => setSelectedOrder(o)}
+                                      className={styles.primaryBtn}
+                                      style={{ padding: "6px 12px", fontSize: "12px" }}
+                                      title="View Order Details"
                                     >
-                                      {orderActionLoading === o.orderNumber ? "Processing..." : "🚀 Retry Shiprocket"}
+                                      View Details
                                     </button>
-
-                                    {(o.shiprocketAwbCode || o.shiprocketShipmentId) && (
-                                      <button
-                                        onClick={() => handleSyncTracking(o.orderNumber)}
-                                        disabled={orderActionLoading === o.orderNumber}
-                                        className={styles.cancelBtn}
-                                        style={{ padding: "4px 10px", fontSize: "11px", width: "100%", textAlign: "center" }}
-                                      >
-                                        ↻ Sync Track
-                                      </button>
-                                    )}
                                   </div>
                                 </td>
                               </tr>
@@ -1120,15 +1007,320 @@ export default function AdminDashboard() {
                   </div>
                 </div>
               )}
+
+              {/* ======================================================== */}
+              {/* TAB 3: PRODUCTS CATALOGUE MANAGEMENT                    */}
+              {/* ======================================================== */}
+              {activeTab === "products" && (
+                <div className={styles.tabContent}>
+                  <div className={styles.flexHeader}>
+                    <div>
+                      <h2>Products Catalogue Management</h2>
+                      <p style={{ margin: "4px 0 0 0", color: "#64748b", fontSize: "13.5px" }}>
+                        Add, view, edit, delete, upload media, and toggle stock availability.
+                      </p>
+                    </div>
+
+                    <button onClick={openAddProductModal} className={styles.primaryBtn}>
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                      </svg>
+                      <span>+ ADD NEW PRODUCT</span>
+                    </button>
+                  </div>
+
+                  {/* Product Search & Filter Strip */}
+                  <div className={styles.searchFilterGrid}>
+                    <input
+                      type="text"
+                      placeholder="Search title, SKU, or brand..."
+                      value={productSearch}
+                      onChange={(e) => setProductSearch(e.target.value)}
+                      className={styles.searchInput}
+                    />
+
+                    <select
+                      value={productCategoryFilter}
+                      onChange={(e) => setProductCategoryFilter(e.target.value)}
+                      className={styles.filterSelect}
+                    >
+                      <option value="all">All Categories</option>
+                      {categories.map((cat) => (
+                        <option key={cat.id} value={cat.id}>
+                          {cat.name}
+                        </option>
+                      ))}
+                    </select>
+
+                    <select
+                      value={productBrandFilter}
+                      onChange={(e) => setProductBrandFilter(e.target.value)}
+                      className={styles.filterSelect}
+                    >
+                      <option value="all">All Brands</option>
+                      <option value="tuqo">TUQO</option>
+                      <option value="pumpkin">PUMPKIN</option>
+                      <option value="mitsuki">MITSUKI</option>
+                      <option value="metso">METSO</option>
+                      <option value="costec">COSTEC</option>
+                    </select>
+
+                    <select
+                      value={productStockFilter}
+                      onChange={(e) => setProductStockFilter(e.target.value)}
+                      className={styles.filterSelect}
+                    >
+                      <option value="all">All Stock Statuses</option>
+                      <option value="in">In Stock Only</option>
+                      <option value="out">Out of Stock Only</option>
+                    </select>
+                  </div>
+
+                  {/* Products Data Table */}
+                  <div className={styles.listCard} style={{ marginTop: "20px" }}>
+                    <div className={styles.tableWrapper}>
+                      <table className={styles.adminTable}>
+                        <thead>
+                          <tr>
+                            <th>Product Details</th>
+                            <th>SKU ID</th>
+                            <th>Brand &amp; Category</th>
+                            <th>Selling Price</th>
+                            <th>Stock Toggle</th>
+                            <th>Media</th>
+                            <th>Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {filteredProducts.length === 0 ? (
+                            <tr>
+                              <td colSpan={7} style={{ textAlign: "center", padding: "40px", color: "#64748b" }}>
+                                No products found matching criteria.
+                              </td>
+                            </tr>
+                          ) : (
+                            filteredProducts.map((p) => (
+                              <tr key={p.id}>
+                                <td>
+                                  <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                                    <div className={styles.tableThumbnail}>
+                                      <Image
+                                        src={p.imageUrl || "/images/products/hw2000.jpg"}
+                                        alt={p.title}
+                                        width={44}
+                                        height={44}
+                                        style={{ objectFit: "contain" }}
+                                      />
+                                    </div>
+                                    <div>
+                                      <strong className={styles.tableNameCell}>{p.title}</strong>
+                                      <div style={{ fontSize: "11px", color: "#94a3b8" }}>
+                                        {p.subCategory ? `Sub: ${p.subCategory}` : ""}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </td>
+                                <td>
+                                  <code style={{ background: "#f1f5f9", padding: "2px 6px", borderRadius: "4px" }}>
+                                    {p.id}
+                                  </code>
+                                </td>
+                                <td>
+                                  <div style={{ fontWeight: "750", textTransform: "uppercase" }}>{p.brand}</div>
+                                  <div style={{ fontSize: "11.5px", color: "#64748b" }}>{p.category}</div>
+                                </td>
+                                <td>
+                                  <div style={{ fontWeight: "800", color: "#132c66" }}>
+                                    ₹{p.price.toLocaleString("en-IN")}
+                                  </div>
+                                  {p.originalPrice > p.price && (
+                                    <del style={{ fontSize: "11px", color: "#94a3b8" }}>
+                                      ₹{p.originalPrice.toLocaleString("en-IN")}
+                                    </del>
+                                  )}
+                                </td>
+                                <td>
+                                  <div className={styles.switchWrapper}>
+                                    <label className={styles.switch}>
+                                      <input
+                                        type="checkbox"
+                                        checked={p.inStock}
+                                        onChange={() => handleStockToggle(p)}
+                                      />
+                                      <span className={styles.slider}></span>
+                                    </label>
+                                    <span style={{ fontSize: "12px", color: p.inStock ? "#10b981" : "#ef4444", fontWeight: "700" }}>
+                                      {p.inStock ? "In Stock" : "Out of Stock"}
+                                    </span>
+                                  </div>
+                                </td>
+                                <td>
+                                  <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+                                    {p.videoUrl ? (
+                                      <span className={styles.mediaBadge} style={{ background: "#ede9fe", color: "#7c3aed" }} title="Has Video">
+                                        🎬 Video
+                                      </span>
+                                    ) : null}
+                                    {p.gallery && p.gallery.length > 0 ? (
+                                      <span className={styles.mediaBadge} style={{ background: "#e0f2fe", color: "#0369a1" }} title={`${p.gallery.length} Gallery Photos`}>
+                                        🖼️ {p.gallery.length}
+                                      </span>
+                                    ) : null}
+                                  </div>
+                                </td>
+                                <td>
+                                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                    {/* View Quick Preview */}
+                                    <button
+                                      onClick={() => setViewingProduct(p)}
+                                      className={styles.iconActionBtn}
+                                      title="Quick View Product"
+                                    >
+                                      👁️
+                                    </button>
+
+                                    {/* Edit Product */}
+                                    <button
+                                      onClick={() => openEditProductModal(p)}
+                                      className={styles.iconActionBtn}
+                                      title="Edit Product"
+                                    >
+                                      ✏️
+                                    </button>
+
+                                    {/* Delete Product */}
+                                    <button
+                                      onClick={() => setDeletingProductId(p.id)}
+                                      className={styles.iconActionBtn}
+                                      style={{ color: "#ef4444" }}
+                                      title="Delete Product"
+                                    >
+                                      🗑️
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ======================================================== */}
+              {/* TAB 4: HERO BANNERS MANAGEMENT                          */}
+              {/* ======================================================== */}
+              {activeTab === "banners" && (
+                <div className={styles.tabContent}>
+                  <div className={styles.flexHeader}>
+                    <h2>Homepage Hero Banners</h2>
+                  </div>
+
+                  <div className={styles.gridFormLayout}>
+                    <div className={styles.formCard}>
+                      <h3>{editingBannerId ? "Edit Hero Banner" : "Add New Banner"}</h3>
+                      <form onSubmit={handleBannerSubmit} className={styles.form}>
+                        <div className={styles.inputField}>
+                          <label htmlFor="form-banner-id">Banner ID</label>
+                          <input
+                            id="form-banner-id"
+                            type="text"
+                            placeholder="e.g. hero-1"
+                            value={bannerForm.id}
+                            onChange={(e) => setBannerForm({ ...bannerForm, id: e.target.value })}
+                            required
+                            disabled={!!editingBannerId}
+                          />
+                        </div>
+
+                        <div className={styles.inputField}>
+                          <label htmlFor="form-banner-image">Banner Image URL</label>
+                          <input
+                            id="form-banner-image"
+                            type="text"
+                            placeholder="e.g. /images/banners/banner1.jpg"
+                            value={bannerForm.imageUrl}
+                            onChange={(e) => setBannerForm({ ...bannerForm, imageUrl: e.target.value })}
+                            required
+                          />
+                        </div>
+
+                        <div className={styles.inputField}>
+                          <label htmlFor="form-banner-link">Target Link</label>
+                          <input
+                            id="form-banner-link"
+                            type="text"
+                            placeholder="e.g. /category/high-pressure-washer"
+                            value={bannerForm.link}
+                            onChange={(e) => setBannerForm({ ...bannerForm, link: e.target.value })}
+                          />
+                        </div>
+
+                        <button type="submit" className={styles.submitBtn}>
+                          {editingBannerId ? "UPDATE BANNER" : "CREATE BANNER"}
+                        </button>
+                        {editingBannerId && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditingBannerId(null);
+                              setBannerForm({ id: "", imageUrl: "", link: "" });
+                            }}
+                            className={styles.cancelBtn}
+                          >
+                            Cancel
+                          </button>
+                        )}
+                      </form>
+                    </div>
+
+                    <div className={styles.listCard}>
+                      <h3>Active Banner Slides ({banners.length})</h3>
+                      <div className={styles.bannersList}>
+                        {banners.map((b) => (
+                          <div key={b.id} className={styles.bannerRow}>
+                            <div className={styles.bannerPreview}>
+                              <Image src={b.imageUrl} alt={b.id} width={120} height={50} style={{ objectFit: "cover" }} />
+                            </div>
+                            <div className={styles.bannerInfo}>
+                              <strong>{b.id}</strong>
+                              <span>Link: {b.link}</span>
+                            </div>
+                            <div className={styles.rowActions}>
+                              <button
+                                onClick={() => {
+                                  setEditingBannerId(b.id);
+                                  setBannerForm({ id: b.id, imageUrl: b.imageUrl, link: b.link });
+                                }}
+                                className={styles.editBtn}
+                              >
+                                Edit
+                              </button>
+                              <button onClick={() => deleteBanner(b.id)} className={styles.deleteBtn}>
+                                Delete
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </>
           )}
         </main>
       </div>
 
-      {/* Popup Modal Form for Add/Edit Product */}
+      {/* ============================================================ */}
+      {/* MODAL 1: ADD / EDIT PRODUCT WITH UPLOADS & GALLERY           */}
+      {/* ============================================================ */}
       {isProductModalOpen && (
         <div className={styles.modalOverlay}>
-          <div className={styles.modalCard}>
+          <div className={styles.modalCard} style={{ maxWidth: "800px" }}>
             <div className={styles.modalHeader}>
               <h3>{editingProduct ? "Edit Product Details" : "Add New Catalogue Product"}</h3>
               <button onClick={() => setIsProductModalOpen(false)} className={styles.closeModalBtn}>
@@ -1136,35 +1328,43 @@ export default function AdminDashboard() {
               </button>
             </div>
 
-            <form onSubmit={handleProductSubmit} className={styles.form}>
-              <div className={styles.inputField}>
-                <label htmlFor="form-prod-id">Product SKU ID</label>
-                <input
-                  id="form-prod-id"
-                  type="text"
-                  placeholder="e.g. prod-6"
-                  value={productForm.id}
-                  onChange={(e) => setProductForm({ ...productForm, id: e.target.value })}
-                  required
-                  disabled={!!editingProduct}
-                />
+            {uploadError && (
+              <div style={{ background: "#fef2f2", border: "1px solid #fecaca", color: "#991b1b", padding: "8px 12px", borderRadius: "6px", fontSize: "12.5px", margin: "10px 0" }}>
+                ⚠️ {uploadError}
               </div>
+            )}
 
-              <div className={styles.inputField}>
-                <label htmlFor="form-prod-title">Product Title</label>
-                <input
-                  id="form-prod-title"
-                  type="text"
-                  placeholder="e.g. High Pressure Washer CDW400"
-                  value={productForm.title}
-                  onChange={(e) => setProductForm({ ...productForm, title: e.target.value })}
-                  required
-                />
+            <form onSubmit={handleProductSubmit} className={styles.form}>
+              <div className={styles.inputRow}>
+                <div className={styles.inputField}>
+                  <label htmlFor="form-prod-id">Product SKU ID *</label>
+                  <input
+                    id="form-prod-id"
+                    type="text"
+                    placeholder="e.g. prod-10 or hpw-1"
+                    value={productForm.id}
+                    onChange={(e) => setProductForm({ ...productForm, id: e.target.value })}
+                    required
+                    disabled={!!editingProduct}
+                  />
+                </div>
+
+                <div className={styles.inputField}>
+                  <label htmlFor="form-prod-title">Product Title *</label>
+                  <input
+                    id="form-prod-title"
+                    type="text"
+                    placeholder="e.g. TUQO High Pressure Washer HW2000"
+                    value={productForm.title}
+                    onChange={(e) => setProductForm({ ...productForm, title: e.target.value })}
+                    required
+                  />
+                </div>
               </div>
 
               <div className={styles.inputRow}>
                 <div className={styles.inputField}>
-                  <label htmlFor="form-prod-price">Selling Price (Rs.)</label>
+                  <label htmlFor="form-prod-price">Selling Price (₹) *</label>
                   <input
                     id="form-prod-price"
                     type="number"
@@ -1175,7 +1375,7 @@ export default function AdminDashboard() {
                   />
                 </div>
                 <div className={styles.inputField}>
-                  <label htmlFor="form-prod-orig-price">Original Price</label>
+                  <label htmlFor="form-prod-orig-price">Original MRP Price (₹)</label>
                   <input
                     id="form-prod-orig-price"
                     type="number"
@@ -1188,7 +1388,7 @@ export default function AdminDashboard() {
 
               <div className={styles.inputRow}>
                 <div className={styles.inputField}>
-                  <label htmlFor="form-prod-brand">Brand</label>
+                  <label htmlFor="form-prod-brand">Brand *</label>
                   <select
                     id="form-prod-brand"
                     value={productForm.brand}
@@ -1202,66 +1402,459 @@ export default function AdminDashboard() {
                   </select>
                 </div>
                 <div className={styles.inputField}>
-                  <label htmlFor="form-prod-category">Category</label>
+                  <label htmlFor="form-prod-category">Category *</label>
                   <select
                     id="form-prod-category"
                     value={productForm.category}
                     onChange={(e) => setProductForm({ ...productForm, category: e.target.value })}
                   >
-                    {uniqueCategories.map((cat) => (
-                      <option key={cat.id} value={cat.id}>{cat.name}</option>
+                    {categories.map((cat) => (
+                      <option key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </option>
                     ))}
                   </select>
                 </div>
-              </div>
-
-              <div className={styles.inputRow}>
                 <div className={styles.inputField}>
                   <label htmlFor="form-prod-subcat">Sub Category</label>
-                  <select
+                  <input
                     id="form-prod-subcat"
+                    type="text"
+                    placeholder="e.g. domestic, commercial, accessory"
                     value={productForm.subCategory}
                     onChange={(e) => setProductForm({ ...productForm, subCategory: e.target.value })}
-                  >
-                    <option value="domestic">Domestic</option>
-                    <option value="commercial">Commercial</option>
-                    <option value="accessory">Accessory</option>
-                  </select>
+                  />
                 </div>
-                <div className={styles.inputField}>
-                  <label htmlFor="form-prod-stock">Stock Availability</label>
-                  <select
-                    id="form-prod-stock"
-                    value={productForm.inStock ? "true" : "false"}
-                    onChange={(e) => setProductForm({ ...productForm, inStock: e.target.value === "true" })}
-                  >
-                    <option value="true">In Stock</option>
-                    <option value="false">Out of Stock</option>
-                  </select>
+              </div>
+
+              {/* Media Section: Main Image Upload */}
+              <div className={styles.mediaUploadBox}>
+                <label><strong>Main Product Image *</strong></label>
+                <div className={styles.uploadRow}>
+                  <input
+                    type="text"
+                    placeholder="Image URL or upload from device below"
+                    value={productForm.imageUrl}
+                    onChange={(e) => setProductForm({ ...productForm, imageUrl: e.target.value })}
+                    required
+                    style={{ flex: 1 }}
+                  />
+                  <label className={styles.uploadBtn}>
+                    {isUploadingImage ? "Uploading..." : "📁 Upload Image"}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      style={{ display: "none" }}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleFileUpload(file, "main_image");
+                      }}
+                    />
+                  </label>
                 </div>
+                {productForm.imageUrl && (
+                  <div className={styles.mediaPreview}>
+                    <Image
+                      src={productForm.imageUrl}
+                      alt="Preview"
+                      width={90}
+                      height={90}
+                      style={{ objectFit: "contain" }}
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Media Section: Video Upload / URL */}
+              <div className={styles.mediaUploadBox}>
+                <label><strong>Product Video (Upload MP4 or Enter YouTube/Video URL)</strong></label>
+                <div className={styles.uploadRow}>
+                  <input
+                    type="text"
+                    placeholder="e.g. /uploads/demo.mp4 or https://youtube.com/watch?v=..."
+                    value={productForm.videoUrl}
+                    onChange={(e) => setProductForm({ ...productForm, videoUrl: e.target.value })}
+                    style={{ flex: 1 }}
+                  />
+                  <label className={styles.uploadBtn}>
+                    {isUploadingVideo ? "Uploading Video..." : "🎬 Upload Video"}
+                    <input
+                      type="file"
+                      accept="video/*"
+                      style={{ display: "none" }}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleFileUpload(file, "video");
+                      }}
+                    />
+                  </label>
+                </div>
+                {productForm.videoUrl && (
+                  <div className={styles.videoPlayerBox}>
+                    <video src={productForm.videoUrl} controls style={{ width: "100%", maxHeight: "180px", borderRadius: "8px" }}>
+                      Your browser does not support video tag.
+                    </video>
+                  </div>
+                )}
+              </div>
+
+              {/* Media Section: Gallery Images */}
+              <div className={styles.mediaUploadBox}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <label><strong>Additional Gallery Images ({productForm.gallery.length})</strong></label>
+                  <label className={styles.uploadBtn} style={{ fontSize: "11px", padding: "4px 10px" }}>
+                    {isUploadingGallery ? "Uploading..." : "+ Upload Gallery Photo"}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      style={{ display: "none" }}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleFileUpload(file, "gallery");
+                      }}
+                    />
+                  </label>
+                </div>
+                {productForm.gallery.length > 0 && (
+                  <div className={styles.galleryThumbGrid}>
+                    {productForm.gallery.map((imgUrl, idx) => (
+                      <div key={idx} className={styles.galleryThumbCard}>
+                        <Image src={imgUrl} alt={`Gallery ${idx}`} width={60} height={60} style={{ objectFit: "contain" }} />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setProductForm((prev) => ({
+                              ...prev,
+                              gallery: prev.gallery.filter((_, i) => i !== idx),
+                            }));
+                          }}
+                          className={styles.removeGalleryBtn}
+                        >
+                          &times;
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Rich Texts: Description, Specs, What's In Box */}
+              <div className={styles.inputField}>
+                <label>Description (One point per line)</label>
+                <textarea
+                  rows={3}
+                  placeholder="High efficiency brushless motor&#10;140 Bar maximum pressure output&#10;Self priming water inlet"
+                  value={productForm.descriptionText}
+                  onChange={(e) => setProductForm({ ...productForm, descriptionText: e.target.value })}
+                />
               </div>
 
               <div className={styles.inputField}>
-                <label htmlFor="form-prod-image">Product Image URL</label>
-                <input
-                  id="form-prod-image"
-                  type="text"
-                  placeholder="e.g. /images/products/cdw400.jpg"
-                  value={productForm.imageUrl}
-                  onChange={(e) => setProductForm({ ...productForm, imageUrl: e.target.value })}
-                  required
+                <label>Specifications (One spec per line)</label>
+                <textarea
+                  rows={3}
+                  placeholder="Max Pressure: 140 Bar&#10;Flow Rate: 420 L/hr&#10;Power Rating: 2000W&#10;Voltage: 220-240V"
+                  value={productForm.specificationsText}
+                  onChange={(e) => setProductForm({ ...productForm, specificationsText: e.target.value })}
+                />
+              </div>
+
+              <div className={styles.inputField}>
+                <label>What&apos;s in the Box (One item per line)</label>
+                <textarea
+                  rows={2}
+                  placeholder="1x High Pressure Washer Unit&#10;1x Trigger Spray Gun&#10;1x 5m Pressure Hose"
+                  value={productForm.whatsInBoxText}
+                  onChange={(e) => setProductForm({ ...productForm, whatsInBoxText: e.target.value })}
                 />
               </div>
 
               <div className={styles.modalActions}>
                 <button type="button" onClick={() => setIsProductModalOpen(false)} className={styles.cancelBtn}>
-                  Close
+                  Cancel
                 </button>
                 <button type="submit" className={styles.submitBtn} style={{ marginTop: 0 }}>
-                  {editingProduct ? "SAVE CHANGES" : "ADD PRODUCT"}
+                  {editingProduct ? "SAVE PRODUCT CHANGES" : "CREATE PRODUCT"}
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ============================================================ */}
+      {/* MODAL 2: PRODUCT QUICK VIEW PREVIEW MODAL                    */}
+      {/* ============================================================ */}
+      {viewingProduct && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalCard} style={{ maxWidth: "650px" }}>
+            <div className={styles.modalHeader}>
+              <h3>Product Preview: {viewingProduct.title}</h3>
+              <button onClick={() => setViewingProduct(null)} className={styles.closeModalBtn}>
+                &times;
+              </button>
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "16px", padding: "10px 0" }}>
+              <div style={{ display: "flex", gap: "20px", alignItems: "center" }}>
+                <div className={styles.tableThumbnail} style={{ width: "120px", height: "120px" }}>
+                  <Image
+                    src={viewingProduct.imageUrl || "/images/products/hw2000.jpg"}
+                    alt={viewingProduct.title}
+                    width={110}
+                    height={110}
+                    style={{ objectFit: "contain" }}
+                  />
+                </div>
+                <div>
+                  <h4 style={{ margin: "0 0 6px 0", fontSize: "16px", color: "#132c66" }}>{viewingProduct.title}</h4>
+                  <div style={{ fontSize: "13px", color: "#64748b" }}>SKU ID: <strong>{viewingProduct.id}</strong></div>
+                  <div style={{ fontSize: "13px", color: "#64748b" }}>Brand: <strong>{viewingProduct.brand.toUpperCase()}</strong> | Category: <strong>{viewingProduct.category}</strong></div>
+                  <div style={{ fontSize: "18px", fontWeight: "900", color: "#132c66", marginTop: "8px" }}>
+                    ₹{viewingProduct.price.toLocaleString("en-IN")}{" "}
+                    {viewingProduct.originalPrice > viewingProduct.price && (
+                      <del style={{ fontSize: "13px", color: "#94a3b8" }}>₹{viewingProduct.originalPrice.toLocaleString("en-IN")}</del>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Video Player */}
+              {viewingProduct.videoUrl && (
+                <div>
+                  <strong>Product Demonstration Video:</strong>
+                  <video src={viewingProduct.videoUrl} controls style={{ width: "100%", maxHeight: "220px", borderRadius: "8px", marginTop: "6px" }}>
+                    Your browser does not support video.
+                  </video>
+                </div>
+              )}
+
+              {/* Gallery */}
+              {viewingProduct.gallery && viewingProduct.gallery.length > 0 && (
+                <div>
+                  <strong>Gallery Photos ({viewingProduct.gallery.length}):</strong>
+                  <div className={styles.galleryThumbGrid} style={{ marginTop: "6px" }}>
+                    {viewingProduct.gallery.map((img, idx) => (
+                      <div key={idx} className={styles.galleryThumbCard}>
+                        <Image src={img} alt={`Gallery ${idx}`} width={60} height={60} style={{ objectFit: "contain" }} />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Specs & Description */}
+              {viewingProduct.description && viewingProduct.description.length > 0 && (
+                <div>
+                  <strong>Key Features:</strong>
+                  <ul style={{ margin: "4px 0 0 18px", fontSize: "13px", color: "#475569" }}>
+                    {viewingProduct.description.map((d, i) => (
+                      <li key={i}>{d}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              <div className={styles.modalActions}>
+                <button onClick={() => setViewingProduct(null)} className={styles.cancelBtn}>
+                  Close Preview
+                </button>
+                <button
+                  onClick={() => {
+                    const p = viewingProduct;
+                    setViewingProduct(null);
+                    openEditProductModal(p);
+                  }}
+                  className={styles.submitBtn}
+                  style={{ marginTop: 0 }}
+                >
+                  Edit Product
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ============================================================ */}
+      {/* MODAL 3: DELETE PRODUCT CONFIRMATION MODAL                   */}
+      {/* ============================================================ */}
+      {deletingProductId && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalCard} style={{ maxWidth: "440px", textAlign: "center" }}>
+            <h3 style={{ color: "#ef4444", margin: "0 0 10px 0" }}>Delete Product?</h3>
+            <p style={{ color: "#64748b", fontSize: "14px", margin: "0 0 20px 0" }}>
+              Are you sure you want to delete product SKU <strong>{deletingProductId}</strong>? This action cannot be undone.
+            </p>
+            <div style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
+              <button onClick={() => setDeletingProductId(null)} className={styles.cancelBtn}>
+                Cancel
+              </button>
+              <button onClick={() => handleDeleteProduct(deletingProductId)} className={styles.deleteBtn} style={{ padding: "8px 20px" }}>
+                Confirm Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ============================================================ */}
+      {/* MODAL 4: DETAILED ORDER & SHIPROCKET LOGISTICS MODAL         */}
+      {/* ============================================================ */}
+      {selectedOrder && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalCard} style={{ maxWidth: "720px" }}>
+            <div className={styles.modalHeader}>
+              <div>
+                <h3 style={{ margin: 0 }}>Order Details: {selectedOrder.orderNumber}</h3>
+                <span style={{ fontSize: "12px", color: "#64748b" }}>
+                  Placed on {new Date(selectedOrder.createdAt).toLocaleString("en-IN")}
+                </span>
+              </div>
+              <button onClick={() => setSelectedOrder(null)} className={styles.closeModalBtn}>
+                &times;
+              </button>
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "20px", marginTop: "16px" }}>
+              {/* Customer & Address Card */}
+              <div className={styles.orderDetailSection}>
+                <h4>Customer &amp; Shipping Address</h4>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", fontSize: "13.5px" }}>
+                  <div>
+                    <strong>Customer Name:</strong> {selectedOrder.userName}<br />
+                    <strong>Email:</strong> {selectedOrder.userEmail}<br />
+                    <strong>Phone:</strong> {selectedOrder.userPhone || "N/A"}
+                  </div>
+                  <div>
+                    <strong>Street:</strong> {selectedOrder.shippingAddress?.street || "Not specified"}<br />
+                    <strong>City:</strong> {selectedOrder.shippingAddress?.city || "N/A"}<br />
+                    <strong>State &amp; PIN:</strong> {selectedOrder.shippingAddress?.state} - {selectedOrder.shippingAddress?.pincode}
+                  </div>
+                </div>
+              </div>
+
+              {/* Order Items Table */}
+              <div className={styles.orderDetailSection}>
+                <h4>Items in this Order ({selectedOrder.items?.length || 0})</h4>
+                <div className={styles.tableWrapper}>
+                  <table className={styles.adminTable}>
+                    <thead>
+                      <tr>
+                        <th>Item</th>
+                        <th>Qty</th>
+                        <th>Unit Price</th>
+                        <th>Total</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {selectedOrder.items?.map((it, idx) => (
+                        <tr key={idx}>
+                          <td>{it.title}</td>
+                          <td>{it.quantity}</td>
+                          <td>₹{it.price.toLocaleString("en-IN")}</td>
+                          <td><strong>₹{(it.price * it.quantity).toLocaleString("en-IN")}</strong></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <div style={{ textAlign: "right", marginTop: "12px", fontSize: "15px", fontWeight: "800", color: "#132c66" }}>
+                  Grand Total (incl. GST): ₹{selectedOrder.grandTotal.toLocaleString("en-IN")}
+                </div>
+              </div>
+
+              {/* Shiprocket Logistics Dispatch Section */}
+              <div className={styles.orderDetailSection} style={{ background: "#f0fdf4", borderColor: "#bbf7d0" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <h4 style={{ margin: 0, color: "#166534" }}>Shiprocket Logistics Status</h4>
+                  <span
+                    style={{
+                      background: selectedOrder.shiprocketAwbCode ? "#dcfce7" : "#fef9c3",
+                      color: selectedOrder.shiprocketAwbCode ? "#15803d" : "#854d0e",
+                      padding: "3px 8px",
+                      borderRadius: "4px",
+                      fontSize: "11px",
+                      fontWeight: "800",
+                    }}
+                  >
+                    {selectedOrder.shiprocketStatus || "pending_shipment"}
+                  </span>
+                </div>
+
+                <div style={{ marginTop: "10px", fontSize: "13px", color: "#1e293b", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+                  <div>
+                    <strong>Shiprocket Order ID:</strong> {selectedOrder.shiprocketOrderId || "Not dispatched yet"}<br />
+                    <strong>Shipment ID:</strong> {selectedOrder.shiprocketShipmentId || "N/A"}<br />
+                    <strong>Assigned Courier:</strong> {selectedOrder.shiprocketCourierName || "N/A"}
+                  </div>
+                  <div>
+                    <strong>AWB Code:</strong> {selectedOrder.shiprocketAwbCode || "N/A"}<br />
+                    {selectedOrder.shiprocketTrackingUrl && (
+                      <a
+                        href={selectedOrder.shiprocketTrackingUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ color: "#0284c7", fontWeight: "750", textDecoration: "underline" }}
+                      >
+                        Open Live Tracking ↗
+                      </a>
+                    )}
+                  </div>
+                </div>
+
+                {selectedOrder.shipmentError && (
+                  <div style={{ color: "#b91c1c", fontSize: "12px", marginTop: "8px", background: "#fef2f2", padding: "6px 10px", borderRadius: "6px" }}>
+                    ⚠️ {selectedOrder.shipmentError}
+                  </div>
+                )}
+
+                {/* Shiprocket Actions */}
+                <div style={{ display: "flex", gap: "10px", marginTop: "14px" }}>
+                  <button
+                    onClick={() => handleRetryShiprocket(selectedOrder.orderNumber)}
+                    disabled={orderActionLoading === selectedOrder.orderNumber}
+                    className={styles.editBtn}
+                    style={{ fontSize: "12.5px" }}
+                  >
+                    {orderActionLoading === selectedOrder.orderNumber ? "Processing..." : "🚀 Dispatch / Retry Shiprocket"}
+                  </button>
+                  {(selectedOrder.shiprocketAwbCode || selectedOrder.shiprocketShipmentId) && (
+                    <button
+                      onClick={() => handleSyncTracking(selectedOrder.orderNumber)}
+                      disabled={orderActionLoading === selectedOrder.orderNumber}
+                      className={styles.cancelBtn}
+                      style={{ fontSize: "12.5px" }}
+                    >
+                      ↻ Sync Live Tracking
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Status Update Control */}
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingTop: "10px", borderTop: "1px solid #e2e8f0" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                  <label style={{ fontSize: "13px", fontWeight: "750" }}>Change Order Status:</label>
+                  <select
+                    value={selectedOrder.orderStatus}
+                    onChange={(e) => handleOrderStatusChange(selectedOrder.orderNumber, e.target.value)}
+                    className={styles.filterSelect}
+                    style={{ width: "160px", height: "36px", fontSize: "12.5px" }}
+                  >
+                    <option value="processing">Processing</option>
+                    <option value="confirmed">Confirmed</option>
+                    <option value="shipped">Shipped</option>
+                    <option value="delivered">Delivered</option>
+                    <option value="cancelled">Cancelled</option>
+                  </select>
+                </div>
+
+                <button onClick={() => setSelectedOrder(null)} className={styles.cancelBtn}>
+                  Close
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
