@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
+import { BRAND_CATEGORIES } from "@/data/home";
 import styles from "./AdminPage.module.css";
 
 // --- Interfaces ---
@@ -97,15 +98,27 @@ interface IAdminOrder {
   };
 }
 
+// Fallback all system categories
+const DEFAULT_SYSTEM_CATEGORIES: ICategory[] = Object.entries(BRAND_CATEGORIES).flatMap(([brandKey, brandObj]) =>
+  brandObj.categories.map((cat) => ({
+    id: cat.id,
+    name: `${cat.name} (${brandObj.name})`,
+    brand: brandKey,
+    imageUrl: cat.imageUrl,
+    link: cat.link,
+  }))
+);
+
 export default function AdminDashboard() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<"analytics" | "products" | "orders" | "banners">("analytics");
   const [authorized, setAuthorized] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Data States
   const [banners, setBanners] = useState<IBanner[]>([]);
-  const [categories, setCategories] = useState<ICategory[]>([]);
+  const [categories, setCategories] = useState<ICategory[]>(DEFAULT_SYSTEM_CATEGORIES);
   const [products, setProducts] = useState<IProduct[]>([]);
   const [enquiries, setEnquiries] = useState<IEnquiry[]>([]);
   const [orders, setOrders] = useState<IAdminOrder[]>([]);
@@ -172,9 +185,14 @@ export default function AdminDashboard() {
     try {
       const res = await fetch("/api/admin/categories");
       const json = await res.json();
-      if (json.success) setCategories(json.data);
+      if (json.success && Array.isArray(json.data) && json.data.length > 0) {
+        setCategories(json.data);
+      } else {
+        setCategories(DEFAULT_SYSTEM_CATEGORIES);
+      }
     } catch (e) {
       console.error("Error fetching categories:", e);
+      setCategories(DEFAULT_SYSTEM_CATEGORIES);
     }
   }, []);
 
@@ -604,9 +622,24 @@ export default function AdminDashboard() {
     <div className={styles.adminWrapper}>
       {/* Top Header Bar */}
       <header className={styles.adminHeader}>
-        <div className={styles.brandGroup}>
-          <span className={styles.headerTitle}>Skill Store Central Control</span>
-          <span className={styles.headerSubtitle}>Official E-Commerce Backend</span>
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <button
+            onClick={() => setIsMobileMenuOpen((prev) => !prev)}
+            className={styles.mobileMenuToggle}
+            aria-label="Toggle Menu"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              {isMobileMenuOpen ? (
+                <path d="M18 6L6 18M6 6l12 12" />
+              ) : (
+                <path d="M4 6h16M4 12h16M4 18h16" />
+              )}
+            </svg>
+          </button>
+          <div className={styles.brandGroup}>
+            <span className={styles.headerTitle}>Skill Store Central Control</span>
+            <span className={styles.headerSubtitle}>Official E-Commerce Backend</span>
+          </div>
         </div>
 
         <div className={styles.headerRight}>
@@ -628,7 +661,12 @@ export default function AdminDashboard() {
 
       {/* Sidebar Layout */}
       <div className={styles.adminLayout}>
-        <aside className={styles.sidebar}>
+        {/* Mobile Backdrop */}
+        {isMobileMenuOpen && (
+          <div className={styles.sidebarBackdrop} onClick={() => setIsMobileMenuOpen(false)} />
+        )}
+
+        <aside className={`${styles.sidebar} ${isMobileMenuOpen ? styles.sidebarOpen : ""}`}>
           <div className={styles.sidebarBrand}>
             <strong>SKILL STORE</strong>
             <span>Management Portal</span>
@@ -636,7 +674,10 @@ export default function AdminDashboard() {
 
           <nav className={styles.sidebarNav}>
             <button
-              onClick={() => setActiveTab("analytics")}
+              onClick={() => {
+                setActiveTab("analytics");
+                setIsMobileMenuOpen(false);
+              }}
               className={`${styles.sidebarTab} ${activeTab === "analytics" ? styles.activeTab : ""}`}
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className={styles.tabIcon}>
@@ -649,7 +690,10 @@ export default function AdminDashboard() {
             </button>
 
             <button
-              onClick={() => setActiveTab("orders")}
+              onClick={() => {
+                setActiveTab("orders");
+                setIsMobileMenuOpen(false);
+              }}
               className={`${styles.sidebarTab} ${activeTab === "orders" ? styles.activeTab : ""}`}
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className={styles.tabIcon}>
@@ -662,7 +706,10 @@ export default function AdminDashboard() {
             </button>
 
             <button
-              onClick={() => setActiveTab("products")}
+              onClick={() => {
+                setActiveTab("products");
+                setIsMobileMenuOpen(false);
+              }}
               className={`${styles.sidebarTab} ${activeTab === "products" ? styles.activeTab : ""}`}
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className={styles.tabIcon}>
@@ -675,7 +722,10 @@ export default function AdminDashboard() {
             </button>
 
             <button
-              onClick={() => setActiveTab("banners")}
+              onClick={() => {
+                setActiveTab("banners");
+                setIsMobileMenuOpen(false);
+              }}
               className={`${styles.sidebarTab} ${activeTab === "banners" ? styles.activeTab : ""}`}
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className={styles.tabIcon}>
@@ -1320,255 +1370,308 @@ export default function AdminDashboard() {
       {/* ============================================================ */}
       {isProductModalOpen && (
         <div className={styles.modalOverlay}>
-          <div className={styles.modalCard} style={{ maxWidth: "800px" }}>
+          <div className={styles.modalCard} style={{ maxWidth: "780px" }}>
             <div className={styles.modalHeader}>
-              <h3>{editingProduct ? "Edit Product Details" : "Add New Catalogue Product"}</h3>
+              <div>
+                <h3 style={{ margin: 0, fontSize: "17px", fontWeight: "800", color: "#132c66" }}>
+                  {editingProduct ? `Edit Product: ${editingProduct.title}` : "Add New Product to Catalogue"}
+                </h3>
+                <span style={{ fontSize: "12px", color: "#64748b" }}>
+                  {editingProduct ? `SKU: ${editingProduct.id}` : "Fill in details, pricing, media and specifications"}
+                </span>
+              </div>
               <button onClick={() => setIsProductModalOpen(false)} className={styles.closeModalBtn}>
                 &times;
               </button>
             </div>
 
             {uploadError && (
-              <div style={{ background: "#fef2f2", border: "1px solid #fecaca", color: "#991b1b", padding: "8px 12px", borderRadius: "6px", fontSize: "12.5px", margin: "10px 0" }}>
+              <div style={{ background: "#fef2f2", border: "1px solid #fecaca", color: "#991b1b", padding: "8px 12px", borderRadius: "8px", fontSize: "12.5px", margin: "4px 0" }}>
                 ⚠️ {uploadError}
               </div>
             )}
 
-            <form onSubmit={handleProductSubmit} className={styles.form}>
-              <div className={styles.inputRow}>
-                <div className={styles.inputField}>
-                  <label htmlFor="form-prod-id">Product SKU ID *</label>
-                  <input
-                    id="form-prod-id"
-                    type="text"
-                    placeholder="e.g. prod-10 or hpw-1"
-                    value={productForm.id}
-                    onChange={(e) => setProductForm({ ...productForm, id: e.target.value })}
-                    required
-                    disabled={!!editingProduct}
-                  />
-                </div>
-
-                <div className={styles.inputField}>
-                  <label htmlFor="form-prod-title">Product Title *</label>
-                  <input
-                    id="form-prod-title"
-                    type="text"
-                    placeholder="e.g. TUQO High Pressure Washer HW2000"
-                    value={productForm.title}
-                    onChange={(e) => setProductForm({ ...productForm, title: e.target.value })}
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className={styles.inputRow}>
-                <div className={styles.inputField}>
-                  <label htmlFor="form-prod-price">Selling Price (₹) *</label>
-                  <input
-                    id="form-prod-price"
-                    type="number"
-                    placeholder="4999"
-                    value={productForm.price}
-                    onChange={(e) => setProductForm({ ...productForm, price: e.target.value })}
-                    required
-                  />
-                </div>
-                <div className={styles.inputField}>
-                  <label htmlFor="form-prod-orig-price">Original MRP Price (₹)</label>
-                  <input
-                    id="form-prod-orig-price"
-                    type="number"
-                    placeholder="6999"
-                    value={productForm.originalPrice}
-                    onChange={(e) => setProductForm({ ...productForm, originalPrice: e.target.value })}
-                  />
-                </div>
-              </div>
-
-              <div className={styles.inputRow}>
-                <div className={styles.inputField}>
-                  <label htmlFor="form-prod-brand">Brand *</label>
-                  <select
-                    id="form-prod-brand"
-                    value={productForm.brand}
-                    onChange={(e) => setProductForm({ ...productForm, brand: e.target.value })}
-                  >
-                    <option value="tuqo">TUQO</option>
-                    <option value="pumpkin">PUMPKIN</option>
-                    <option value="mitsuki">MITSUKI</option>
-                    <option value="metso">METSO</option>
-                    <option value="costec">COSTEC</option>
-                  </select>
-                </div>
-                <div className={styles.inputField}>
-                  <label htmlFor="form-prod-category">Category *</label>
-                  <select
-                    id="form-prod-category"
-                    value={productForm.category}
-                    onChange={(e) => setProductForm({ ...productForm, category: e.target.value })}
-                  >
-                    {categories.map((cat) => (
-                      <option key={cat.id} value={cat.id}>
-                        {cat.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className={styles.inputField}>
-                  <label htmlFor="form-prod-subcat">Sub Category</label>
-                  <input
-                    id="form-prod-subcat"
-                    type="text"
-                    placeholder="e.g. domestic, commercial, accessory"
-                    value={productForm.subCategory}
-                    onChange={(e) => setProductForm({ ...productForm, subCategory: e.target.value })}
-                  />
-                </div>
-              </div>
-
-              {/* Media Section: Main Image Upload */}
-              <div className={styles.mediaUploadBox}>
-                <label><strong>Main Product Image *</strong></label>
-                <div className={styles.uploadRow}>
-                  <input
-                    type="text"
-                    placeholder="Image URL or upload from device below"
-                    value={productForm.imageUrl}
-                    onChange={(e) => setProductForm({ ...productForm, imageUrl: e.target.value })}
-                    required
-                    style={{ flex: 1 }}
-                  />
-                  <label className={styles.uploadBtn}>
-                    {isUploadingImage ? "Uploading..." : "📁 Upload Image"}
+            <form onSubmit={handleProductSubmit} className={styles.form} style={{ gap: "14px" }}>
+              {/* 1. Essential Product Info */}
+              <div className={styles.formSection}>
+                <div className={styles.sectionHeader}>1. Basic Details &amp; Categorization</div>
+                <div className={styles.inputGrid3}>
+                  <div className={styles.inputField}>
+                    <label htmlFor="form-prod-id">Product SKU *</label>
                     <input
-                      type="file"
-                      accept="image/*"
-                      style={{ display: "none" }}
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) handleFileUpload(file, "main_image");
-                      }}
-                    />
-                  </label>
-                </div>
-                {productForm.imageUrl && (
-                  <div className={styles.mediaPreview}>
-                    <Image
-                      src={productForm.imageUrl}
-                      alt="Preview"
-                      width={90}
-                      height={90}
-                      style={{ objectFit: "contain" }}
+                      id="form-prod-id"
+                      type="text"
+                      placeholder="e.g. hpw-1 or prod-10"
+                      value={productForm.id}
+                      onChange={(e) => setProductForm({ ...productForm, id: e.target.value })}
+                      required
+                      disabled={!!editingProduct}
                     />
                   </div>
-                )}
-              </div>
 
-              {/* Media Section: Video Upload / URL */}
-              <div className={styles.mediaUploadBox}>
-                <label><strong>Product Video (Upload MP4 or Enter YouTube/Video URL)</strong></label>
-                <div className={styles.uploadRow}>
-                  <input
-                    type="text"
-                    placeholder="e.g. /uploads/demo.mp4 or https://youtube.com/watch?v=..."
-                    value={productForm.videoUrl}
-                    onChange={(e) => setProductForm({ ...productForm, videoUrl: e.target.value })}
-                    style={{ flex: 1 }}
-                  />
-                  <label className={styles.uploadBtn}>
-                    {isUploadingVideo ? "Uploading Video..." : "🎬 Upload Video"}
+                  <div className={styles.inputField} style={{ gridColumn: "span 2" }}>
+                    <label htmlFor="form-prod-title">Product Title *</label>
                     <input
-                      type="file"
-                      accept="video/*"
-                      style={{ display: "none" }}
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) handleFileUpload(file, "video");
-                      }}
+                      id="form-prod-title"
+                      type="text"
+                      placeholder="e.g. TUQO High Pressure Washer HW2000"
+                      value={productForm.title}
+                      onChange={(e) => setProductForm({ ...productForm, title: e.target.value })}
+                      required
                     />
-                  </label>
-                </div>
-                {productForm.videoUrl && (
-                  <div className={styles.videoPlayerBox}>
-                    <video src={productForm.videoUrl} controls style={{ width: "100%", maxHeight: "180px", borderRadius: "8px" }}>
-                      Your browser does not support video tag.
-                    </video>
                   </div>
-                )}
+                </div>
+
+                <div className={styles.inputGrid3}>
+                  <div className={styles.inputField}>
+                    <label htmlFor="form-prod-brand">Brand *</label>
+                    <select
+                      id="form-prod-brand"
+                      value={productForm.brand}
+                      onChange={(e) => {
+                        const newBrand = e.target.value;
+                        setProductForm((prev) => {
+                          const brandCats = BRAND_CATEGORIES[newBrand]?.categories || [];
+                          const nextCat = brandCats.length > 0 ? brandCats[0].id : prev.category;
+                          return { ...prev, brand: newBrand, category: nextCat };
+                        });
+                      }}
+                    >
+                      <option value="tuqo">TUQO</option>
+                      <option value="pumpkin">PUMPKIN</option>
+                      <option value="mitsuki">MITSUKI</option>
+                      <option value="metso">METSO</option>
+                      <option value="costec">COSTEC</option>
+                      <option value="ultratouch">Ultra TOUCH</option>
+                    </select>
+                  </div>
+
+                  <div className={styles.inputField}>
+                    <label htmlFor="form-prod-category">Category *</label>
+                    <select
+                      id="form-prod-category"
+                      value={productForm.category}
+                      onChange={(e) => setProductForm({ ...productForm, category: e.target.value })}
+                    >
+                      {categories.map((cat) => (
+                        <option key={cat.id} value={cat.id}>
+                          {cat.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className={styles.inputField}>
+                    <label htmlFor="form-prod-subcat">Sub-Category</label>
+                    <input
+                      id="form-prod-subcat"
+                      type="text"
+                      placeholder="e.g. domestic, commercial, accessory"
+                      value={productForm.subCategory}
+                      onChange={(e) => setProductForm({ ...productForm, subCategory: e.target.value })}
+                    />
+                  </div>
+                </div>
               </div>
 
-              {/* Media Section: Gallery Images */}
-              <div className={styles.mediaUploadBox}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <label><strong>Additional Gallery Images ({productForm.gallery.length})</strong></label>
-                  <label className={styles.uploadBtn} style={{ fontSize: "11px", padding: "4px 10px" }}>
-                    {isUploadingGallery ? "Uploading..." : "+ Upload Gallery Photo"}
+              {/* 2. Pricing & Stock */}
+              <div className={styles.formSection}>
+                <div className={styles.sectionHeader}>2. Pricing &amp; Stock Availability</div>
+                <div className={styles.inputGrid3}>
+                  <div className={styles.inputField}>
+                    <label htmlFor="form-prod-price">Selling Price (₹) *</label>
                     <input
-                      type="file"
-                      accept="image/*"
-                      style={{ display: "none" }}
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) handleFileUpload(file, "gallery");
-                      }}
+                      id="form-prod-price"
+                      type="number"
+                      placeholder="4999"
+                      value={productForm.price}
+                      onChange={(e) => setProductForm({ ...productForm, price: e.target.value })}
+                      required
                     />
-                  </label>
+                  </div>
+
+                  <div className={styles.inputField}>
+                    <label htmlFor="form-prod-orig-price">MRP Price (₹)</label>
+                    <input
+                      id="form-prod-orig-price"
+                      type="number"
+                      placeholder="6999"
+                      value={productForm.originalPrice}
+                      onChange={(e) => setProductForm({ ...productForm, originalPrice: e.target.value })}
+                    />
+                  </div>
+
+                  <div className={styles.inputField} style={{ justifyContent: "center" }}>
+                    <label>Stock Status</label>
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px", marginTop: "4px" }}>
+                      <label className={styles.switch}>
+                        <input
+                          type="checkbox"
+                          checked={productForm.inStock}
+                          onChange={(e) => setProductForm({ ...productForm, inStock: e.target.checked })}
+                        />
+                        <span className={styles.slider}></span>
+                      </label>
+                      <span style={{ fontSize: "12px", fontWeight: "800", color: productForm.inStock ? "#10b981" : "#ef4444" }}>
+                        {productForm.inStock ? "IN STOCK" : "OUT OF STOCK"}
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                {productForm.gallery.length > 0 && (
-                  <div className={styles.galleryThumbGrid}>
-                    {productForm.gallery.map((imgUrl, idx) => (
-                      <div key={idx} className={styles.galleryThumbCard}>
-                        <Image src={imgUrl} alt={`Gallery ${idx}`} width={60} height={60} style={{ objectFit: "contain" }} />
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setProductForm((prev) => ({
-                              ...prev,
-                              gallery: prev.gallery.filter((_, i) => i !== idx),
-                            }));
+              </div>
+
+              {/* 3. Media Assets */}
+              <div className={styles.formSection}>
+                <div className={styles.sectionHeader}>3. Media Assets (Image, Video &amp; Gallery)</div>
+                <div className={styles.inputRow}>
+                  {/* Main Product Image */}
+                  <div className={styles.mediaUploadBox} style={{ flex: 1 }}>
+                    <label><strong>Main Image *</strong></label>
+                    <div className={styles.uploadRow}>
+                      <input
+                        type="text"
+                        placeholder="Image URL or upload"
+                        value={productForm.imageUrl}
+                        onChange={(e) => setProductForm({ ...productForm, imageUrl: e.target.value })}
+                        required
+                        style={{ flex: 1, minWidth: "140px" }}
+                      />
+                      <label className={styles.uploadBtn}>
+                        {isUploadingImage ? "..." : "📁 Upload"}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          style={{ display: "none" }}
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handleFileUpload(file, "main_image");
                           }}
-                          className={styles.removeGalleryBtn}
-                        >
-                          &times;
-                        </button>
+                        />
+                      </label>
+                    </div>
+                    {productForm.imageUrl && (
+                      <div className={styles.mediaPreview} style={{ marginTop: "6px" }}>
+                        <Image
+                          src={productForm.imageUrl}
+                          alt="Preview"
+                          width={70}
+                          height={70}
+                          style={{ objectFit: "contain" }}
+                        />
                       </div>
-                    ))}
+                    )}
                   </div>
-                )}
+
+                  {/* Video */}
+                  <div className={styles.mediaUploadBox} style={{ flex: 1 }}>
+                    <label><strong>Product Video</strong></label>
+                    <div className={styles.uploadRow}>
+                      <input
+                        type="text"
+                        placeholder="Video URL or upload MP4"
+                        value={productForm.videoUrl}
+                        onChange={(e) => setProductForm({ ...productForm, videoUrl: e.target.value })}
+                        style={{ flex: 1, minWidth: "140px" }}
+                      />
+                      <label className={styles.uploadBtn}>
+                        {isUploadingVideo ? "..." : "🎬 Upload"}
+                        <input
+                          type="file"
+                          accept="video/*"
+                          style={{ display: "none" }}
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handleFileUpload(file, "video");
+                          }}
+                        />
+                      </label>
+                    </div>
+                    {productForm.videoUrl && (
+                      <div style={{ fontSize: "11px", color: "#166534", marginTop: "4px" }}>
+                        ✓ Video attached
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Gallery Images */}
+                <div className={styles.mediaUploadBox} style={{ marginTop: "8px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <label><strong>Additional Gallery Images ({productForm.gallery.length})</strong></label>
+                    <label className={styles.uploadBtn} style={{ fontSize: "11px", padding: "4px 10px" }}>
+                      {isUploadingGallery ? "Uploading..." : "+ Add Photo"}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        style={{ display: "none" }}
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handleFileUpload(file, "gallery");
+                        }}
+                      />
+                    </label>
+                  </div>
+                  {productForm.gallery.length > 0 && (
+                    <div className={styles.galleryThumbGrid} style={{ marginTop: "8px" }}>
+                      {productForm.gallery.map((imgUrl, idx) => (
+                        <div key={idx} className={styles.galleryThumbCard}>
+                          <Image src={imgUrl} alt={`Gallery ${idx}`} width={55} height={55} style={{ objectFit: "contain" }} />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setProductForm((prev) => ({
+                                ...prev,
+                                gallery: prev.gallery.filter((_, i) => i !== idx),
+                              }));
+                            }}
+                            className={styles.removeGalleryBtn}
+                          >
+                            &times;
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
 
-              {/* Rich Texts: Description, Specs, What's In Box */}
-              <div className={styles.inputField}>
-                <label>Description (One point per line)</label>
-                <textarea
-                  rows={3}
-                  placeholder="High efficiency brushless motor&#10;140 Bar maximum pressure output&#10;Self priming water inlet"
-                  value={productForm.descriptionText}
-                  onChange={(e) => setProductForm({ ...productForm, descriptionText: e.target.value })}
-                />
+              {/* 4. Specifications & Highlights */}
+              <div className={styles.formSection}>
+                <div className={styles.sectionHeader}>4. Descriptions &amp; Specs (One line per point)</div>
+                <div className={styles.inputGrid3}>
+                  <div className={styles.inputField}>
+                    <label>Features &amp; Highlights</label>
+                    <textarea
+                      rows={2}
+                      placeholder="Induction Motor 140 Bar&#10;Self-priming function&#10;Auto-stop system"
+                      value={productForm.descriptionText}
+                      onChange={(e) => setProductForm({ ...productForm, descriptionText: e.target.value })}
+                    />
+                  </div>
+
+                  <div className={styles.inputField}>
+                    <label>Technical Specifications</label>
+                    <textarea
+                      rows={2}
+                      placeholder="Power: 2000W&#10;Pressure: 140 Bar&#10;Flow: 420 L/hr"
+                      value={productForm.specificationsText}
+                      onChange={(e) => setProductForm({ ...productForm, specificationsText: e.target.value })}
+                    />
+                  </div>
+
+                  <div className={styles.inputField}>
+                    <label>What&apos;s in the Box</label>
+                    <textarea
+                      rows={2}
+                      placeholder="1x Washer Machine&#10;1x Trigger Gun&#10;1x Hose Pipe"
+                      value={productForm.whatsInBoxText}
+                      onChange={(e) => setProductForm({ ...productForm, whatsInBoxText: e.target.value })}
+                    />
+                  </div>
+                </div>
               </div>
 
-              <div className={styles.inputField}>
-                <label>Specifications (One spec per line)</label>
-                <textarea
-                  rows={3}
-                  placeholder="Max Pressure: 140 Bar&#10;Flow Rate: 420 L/hr&#10;Power Rating: 2000W&#10;Voltage: 220-240V"
-                  value={productForm.specificationsText}
-                  onChange={(e) => setProductForm({ ...productForm, specificationsText: e.target.value })}
-                />
-              </div>
-
-              <div className={styles.inputField}>
-                <label>What&apos;s in the Box (One item per line)</label>
-                <textarea
-                  rows={2}
-                  placeholder="1x High Pressure Washer Unit&#10;1x Trigger Spray Gun&#10;1x 5m Pressure Hose"
-                  value={productForm.whatsInBoxText}
-                  onChange={(e) => setProductForm({ ...productForm, whatsInBoxText: e.target.value })}
-                />
-              </div>
-
+              {/* Modal Buttons */}
               <div className={styles.modalActions}>
                 <button type="button" onClick={() => setIsProductModalOpen(false)} className={styles.cancelBtn}>
                   Cancel

@@ -18,6 +18,22 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
+.mobileMenuToggle {
+  display: none;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #132c66;
+  padding: 6px;
+  border-radius: 6px;
+  align-items: center;
+  justify-content: center;
+}
+
+.mobileMenuToggle:hover {
+  background: #f1f5f9;
+}
+
 .brandGroup {
   display: flex;
   flex-direction: column;
@@ -84,6 +100,16 @@
   display: grid;
   grid-template-columns: 240px 1fr;
   flex-grow: 1;
+  position: relative;
+}
+
+.sidebarBackdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 80;
 }
 
 /* Sidebar Styling */
@@ -848,11 +874,13 @@
   border-radius: 20px;
   width: 100%;
   max-width: 500px;
-  padding: 30px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 24px 28px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.18);
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
   animation: modalScale 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
@@ -1101,27 +1129,182 @@
   color: #0f172a;
 }
 
+.formSection {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sectionHeader {
+  font-size: 12px;
+  font-weight: 850;
+  color: #132c66;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  border-bottom: 1.5px solid #e2e8f0;
+  padding-bottom: 6px;
+}
+
+.inputGrid3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.inputRow {
+  display: flex;
+  gap: 12px;
+}
+
+.primaryBtn {
+  background: #ffd300;
+  color: #132c66;
+  border: none;
+  height: 42px;
+  padding: 0 18px;
+  border-radius: 8px;
+  font-family: var(--font-sans);
+  font-weight: 800;
+  font-size: 13px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 2px 8px rgba(253, 211, 0, 0.3);
+  transition: all var(--transition-fast) ease;
+}
+
+.primaryBtn:hover {
+  background: #e6be00;
+  transform: translateY(-1px);
+}
+
+.flexHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.searchFilterGrid {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+/* ======================================================== */
+/* RESPONSIVE MEDIA QUERIES (TABLETS & MOBILE)             */
+/* ======================================================== */
 @media (max-width: 1024px) {
   .adminLayout {
     grid-template-columns: 1fr;
   }
-  .sidebar {
-    height: auto;
-    border-right: none;
-    border-bottom: 1px solid #e2e8f0;
+
+  .mobileMenuToggle {
+    display: inline-flex;
   }
+
+  .sidebar {
+    position: fixed;
+    top: 60px;
+    left: 0;
+    bottom: 0;
+    width: 260px;
+    z-index: 90;
+    transform: translateX(-100%);
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 10px 0 25px rgba(0, 0, 0, 0.2);
+  }
+
+  .sidebarOpen {
+    transform: translateX(0);
+  }
+
+  .sidebarBackdrop {
+    display: block;
+  }
+
+  .dashboardContent {
+    padding: 24px 20px;
+    max-height: calc(100vh - 60px);
+  }
+
   .statsGrid {
     grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
   }
+
   .dualPanelGrid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .searchFilterGrid {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .gridFormLayout {
     grid-template-columns: 1fr;
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
+  .adminHeader {
+    padding: 0 16px;
+    height: 56px;
+  }
+
+  .headerTitle {
+    font-size: 15px;
+  }
+
+  .headerSubtitle {
+    display: none;
+  }
+
+  .adminMeta {
+    display: none;
+  }
+
+  .dashboardContent {
+    padding: 16px 12px;
+  }
+
   .statsGrid {
     grid-template-columns: 1fr;
   }
+
+  .searchFilterGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .inputGrid3 {
+    grid-template-columns: 1fr;
+  }
+
+  .inputRow {
+    flex-direction: column;
+  }
+
+  .modalCard {
+    padding: 18px 14px;
+    border-radius: 16px;
+    max-height: 94vh;
+  }
+
+  .modalActions {
+    grid-template-columns: 1fr;
+  }
+
   .uploadRow {
     flex-direction: column;
     align-items: stretch;
