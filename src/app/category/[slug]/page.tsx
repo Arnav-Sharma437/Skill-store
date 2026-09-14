@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, use } from "react";
+import React, { useState, useMemo, use, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -8,7 +8,7 @@ import AnnouncementBar from "@/components/home/AnnouncementBar";
 import Header from "@/components/home/Header";
 import Footer from "@/components/home/Footer";
 import { useApp } from "@/context/AppContext";
-import { CATEGORIES_DATA, CategoryDetail } from "@/data/categories";
+import { CATEGORIES_DATA, CategoryDetail, CategoryProduct } from "@/data/categories";
 import styles from "./CategoryPage.module.css";
 
 type PageProps = {
@@ -23,6 +23,7 @@ export default function CategoryPage({ params }: PageProps) {
   const [filterType, setFilterType] = useState("all");
   const [filterPrice, setFilterPrice] = useState("all");
   const [sortBy, setSortBy] = useState("default");
+  const [dbProducts, setDbProducts] = useState<CategoryProduct[]>([]);
 
   // Format fallback title if slug not explicitly mapped
   const formatTitle = (rawSlug: string) => {
@@ -32,7 +33,7 @@ export default function CategoryPage({ params }: PageProps) {
       .join(" ");
   };
 
-  const categoryDetail: CategoryDetail = useMemo(() => {
+  const initialDetail: CategoryDetail = useMemo(() => {
     const directMatch = CATEGORIES_DATA[slug.toLowerCase()];
     if (directMatch) return directMatch;
 
@@ -60,46 +61,66 @@ export default function CategoryPage({ params }: PageProps) {
           subType: "domestic",
           brand: "TUQO",
           inStock: true
-        },
-        {
-          id: `prod-${slug}-2`,
-          title: `TUQO Professional Cordless ${title} CDW400`,
-          price: 6299,
-          originalPrice: 8299,
-          imageUrl: "/images/products/cdw400.jpg",
-          rating: 5,
-          ratingCount: 380,
-          subType: "domestic",
-          brand: "TUQO",
-          inStock: true
-        },
-        {
-          id: `prod-${slug}-3`,
-          title: `TUQO Heavy Duty ${title} Commercial Grade`,
-          price: 14500,
-          originalPrice: 18500,
-          imageUrl: "/images/products/compressor.jpg",
-          rating: 4,
-          ratingCount: 150,
-          subType: "commercial",
-          brand: "TUQO",
-          inStock: true
-        },
-        {
-          id: `prod-${slug}-4`,
-          title: `TUQO ${title} Premium Brass Attachment & Spares`,
-          price: 999,
-          originalPrice: 1499,
-          imageUrl: "/images/products/trigger_gun.jpg",
-          rating: 5,
-          ratingCount: 420,
-          subType: "accessory",
-          brand: "TUQO",
-          inStock: true
         }
       ]
     };
   }, [slug]);
+
+  // Fetch live products from MongoDB for this category
+  useEffect(() => {
+    let isMounted = true;
+    async function loadCategoryProducts() {
+      try {
+        const res = await fetch(`/api/products?category=${encodeURIComponent(slug)}`);
+        if (res.ok) {
+          const json = await res.json();
+          if (json.success && Array.isArray(json.data)) {
+            const mapped: CategoryProduct[] = json.data.map((item: {
+              id: string;
+              title: string;
+              price: number;
+              originalPrice?: number;
+              imageUrl: string;
+              rating?: number;
+              ratingCount?: number;
+              subCategory?: string;
+              brand?: string;
+              inStock?: boolean;
+            }) => ({
+              id: item.id,
+              title: item.title,
+              price: item.price,
+              originalPrice: item.originalPrice || item.price,
+              imageUrl: item.imageUrl,
+              rating: item.rating || 5,
+              ratingCount: item.ratingCount || 0,
+              subType: (item.subCategory || "domestic") as "domestic" | "commercial" | "accessory" | "general",
+              brand: item.brand ? item.brand.toUpperCase() : "TUQO",
+              inStock: item.inStock !== false
+            }));
+
+            if (isMounted) {
+              setDbProducts(mapped);
+            }
+          }
+        }
+      } catch {
+        // Keep initial static products
+      }
+    }
+
+    loadCategoryProducts();
+    return () => {
+      isMounted = false;
+    };
+  }, [slug]);
+
+  // Combined product list (DB products first, then static products not already in DB)
+  const allProducts = useMemo(() => {
+    const dbIds = new Set(dbProducts.map((p) => p.id));
+    const fallbackFiltered = initialDetail.products.filter((p) => !dbIds.has(p.id));
+    return [...dbProducts, ...fallbackFiltered];
+  }, [dbProducts, initialDetail.products]);
 
   // Star Rating Helper
   const renderStars = (rating: number) => {
@@ -125,7 +146,7 @@ export default function CategoryPage({ params }: PageProps) {
 
   // Filter and Sort Pipeline
   const filteredProducts = useMemo(() => {
-    let list = [...categoryDetail.products];
+    let list = [...allProducts];
 
     // Filter by Type
     if (filterType !== "all") {
@@ -151,7 +172,7 @@ export default function CategoryPage({ params }: PageProps) {
     }
 
     return list;
-  }, [categoryDetail, filterType, filterPrice, sortBy]);
+  }, [allProducts, filterType, filterPrice, sortBy]);
 
   return (
     <>
@@ -167,7 +188,7 @@ export default function CategoryPage({ params }: PageProps) {
               <span className={styles.separator}>/</span>
               <Link href="/categories">CATEGORIES</Link>
               <span className={styles.separator}>/</span>
-              <span className={styles.activeCrumb}>{categoryDetail.name.toUpperCase()}</span>
+              <span className={styles.activeCrumb}>{initialDetail.name.toUpperCase()}</span>
             </div>
           </div>
         </div>
@@ -187,15 +208,15 @@ export default function CategoryPage({ params }: PageProps) {
                 </svg>
                 <span>Back</span>
               </button>
-              <span className={styles.bannerSubtitle}>{categoryDetail.subtitle}</span>
+              <span className={styles.bannerSubtitle}>{initialDetail.subtitle}</span>
             </div>
 
-            <h1 className={styles.bannerTitle}>{categoryDetail.name}</h1>
-            <p className={styles.bannerDesc}>{categoryDetail.description}</p>
+            <h1 className={styles.bannerTitle}>{initialDetail.name}</h1>
+            <p className={styles.bannerDesc}>{initialDetail.description}</p>
             
-            {categoryDetail.subCategories && categoryDetail.subCategories.length > 0 && (
+            {initialDetail.subCategories && initialDetail.subCategories.length > 0 && (
               <div className={styles.subCatPills}>
-                {categoryDetail.subCategories.map((sub) => (
+                {initialDetail.subCategories.map((sub) => (
                   <Link href={`/category/${sub.slug}`} key={sub.slug} className={styles.subCatPill}>
                     {sub.name} &rarr;
                   </Link>
@@ -203,10 +224,10 @@ export default function CategoryPage({ params }: PageProps) {
               </div>
             )}
 
-            {/* Merged Filter & Sorting Controls Strip directly inside Banner */}
+            {/* Merged Filter & Sorting Controls Strip */}
             <div className={styles.bannerFilterRow}>
               <div className={styles.resultsCount}>
-                Showing <strong className={styles.countHighlight}>{filteredProducts.length}</strong> of {categoryDetail.products.length} Products
+                Showing <strong className={styles.countHighlight}>{filteredProducts.length}</strong> of {allProducts.length} Products
               </div>
 
               <div className={styles.controls}>
@@ -259,7 +280,7 @@ export default function CategoryPage({ params }: PageProps) {
           {filteredProducts.length > 0 ? (
             <div className={styles.productsGrid}>
               {filteredProducts.map((product) => {
-                const discount = Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100);
+                const discount = product.originalPrice > product.price ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100) : 0;
                 return (
                   <div key={product.id} className={styles.productCard}>
                     {discount > 0 && <span className={styles.discountBadge}>{discount}% OFF</span>}

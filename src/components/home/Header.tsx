@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useApp } from "@/context/AppContext";
-import { searchProductsAndCategories } from "@/data/categories";
+import { searchProductsAndCategories, CategoryProduct } from "@/data/categories";
 import styles from "./Header.module.css";
 
 export default function Header() {
@@ -17,7 +17,54 @@ export default function Header() {
   const [isBrandsOpen, setIsBrandsOpen] = useState(false);
   const [activeSubmenu, setActiveSubmenu] = useState<string | null>(null);
   
+  const [dbSearchProducts, setDbSearchProducts] = useState<CategoryProduct[]>([]);
   const searchContainerRef = useRef<HTMLDivElement | null>(null);
+
+  // Fetch live search products from DB
+  useEffect(() => {
+    let isMounted = true;
+    if (!searchQuery.trim() || searchQuery.trim().length < 2) {
+      return;
+    }
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/products?search=${encodeURIComponent(searchQuery.trim())}&limit=4`);
+        if (res.ok) {
+          const json = await res.json();
+          if (json.success && Array.isArray(json.data) && isMounted) {
+            setDbSearchProducts(json.data.map((item: {
+              id: string;
+              title: string;
+              price: number;
+              originalPrice?: number;
+              imageUrl: string;
+              rating?: number;
+              ratingCount?: number;
+              brand?: string;
+              subCategory?: string;
+            }) => ({
+              id: item.id,
+              title: item.title,
+              price: item.price,
+              originalPrice: item.originalPrice || item.price,
+              imageUrl: item.imageUrl,
+              rating: item.rating || 5,
+              ratingCount: item.ratingCount || 0,
+              brand: item.brand ? item.brand.toUpperCase() : "TUQO",
+              subType: (item.subCategory || "domestic") as "domestic" | "commercial" | "accessory" | "general"
+            })));
+          }
+        }
+      } catch {
+        // Fallback to static
+      }
+    }, 200);
+
+    return () => {
+      isMounted = false;
+      clearTimeout(timer);
+    };
+  }, [searchQuery]);
 
   // Live Instant Search Preview
   const liveResults = useMemo(() => {
@@ -25,11 +72,15 @@ export default function Header() {
       return { products: [], categories: [] };
     }
     const res = searchProductsAndCategories(searchQuery);
+    const dbIds = new Set(dbSearchProducts.map((p) => p.id));
+    const fallbackProds = res.products.filter((p) => !dbIds.has(p.id));
+    const combined = [...dbSearchProducts, ...fallbackProds].slice(0, 4);
+
     return {
-      products: res.products.slice(0, 4),
+      products: combined,
       categories: res.categories.slice(0, 3)
     };
-  }, [searchQuery]);
+  }, [searchQuery, dbSearchProducts]);
 
   // Close search preview on outside click
   useEffect(() => {

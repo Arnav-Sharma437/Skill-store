@@ -2,20 +2,49 @@
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
-import { HERO_SLIDES } from "@/data/home";
+import { HERO_SLIDES, HeroSlide } from "@/data/home";
 import styles from "./HeroBanner.module.css";
 
 export default function HeroBanner() {
+  const [slides, setSlides] = useState<HeroSlide[]>(HERO_SLIDES);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const slideInterval = useRef<NodeJS.Timeout | null>(null);
 
-  const nextSlide = useCallback(() => {
-    setCurrentSlide((prev) => (prev === HERO_SLIDES.length - 1 ? 0 : prev + 1));
+  useEffect(() => {
+    let isMounted = true;
+    async function loadBanners() {
+      try {
+        const res = await fetch("/api/banners");
+        if (res.ok) {
+          const json = await res.json();
+          if (json.success && Array.isArray(json.data) && json.data.length > 0) {
+            const dbSlides: HeroSlide[] = json.data.map((b: { id: string; imageUrl: string; link?: string }) => ({
+              id: b.id,
+              imageUrl: b.imageUrl,
+              link: b.link || "/"
+            }));
+            if (isMounted && dbSlides.length > 0) {
+              setSlides(dbSlides);
+            }
+          }
+        }
+      } catch {
+        // Fallback to static slides
+      }
+    }
+    loadBanners();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
+  const nextSlide = useCallback(() => {
+    setCurrentSlide((prev) => (prev === slides.length - 1 ? 0 : prev + 1));
+  }, [slides.length]);
+
   const prevSlide = () => {
-    setCurrentSlide((prev) => (prev === 0 ? HERO_SLIDES.length - 1 : prev - 1));
+    setCurrentSlide((prev) => (prev === 0 ? slides.length - 1 : prev - 1));
   };
 
   const goToSlide = (index: number) => {
@@ -23,7 +52,7 @@ export default function HeroBanner() {
   };
 
   useEffect(() => {
-    if (!isPaused) {
+    if (!isPaused && slides.length > 1) {
       slideInterval.current = setInterval(nextSlide, 5000); // 5s auto-scroll
     }
 
@@ -32,7 +61,7 @@ export default function HeroBanner() {
         clearInterval(slideInterval.current);
       }
     };
-  }, [isPaused, nextSlide]);
+  }, [isPaused, nextSlide, slides.length]);
 
   return (
     <section 
@@ -46,16 +75,16 @@ export default function HeroBanner() {
         className={styles.slidesWrapper}
         style={{ transform: `translateX(-${currentSlide * 100}%)` }}
       >
-        {HERO_SLIDES.map((slide, idx) => (
+        {slides.map((slide, idx) => (
           <div 
-            key={slide.id} 
+            key={slide.id || idx} 
             className={styles.slide}
             aria-hidden={idx !== currentSlide}
           >
             <div className={styles.imageContainer}>
               <Image
                 src={slide.imageUrl}
-                alt={`TUQO Machinery Banner ${idx + 1}`}
+                alt={`Machinery Banner ${idx + 1}`}
                 fill
                 priority={idx === 0}
                 className={styles.image}
@@ -66,37 +95,41 @@ export default function HeroBanner() {
         ))}
       </div>
 
-      {/* Navigation Arrows (White circles with black chevrons) */}
-      <button 
-        className={`${styles.navButton} ${styles.prevButton}`} 
-        onClick={prevSlide}
-        aria-label="Previous slide"
-      >
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#000000" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-          <polyline points="15 18 9 12 15 6"></polyline>
-        </svg>
-      </button>
-      <button 
-        className={`${styles.navButton} ${styles.nextButton}`} 
-        onClick={nextSlide}
-        aria-label="Next slide"
-      >
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#000000" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-          <polyline points="9 18 15 12 9 6"></polyline>
-        </svg>
-      </button>
+      {/* Navigation Arrows */}
+      {slides.length > 1 && (
+        <>
+          <button 
+            className={`${styles.navButton} ${styles.prevButton}`} 
+            onClick={prevSlide}
+            aria-label="Previous slide"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#000000" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+          </button>
+          <button 
+            className={`${styles.navButton} ${styles.nextButton}`} 
+            onClick={nextSlide}
+            aria-label="Next slide"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#000000" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+          </button>
 
-      {/* Pagination Dots (Centered on the bottom edge) */}
-      <div className={styles.pagination}>
-        {HERO_SLIDES.map((_, idx) => (
-          <button
-            key={idx}
-            className={`${styles.dot} ${idx === currentSlide ? styles.activeDot : ""}`}
-            onClick={() => goToSlide(idx)}
-            aria-label={`Go to slide ${idx + 1}`}
-          />
-        ))}
-      </div>
+          {/* Pagination Dots */}
+          <div className={styles.pagination}>
+            {slides.map((_, idx) => (
+              <button
+                key={idx}
+                className={`${styles.dot} ${idx === currentSlide ? styles.activeDot : ""}`}
+                onClick={() => goToSlide(idx)}
+                aria-label={`Go to slide ${idx + 1}`}
+              />
+            ))}
+          </div>
+        </>
+      )}
     </section>
   );
 }

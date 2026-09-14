@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, use } from "react";
+import React, { useState, useMemo, use, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -8,7 +8,7 @@ import AnnouncementBar from "@/components/home/AnnouncementBar";
 import Header from "@/components/home/Header";
 import Footer from "@/components/home/Footer";
 import { useApp } from "@/context/AppContext";
-import { CATEGORIES_DATA } from "@/data/categories";
+import { CATEGORIES_DATA, CategoryProduct } from "@/data/categories";
 import styles from "./CategoryProductsPage.module.css";
 
 type PageProps = {
@@ -22,6 +22,7 @@ export default function CategoryProductsPage({ params }: PageProps) {
 
   const [filterPrice, setFilterPrice] = useState("all");
   const [sortBy, setSortBy] = useState("default");
+  const [dbProducts, setDbProducts] = useState<CategoryProduct[]>([]);
 
   const formatTitle = (slug: string) => {
     return slug
@@ -33,15 +34,62 @@ export default function CategoryProductsPage({ params }: PageProps) {
   const brandName = brand.toUpperCase();
   const categoryName = formatTitle(category);
 
-  // Dynamic Product Resolution
-  const categoryProducts = useMemo(() => {
-    // 1. Direct match in CATEGORIES_DATA
+  // Fetch dynamic products from MongoDB
+  useEffect(() => {
+    let isMounted = true;
+    async function loadBrandCategoryProducts() {
+      try {
+        const res = await fetch(`/api/products?brand=${encodeURIComponent(brand)}&category=${encodeURIComponent(category)}`);
+        if (res.ok) {
+          const json = await res.json();
+          if (json.success && Array.isArray(json.data)) {
+            const mapped: CategoryProduct[] = json.data.map((item: {
+              id: string;
+              title: string;
+              price: number;
+              originalPrice?: number;
+              imageUrl: string;
+              rating?: number;
+              ratingCount?: number;
+              subCategory?: string;
+              brand?: string;
+              inStock?: boolean;
+            }) => ({
+              id: item.id,
+              title: item.title,
+              price: item.price,
+              originalPrice: item.originalPrice || item.price,
+              imageUrl: item.imageUrl,
+              rating: item.rating || 5,
+              ratingCount: item.ratingCount || 0,
+              subType: (item.subCategory || "domestic") as "domestic" | "commercial" | "accessory" | "general",
+              brand: item.brand ? item.brand.toUpperCase() : brandName,
+              inStock: item.inStock !== false
+            }));
+
+            if (isMounted) {
+              setDbProducts(mapped);
+            }
+          }
+        }
+      } catch {
+        // Fallback to static items
+      }
+    }
+
+    loadBrandCategoryProducts();
+    return () => {
+      isMounted = false;
+    };
+  }, [brand, category, brandName]);
+
+  // Static Fallback items
+  const fallbackProducts: CategoryProduct[] = useMemo(() => {
     const directCat = CATEGORIES_DATA[category.toLowerCase()];
     if (directCat && directCat.products && directCat.products.length > 0) {
       return directCat.products;
     }
 
-    // 2. Fallback generated items for this brand/category
     return [
       {
         id: `${brand}-${category}-1`,
@@ -117,6 +165,13 @@ export default function CategoryProductsPage({ params }: PageProps) {
       }
     ];
   }, [brand, category, brandName, categoryName]);
+
+  // Combined product list
+  const categoryProducts = useMemo(() => {
+    const dbIds = new Set(dbProducts.map((p) => p.id));
+    const staticFiltered = fallbackProducts.filter((p) => !dbIds.has(p.id));
+    return [...dbProducts, ...staticFiltered];
+  }, [dbProducts, fallbackProducts]);
 
   // Star Ratings Helper
   const renderStars = (rating: number) => {
@@ -264,7 +319,7 @@ export default function CategoryProductsPage({ params }: PageProps) {
         </div>
 
         <div className="container">
-          {/* Dashboard Filter Bar */}
+          {/* Filter Bar */}
           <div className={styles.filterBar}>
             <div className={styles.resultsCount}>
               Showing {processedDomestic.length + processedCommercial.length} Products for {categoryName}
@@ -315,7 +370,7 @@ export default function CategoryProductsPage({ params }: PageProps) {
               <div className={styles.grid}>
                 {processedDomestic.map((product) => (
                   <div key={product.id} className={styles.productCard}>
-                    <Link href={`/product/prod-3`} className={styles.imageLink}>
+                    <Link href={`/product/${product.id}`} className={styles.imageLink}>
                       <div className={styles.imageContainer}>
                         <Image
                           src={product.imageUrl}
@@ -328,7 +383,7 @@ export default function CategoryProductsPage({ params }: PageProps) {
                       </div>
                     </Link>
                     <div className={styles.cardDetails}>
-                      <Link href={`/product/prod-3`} className={styles.titleLink}>
+                      <Link href={`/product/${product.id}`} className={styles.titleLink}>
                         <h3 className={styles.productTitle} title={product.title}>
                           {product.title}
                         </h3>
@@ -382,7 +437,7 @@ export default function CategoryProductsPage({ params }: PageProps) {
               <div className={styles.grid}>
                 {processedCommercial.map((product) => (
                   <div key={product.id} className={styles.productCard}>
-                    <Link href={`/product/prod-3`} className={styles.imageLink}>
+                    <Link href={`/product/${product.id}`} className={styles.imageLink}>
                       <div className={styles.imageContainer}>
                         <Image
                           src={product.imageUrl}
@@ -395,7 +450,7 @@ export default function CategoryProductsPage({ params }: PageProps) {
                       </div>
                     </Link>
                     <div className={styles.cardDetails}>
-                      <Link href={`/product/prod-3`} className={styles.titleLink}>
+                      <Link href={`/product/${product.id}`} className={styles.titleLink}>
                         <h3 className={styles.productTitle} title={product.title}>
                           {product.title}
                         </h3>
@@ -449,7 +504,7 @@ export default function CategoryProductsPage({ params }: PageProps) {
               <div className={styles.gridAccessories}>
                 {processedAccessories.map((product) => (
                   <div key={product.id} className={styles.productCard}>
-                    <Link href={`/product/prod-3`} className={styles.imageLink}>
+                    <Link href={`/product/${product.id}`} className={styles.imageLink}>
                       <div className={styles.imageContainer}>
                         <Image
                           src={product.imageUrl}
@@ -462,7 +517,7 @@ export default function CategoryProductsPage({ params }: PageProps) {
                       </div>
                     </Link>
                     <div className={styles.cardDetails}>
-                      <Link href={`/product/prod-3`} className={styles.titleLink}>
+                      <Link href={`/product/${product.id}`} className={styles.titleLink}>
                         <h3 className={styles.productTitle} title={product.title}>
                           {product.title}
                         </h3>

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, Suspense } from "react";
+import React, { useState, useMemo, Suspense, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -8,7 +8,7 @@ import AnnouncementBar from "@/components/home/AnnouncementBar";
 import Header from "@/components/home/Header";
 import Footer from "@/components/home/Footer";
 import { useApp } from "@/context/AppContext";
-import { searchProductsAndCategories } from "@/data/categories";
+import { searchProductsAndCategories, CategoryProduct } from "@/data/categories";
 import styles from "./SearchPage.module.css";
 
 const POPULAR_SEARCHES = [
@@ -29,11 +29,71 @@ function SearchContent() {
 
   const [filterPrice, setFilterPrice] = useState("all");
   const [sortBy, setSortBy] = useState("default");
+  const [dbProducts, setDbProducts] = useState<CategoryProduct[]>([]);
 
-  // Search Results
-  const searchResults = useMemo(() => {
+  // Static Search Results
+  const staticResults = useMemo(() => {
     return searchProductsAndCategories(query);
   }, [query]);
+
+  // Fetch live search from MongoDB
+  useEffect(() => {
+    let isMounted = true;
+    if (!query.trim()) {
+      return;
+    }
+    async function loadDbSearch() {
+      try {
+        const res = await fetch(`/api/products?search=${encodeURIComponent(query.trim())}`);
+        if (res.ok) {
+          const json = await res.json();
+          if (json.success && Array.isArray(json.data)) {
+            const mapped: CategoryProduct[] = json.data.map((item: {
+              id: string;
+              title: string;
+              price: number;
+              originalPrice?: number;
+              imageUrl: string;
+              rating?: number;
+              ratingCount?: number;
+              subCategory?: string;
+              brand?: string;
+              inStock?: boolean;
+            }) => ({
+              id: item.id,
+              title: item.title,
+              price: item.price,
+              originalPrice: item.originalPrice || item.price,
+              imageUrl: item.imageUrl,
+              rating: item.rating || 5,
+              ratingCount: item.ratingCount || 0,
+              subType: (item.subCategory || "domestic") as "domestic" | "commercial" | "accessory" | "general",
+              brand: item.brand ? item.brand.toUpperCase() : "TUQO",
+              inStock: item.inStock !== false
+            }));
+
+            if (isMounted) {
+              setDbProducts(mapped);
+            }
+          }
+        }
+      } catch {
+        // Fallback to static results
+      }
+    }
+
+    loadDbSearch();
+    return () => {
+      isMounted = false;
+    };
+  }, [query]);
+
+  // Combined product list (Live DB first, then static)
+  const combinedProducts = useMemo(() => {
+    const dbIds = new Set(dbProducts.map((p) => p.id));
+    const filteredStatic = staticResults.products.filter((p) => !dbIds.has(p.id));
+    return [...dbProducts, ...filteredStatic];
+  }, [dbProducts, staticResults.products]);
 
   // Star Rating Helper
   const renderStars = (rating: number) => {
@@ -59,7 +119,7 @@ function SearchContent() {
 
   // Filter and Sort Pipeline
   const filteredProducts = useMemo(() => {
-    let list = [...searchResults.products];
+    let list = [...combinedProducts];
 
     // Filter by Price
     if (filterPrice === "under5k") {
@@ -80,7 +140,7 @@ function SearchContent() {
     }
 
     return list;
-  }, [searchResults.products, filterPrice, sortBy]);
+  }, [combinedProducts, filterPrice, sortBy]);
 
   return (
     <>
@@ -120,15 +180,15 @@ function SearchContent() {
             {query ? `RESULTS FOR "${query}"` : "EXPLORE ALL MACHINERY & TOOLS"}
           </h1>
           <p className={styles.bannerDesc}>
-            Found {searchResults.products.length} matching machinery tools, spare attachments, and workshop equipment.
+            Found {combinedProducts.length} matching machinery tools, spare attachments, and workshop equipment.
           </p>
 
           {/* Matched Categories quick pills */}
-          {searchResults.categories.length > 0 && (
+          {staticResults.categories.length > 0 && (
             <div className={styles.categoryPillsRow}>
               <span className={styles.pillsLabel}>Matching Categories:</span>
               <div className={styles.pillsList}>
-                {searchResults.categories.map((cat) => (
+                {staticResults.categories.map((cat) => (
                   <Link href={`/category/${cat.slug}`} key={cat.slug} className={styles.catPill}>
                     {cat.name} ({cat.count}) &rarr;
                   </Link>
@@ -140,7 +200,7 @@ function SearchContent() {
           {/* Merged Filter Bar Strip */}
           <div className={styles.bannerFilterRow}>
             <div className={styles.resultsCount}>
-              Showing <strong className={styles.countHighlight}>{filteredProducts.length}</strong> of {searchResults.products.length} Products
+              Showing <strong className={styles.countHighlight}>{filteredProducts.length}</strong> of {combinedProducts.length} Products
             </div>
 
             <div className={styles.controls}>
@@ -179,9 +239,9 @@ function SearchContent() {
         {filteredProducts.length > 0 ? (
           <div className={styles.productsGrid}>
             {filteredProducts.map((product) => {
-              const discount = Math.round(
-                ((product.originalPrice - product.price) / product.originalPrice) * 100
-              );
+              const discount = product.originalPrice > product.price
+                ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
+                : 0;
               return (
                 <div key={product.id} className={styles.productCard}>
                   {discount > 0 && <span className={styles.discountBadge}>{discount}% OFF</span>}
@@ -265,7 +325,6 @@ function SearchContent() {
             <h2>No matching products found for &ldquo;{query}&rdquo;</h2>
             <p>Check the spelling or try searching with more general keywords.</p>
 
-            {/* Popular search chips */}
             <div className={styles.popularSearchesBlock}>
               <h4>Popular Searches:</h4>
               <div className={styles.chipsWrapper}>

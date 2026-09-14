@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, use } from "react";
+import React, { useState, useMemo, use, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -58,23 +58,50 @@ type PageProps = {
   params: Promise<{ id: string }>;
 };
 
+interface ProductData {
+  id: string;
+  title: string;
+  price: number;
+  originalPrice: number;
+  imageUrl: string;
+  videoUrl?: string;
+  gallery?: string[];
+  rating: number;
+  ratingCount: number;
+  brand?: string;
+  category?: string;
+  categorySlug?: string;
+  categoryName?: string;
+  subCategory?: string;
+  subType?: "domestic" | "commercial" | "accessory" | "general";
+  description?: string[] | string;
+  specifications?: string[] | string;
+  whatsInBox?: string[] | string;
+  inStock?: boolean;
+}
+
 export default function ProductPage({ params }: PageProps) {
   const { id } = use(params);
   const router = useRouter();
   const { addToCart, toggleWishlist, isInWishlist } = useApp();
 
-  // Resolve Product
-  const product = useMemo(() => {
+  // Initial fallback resolution
+  const initialProduct = useMemo(() => {
     const found = getProductById(id);
-    if (found) return found;
+    if (found) {
+      return {
+        ...found,
+        category: found.categorySlug || "high-pressure-washer",
+        inStock: found.inStock !== false
+      };
+    }
 
-    // Fallback default product
     return {
       id: id,
-      title: "TUQO Cordless High Pressure Washer CDW400 / 24V Lithium",
-      price: 6299,
-      originalPrice: 8299,
-      imageUrl: "/images/products/cdw400.jpg",
+      title: "Machinery Product " + id,
+      price: 4999,
+      originalPrice: 6999,
+      imageUrl: "/images/products/hw2000.jpg",
       rating: 5,
       ratingCount: 241,
       brand: "TUQO",
@@ -85,24 +112,90 @@ export default function ProductPage({ params }: PageProps) {
     };
   }, [id]);
 
-  const isFavourite = isInWishlist(product.id);
-  const savings = Math.max(0, product.originalPrice - product.price);
-  const savingsPercent = Math.round((savings / product.originalPrice) * 100);
-
-  // States
+  const [product, setProduct] = useState<ProductData>(initialProduct);
+  const [selectedImage, setSelectedImage] = useState<string>(initialProduct.imageUrl);
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState("description");
-  const [selectedImage, setSelectedImage] = useState(product.imageUrl);
+
+  // Fetch live product from MongoDB
+  useEffect(() => {
+    let isMounted = true;
+    async function fetchProduct() {
+      try {
+        const res = await fetch(`/api/products/${encodeURIComponent(id)}`);
+        if (res.ok) {
+          const json = await res.json();
+          if (json.success && json.data) {
+            const d = json.data;
+            const normalized: ProductData = {
+              id: d.id,
+              title: d.title,
+              price: d.price,
+              originalPrice: d.originalPrice || d.price,
+              imageUrl: d.imageUrl,
+              videoUrl: d.videoUrl || "",
+              gallery: Array.isArray(d.gallery) ? d.gallery : [],
+              rating: d.rating || 5,
+              ratingCount: d.ratingCount || 10,
+              brand: d.brand ? d.brand.toUpperCase() : "TUQO",
+              category: d.category || "high-pressure-washer",
+              categorySlug: d.category ? d.category.toLowerCase().replace(/\s+/g, "-") : "high-pressure-washer",
+              categoryName: d.category ? d.category.toUpperCase() : "MACHINERY",
+              subCategory: d.subCategory || "domestic",
+              description: d.description || [],
+              specifications: d.specifications || [],
+              whatsInBox: d.whatsInBox || [],
+              inStock: d.inStock !== false
+            };
+
+            if (isMounted) {
+              setProduct(normalized);
+              setSelectedImage(normalized.imageUrl);
+            }
+          }
+        }
+      } catch {
+        // Keep initial fallback product
+      }
+    }
+
+    fetchProduct();
+    return () => {
+      isMounted = false;
+    };
+  }, [id]);
+
+  const isFavourite = isInWishlist(product.id);
+  const savings = Math.max(0, product.originalPrice - product.price);
+  const savingsPercent = product.originalPrice > 0 ? Math.round((savings / product.originalPrice) * 100) : 0;
 
   // Gallery thumbnails
-  const gallery = [
-    product.imageUrl,
-    "/images/products/cdw400.jpg",
-    "/images/products/hw2000.jpg",
-    "/images/products/nozzle_tips.jpg",
-    "/images/products/trigger_gun.jpg",
-    "/images/products/compressor.jpg"
-  ];
+  const gallery = useMemo(() => {
+    const list: string[] = [];
+    if (product.imageUrl) list.push(product.imageUrl);
+    if (product.gallery && Array.isArray(product.gallery)) {
+      product.gallery.forEach((img) => {
+        if (img && !list.includes(img)) list.push(img);
+      });
+    }
+
+    // Default thumbnails if less than 3
+    const defaultThumbs = [
+      "/images/products/cdw400.jpg",
+      "/images/products/hw2000.jpg",
+      "/images/products/nozzle_tips.jpg",
+      "/images/products/trigger_gun.jpg",
+      "/images/products/compressor.jpg"
+    ];
+
+    defaultThumbs.forEach((img) => {
+      if (list.length < 5 && !list.includes(img)) {
+        list.push(img);
+      }
+    });
+
+    return list;
+  }, [product.imageUrl, product.gallery]);
 
   const handleNextImage = () => {
     const currentIndex = gallery.indexOf(selectedImage);
@@ -115,6 +208,56 @@ export default function ProductPage({ params }: PageProps) {
     const prevIndex = (currentIndex - 1 + gallery.length) % gallery.length;
     setSelectedImage(gallery[prevIndex]);
   };
+
+  // Convert description to string array
+  const descItems = useMemo(() => {
+    if (Array.isArray(product.description) && product.description.length > 0) {
+      return product.description;
+    }
+    if (typeof product.description === "string" && product.description.trim()) {
+      return product.description.split("\n").filter(Boolean);
+    }
+    return [
+      "HIGH PERFORMANCE OUTPUT - Experience powerful high performance cleaning with our precision-engineered machine.",
+      "VERSATILE ALL-WEATHER OPERATION - Equipped with multi-functional quick connectors and spray accessories.",
+      "PORTABLE & EASY TO ASSEMBLE - Designed for convenient handling and hassle-free operation.",
+      "LOW NOISE MOTOR - Built with high efficiency cooling and vibration dampening technology."
+    ];
+  }, [product.description]);
+
+  const specItems = useMemo(() => {
+    if (Array.isArray(product.specifications) && product.specifications.length > 0) {
+      return product.specifications;
+    }
+    if (typeof product.specifications === "string" && product.specifications.trim()) {
+      return product.specifications.split("\n").filter(Boolean);
+    }
+    return [
+      `Brand: ${product.brand || "SkillStore"}`,
+      `Model SKU: ${product.id}`,
+      `Category: ${product.categoryName || "Machinery"}`,
+      "Operating Voltage: 220V - 240V / 24V DC",
+      "Construction: Reinforced Industrial Composite",
+      "Warranty: 1 Year Official Manufacturer Warranty"
+    ];
+  }, [product.specifications, product.brand, product.id, product.categoryName]);
+
+  const boxItems = useMemo(() => {
+    if (Array.isArray(product.whatsInBox) && product.whatsInBox.length > 0) {
+      return product.whatsInBox;
+    }
+    if (typeof product.whatsInBox === "string" && product.whatsInBox.trim()) {
+      return product.whatsInBox.split("\n").filter(Boolean);
+    }
+    return [
+      `1x ${product.title}`,
+      "1x Pressure Nozzle Set / Adapters",
+      "1x Quick Connector Coupler",
+      "1x User Instruction Manual & Warranty Card"
+    ];
+  }, [product.whatsInBox, product.title]);
+
+  const isInStock = product.inStock !== false;
 
   return (
     <>
@@ -168,7 +311,7 @@ export default function ProductPage({ params }: PageProps) {
                 </button>
               </div>
 
-              {/* Thumbnails row (Auto / touch scrollable strip without manual arrow clutter) */}
+              {/* Thumbnails row */}
               <div className={styles.thumbnailsWrapper}>
                 <div className={styles.thumbnailsGrid}>
                   {gallery.map((img, index) => (
@@ -214,6 +357,21 @@ export default function ProductPage({ params }: PageProps) {
                 </button>
               </div>
 
+              {/* In Stock / Out of Stock status */}
+              <div style={{ marginBottom: "12px" }}>
+                {isInStock ? (
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "13px", fontWeight: 700, color: "#16a34a" }}>
+                    <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#16a34a" }}></span>
+                    In Stock &bull; Ready to Dispatch
+                  </span>
+                ) : (
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "13px", fontWeight: 700, color: "#dc2626" }}>
+                    <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#dc2626" }}></span>
+                    Currently Out of Stock
+                  </span>
+                )}
+              </div>
+
               {/* Price block */}
               <div className={styles.priceContainer}>
                 {product.originalPrice > product.price && (
@@ -238,61 +396,83 @@ export default function ProductPage({ params }: PageProps) {
               </div>
 
               {/* Quantity Picker */}
-              <div className={styles.quantityContainer}>
-                <button
-                  type="button"
-                  onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                  className={styles.qtyBtn}
-                  aria-label="Decrease quantity"
-                >
-                  -
-                </button>
-                <input
-                  type="number"
-                  min="1"
-                  value={quantity}
-                  onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-                  className={styles.qtyInput}
-                  aria-label="Product quantity"
-                />
-                <button
-                  type="button"
-                  onClick={() => setQuantity((q) => q + 1)}
-                  className={styles.qtyBtn}
-                  aria-label="Increase quantity"
-                >
-                  +
-                </button>
-              </div>
+              {isInStock && (
+                <div className={styles.quantityContainer}>
+                  <button
+                    type="button"
+                    onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                    className={styles.qtyBtn}
+                    aria-label="Decrease quantity"
+                  >
+                    -
+                  </button>
+                  <input
+                    type="number"
+                    min="1"
+                    value={quantity}
+                    onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                    className={styles.qtyInput}
+                    aria-label="Product quantity"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setQuantity((q) => q + 1)}
+                    className={styles.qtyBtn}
+                    aria-label="Increase quantity"
+                  >
+                    +
+                  </button>
+                </div>
+              )}
 
               {/* Action Buttons */}
               <div className={styles.actionsBlock}>
-                <button 
-                  onClick={() => {
-                    for (let i = 0; i < quantity; i++) {
-                      addToCart({ id: product.id, title: product.title, price: product.price, imageUrl: product.imageUrl });
-                    }
-                    router.push("/cart");
-                  }}
-                  className={styles.buyNowBtn}
-                >
-                  Buy Now
-                </button>
-                <button 
-                  onClick={() => {
-                    for (let i = 0; i < quantity; i++) {
-                      addToCart({ id: product.id, title: product.title, price: product.price, imageUrl: product.imageUrl });
-                    }
-                  }}
-                  className={styles.addToCartBtn}
-                >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                    <circle cx="9" cy="21" r="1"></circle>
-                    <circle cx="20" cy="21" r="1"></circle>
-                    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
-                  </svg>
-                  <span>Add to Cart</span>
-                </button>
+                {isInStock ? (
+                  <>
+                    <button 
+                      onClick={() => {
+                        for (let i = 0; i < quantity; i++) {
+                          addToCart({ id: product.id, title: product.title, price: product.price, imageUrl: product.imageUrl });
+                        }
+                        router.push("/cart");
+                      }}
+                      className={styles.buyNowBtn}
+                    >
+                      Buy Now
+                    </button>
+                    <button 
+                      onClick={() => {
+                        for (let i = 0; i < quantity; i++) {
+                          addToCart({ id: product.id, title: product.title, price: product.price, imageUrl: product.imageUrl });
+                        }
+                      }}
+                      className={styles.addToCartBtn}
+                    >
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <circle cx="9" cy="21" r="1"></circle>
+                        <circle cx="20" cy="21" r="1"></circle>
+                        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                      </svg>
+                      <span>Add to Cart</span>
+                    </button>
+                  </>
+                ) : (
+                  <button 
+                    disabled 
+                    style={{
+                      width: "100%",
+                      padding: "14px 20px",
+                      background: "#9ca3af",
+                      color: "#ffffff",
+                      border: "none",
+                      borderRadius: "8px",
+                      fontWeight: 700,
+                      cursor: "not-allowed"
+                    }}
+                  >
+                    Item Out of Stock
+                  </button>
+                )}
               </div>
 
               {/* Product Info List */}
@@ -364,20 +544,27 @@ export default function ProductPage({ params }: PageProps) {
             <div className={styles.tabContentArea}>
               {activeTab === "description" && (
                 <ol className={styles.descriptionList}>
-                  <li><strong>HIGH PERFORMANCE OUTPUT</strong> - Experience powerful high performance cleaning with our precision-engineered machine. Delivers continuous pressure output and consistent water flow for rigorous automotive and industrial cleaning jobs.</li>
-                  <li><strong>VERSATILE ALL-WEATHER OPERATION</strong> - Comes equipped with multi-functional quick connectors, spray lances, and inlet hoses. Tackles tough grease, grime, road salt, and mud easily.</li>
-                  <li><strong>PORTABLE &amp; EASY TO ASSEMBLE</strong> - Designed for convenient handling and hassle-free operation. Simple plug-and-play assembly allows you to begin cleaning within minutes.</li>
-                  <li><strong>LOW NOISE MOTOR</strong> - Built with high efficiency cooling and vibration dampening technology for quiet, long-lasting reliability.</li>
+                  {descItems.map((item, idx) => (
+                    <li key={idx}>{item}</li>
+                  ))}
                 </ol>
               )}
               {activeTab === "specification" && (
                 <div className={styles.tabPane}>
-                  <p>Brand: {product.brand || "SkillStore"} | Model: {product.id} | Operating Voltage: 220V - 240V / 24V DC | Construction: Reinforced Industrial Composite | Finish: Matte Premium | Warranty: 1 Year Official Manufacturer Warranty</p>
+                  <ul style={{ listStyleType: "disc", paddingLeft: "20px", display: "flex", flexDirection: "column", gap: "8px" }}>
+                    {specItems.map((item, idx) => (
+                      <li key={idx}>{item}</li>
+                    ))}
+                  </ul>
                 </div>
               )}
               {activeTab === "box" && (
                 <div className={styles.tabPane}>
-                  <p>1x {product.title}, 1x Pressure Nozzle Set, 1x Reinforced Hose, 1x Quick Connector Coupler, 1x Foam Bottle attachment, 1x Instruction Manual &amp; Warranty Card.</p>
+                  <ul style={{ listStyleType: "disc", paddingLeft: "20px", display: "flex", flexDirection: "column", gap: "8px" }}>
+                    {boxItems.map((item, idx) => (
+                      <li key={idx}>{item}</li>
+                    ))}
+                  </ul>
                 </div>
               )}
             </div>
@@ -478,7 +665,7 @@ export default function ProductPage({ params }: PageProps) {
             </div>
           </div>
 
-          {/* Section: Based on your recent views (Continuous Scrolling Marquee) */}
+          {/* Section: Based on your recent views */}
           <div className={styles.recentSection}>
             <div className={styles.sectionHeaderRow}>
               <div className={styles.titleTab}>
@@ -487,7 +674,6 @@ export default function ProductPage({ params }: PageProps) {
               <div className={styles.headerLine}></div>
             </div>
 
-            {/* Continuous Scrolling Marquee Slider Track for Recent Views */}
             <div className={styles.recentMarqueeContainer}>
               <div className={styles.recentMarqueeTrack}>
                 {/* First Copy */}
@@ -534,7 +720,7 @@ export default function ProductPage({ params }: PageProps) {
                   ))}
                 </div>
 
-                {/* Duplicate Copy for Seamless Infinite Scrolling */}
+                {/* Duplicate Copy */}
                 <div className={styles.recentRow} aria-hidden="true">
                   {RECENT_PRODUCTS.map((prod) => (
                     <div key={`${prod.id}-2`} className={styles.recentCard}>
