@@ -9,6 +9,7 @@ import Header from "@/components/home/Header";
 import Footer from "@/components/home/Footer";
 import { useApp } from "@/context/AppContext";
 import { getProductById } from "@/data/categories";
+import { optimizeProductDetail, optimizeGalleryThumbnail, optimizeProductCard } from "@/lib/imageOptimization";
 import styles from "./ProductPage.module.css";
 
 // Accessory Products for "Based on your recent views"
@@ -295,12 +296,13 @@ export default function ProductPage({ params }: PageProps) {
                 </button>
                 <div className={styles.mainImageContainer}>
                   <Image
-                    src={selectedImage || product.imageUrl}
+                    src={optimizeProductDetail(selectedImage || product.imageUrl)}
                     alt={product.title}
                     width={400}
                     height={400}
                     className={styles.mainImage}
                     priority
+                    sizes="(max-width: 768px) 100vw, 50vw"
                     style={{ objectFit: "contain" }}
                   />
                 </div>
@@ -322,10 +324,11 @@ export default function ProductPage({ params }: PageProps) {
                       aria-label={`View image ${index + 1}`}
                     >
                       <Image
-                        src={img}
+                        src={optimizeGalleryThumbnail(img)}
                         alt={`Thumbnail ${index + 1}`}
                         width={60}
                         height={60}
+                        loading="lazy"
                         className={styles.thumbnailImg}
                         style={{ objectFit: "contain" }}
                       />
@@ -681,7 +684,15 @@ export default function ProductPage({ params }: PageProps) {
                   {RECENT_PRODUCTS.map((prod) => (
                     <div key={`${prod.id}-1`} className={styles.recentCard}>
                       <div className={styles.recentImgBox}>
-                        <Image src={prod.imageUrl} alt={prod.title} width={160} height={120} className={styles.recentImg} style={{ objectFit: "contain" }} />
+                        <Image
+                          src={optimizeProductCard(prod.imageUrl)}
+                          alt={prod.title}
+                          width={160}
+                          height={120}
+                          loading="lazy"
+                          className={styles.recentImg}
+                          style={{ objectFit: "contain" }}
+                        />
                       </div>
                       <div className={styles.recentInfo}>
                         <h4 className={styles.recentTitle} title={prod.title}>{prod.title}</h4>
@@ -725,7 +736,15 @@ export default function ProductPage({ params }: PageProps) {
                   {RECENT_PRODUCTS.map((prod) => (
                     <div key={`${prod.id}-2`} className={styles.recentCard}>
                       <div className={styles.recentImgBox}>
-                        <Image src={prod.imageUrl} alt={prod.title} width={160} height={120} className={styles.recentImg} style={{ objectFit: "contain" }} />
+                        <Image
+                          src={optimizeProductCard(prod.imageUrl)}
+                          alt={prod.title}
+                          width={160}
+                          height={120}
+                          loading="lazy"
+                          className={styles.recentImg}
+                          style={{ objectFit: "contain" }}
+                        />
                       </div>
                       <div className={styles.recentInfo}>
                         <h4 className={styles.recentTitle} title={prod.title}>{prod.title}</h4>

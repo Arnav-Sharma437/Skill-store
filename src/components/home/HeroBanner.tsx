@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
 import { HERO_SLIDES, HeroSlide } from "@/data/home";
+import { optimizeHeroBanner } from "@/lib/imageOptimization";
 import styles from "./HeroBanner.module.css";
 
 export default function HeroBanner() {
@@ -83,10 +84,11 @@ export default function HeroBanner() {
           >
             <div className={styles.imageContainer}>
               <Image
-                src={slide.imageUrl}
+                src={optimizeHeroBanner(slide.imageUrl)}
                 alt={`Machinery Banner ${idx + 1}`}
                 fill
                 priority={idx === 0}
+                loading={idx === 0 ? "eager" : "lazy"}
                 className={styles.image}
                 sizes="100vw"
               />

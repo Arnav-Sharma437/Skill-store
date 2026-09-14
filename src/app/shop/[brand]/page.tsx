@@ -6,6 +6,7 @@ import AnnouncementBar from "@/components/home/AnnouncementBar";
 import Header from "@/components/home/Header";
 import Footer from "@/components/home/Footer";
 import { BRAND_CATEGORIES } from "@/data/home";
+import { optimizeProductCard } from "@/lib/imageOptimization";
 import styles from "./BrandPage.module.css";
 
 type PageProps = {
@@ -57,10 +58,11 @@ export default async function BrandPage({ params }: PageProps) {
               >
                 <div className={styles.imageContainer}>
                   <Image
-                    src={category.imageUrl}
+                    src={optimizeProductCard(category.imageUrl)}
                     alt={category.name}
                     width={180}
                     height={180}
+                    loading="lazy"
                     className={styles.image}
                     style={{ objectFit: "contain" }}
                   />

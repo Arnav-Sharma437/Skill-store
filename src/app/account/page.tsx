@@ -9,6 +9,7 @@ import Header from "@/components/home/Header";
 import Footer from "@/components/home/Footer";
 import AnnouncementBar from "@/components/home/AnnouncementBar";
 import { useApp } from "@/context/AppContext";
+import { optimizeGalleryThumbnail } from "@/lib/imageOptimization";
 import styles from "./AccountPage.module.css";
 
 interface OrderItem {
@@ -327,10 +328,11 @@ function AccountContent() {
                       {wishlist.map((item) => (
                         <div key={item.id} className={styles.wishlistCard}>
                           <Image
-                            src={item.imageUrl}
+                            src={optimizeGalleryThumbnail(item.imageUrl)}
                             alt={item.title}
                             width={100}
                             height={100}
+                            loading="lazy"
                             className={styles.wishlistImg}
                             style={{ objectFit: "contain" }}
                           />
@@ -338,7 +340,7 @@ function AccountContent() {
                             <h4>{item.title}</h4>
                             <p className={styles.wishlistPrice}>₹{item.price.toLocaleString("en-IN")}</p>
                             <div className={styles.wishlistActions}>
-                              <Link href={`/product/prod-3`} className={styles.viewProductBtn}>
+                              <Link href={`/product/${item.id}`} className={styles.viewProductBtn}>
                                 View Item
                               </Link>
                               <button onClick={() => toggleWishlist(item)} className={styles.removeWishlistBtn}>

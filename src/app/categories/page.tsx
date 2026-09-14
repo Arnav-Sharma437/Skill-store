@@ -5,6 +5,7 @@ import AnnouncementBar from "@/components/home/AnnouncementBar";
 import Header from "@/components/home/Header";
 import Footer from "@/components/home/Footer";
 import { CATEGORIES_DATA } from "@/data/categories";
+import { optimizeGalleryThumbnail } from "@/lib/imageOptimization";
 import styles from "./CategoriesPage.module.css";
 
 export const metadata = {
@@ -83,10 +84,11 @@ export default function CategoriesPage() {
                 <div className={styles.cardTop}>
                   <div className={styles.imageWrapper}>
                     <Image
-                      src={getCategoryImage(cat.slug)}
+                      src={optimizeGalleryThumbnail(getCategoryImage(cat.slug))}
                       alt={cat.name}
                       width={70}
                       height={70}
+                      loading="lazy"
                       style={{ objectFit: "contain" }}
                     />
                   </div>

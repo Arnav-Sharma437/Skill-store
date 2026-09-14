@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { BRAND_CATEGORIES } from "@/data/home";
+import { optimizeAdminPreview } from "@/lib/imageOptimization";
 import styles from "./AdminPage.module.css";
 
 // --- Interfaces ---
@@ -1162,10 +1163,11 @@ export default function AdminDashboard() {
                                   <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
                                     <div className={styles.tableThumbnail}>
                                       <Image
-                                        src={p.imageUrl || "/images/products/hw2000.jpg"}
+                                        src={optimizeAdminPreview(p.imageUrl || "/images/products/hw2000.jpg")}
                                         alt={p.title}
                                         width={44}
                                         height={44}
+                                        loading="lazy"
                                         style={{ objectFit: "contain" }}
                                       />
                                     </div>
@@ -1321,10 +1323,11 @@ export default function AdminDashboard() {
                           {bannerForm.imageUrl && (
                             <div className={styles.mediaPreview} style={{ width: "100%", height: "90px", marginTop: "4px" }}>
                               <Image
-                                src={bannerForm.imageUrl}
+                                src={optimizeAdminPreview(bannerForm.imageUrl)}
                                 alt="Banner Preview"
                                 width={240}
                                 height={80}
+                                loading="lazy"
                                 style={{ objectFit: "contain", maxHeight: "80px" }}
                               />
                             </div>
@@ -1366,7 +1369,14 @@ export default function AdminDashboard() {
                         {banners.map((b) => (
                           <div key={b.id} className={styles.bannerRow}>
                             <div className={styles.bannerPreview}>
-                              <Image src={b.imageUrl} alt={b.id} width={120} height={50} style={{ objectFit: "cover" }} />
+                              <Image
+                                src={optimizeAdminPreview(b.imageUrl)}
+                                alt={b.id}
+                                width={120}
+                                height={50}
+                                loading="lazy"
+                                style={{ objectFit: "cover" }}
+                              />
                             </div>
                             <div className={styles.bannerInfo}>
                               <strong>{b.id}</strong>
@@ -1585,10 +1595,11 @@ export default function AdminDashboard() {
                     {productForm.imageUrl && (
                       <div className={styles.mediaPreview} style={{ marginTop: "6px" }}>
                         <Image
-                          src={productForm.imageUrl}
+                          src={optimizeAdminPreview(productForm.imageUrl)}
                           alt="Preview"
                           width={70}
                           height={70}
+                          loading="lazy"
                           style={{ objectFit: "contain" }}
                         />
                       </div>
@@ -1648,7 +1659,14 @@ export default function AdminDashboard() {
                     <div className={styles.galleryThumbGrid} style={{ marginTop: "8px" }}>
                       {productForm.gallery.map((imgUrl, idx) => (
                         <div key={idx} className={styles.galleryThumbCard}>
-                          <Image src={imgUrl} alt={`Gallery ${idx}`} width={55} height={55} style={{ objectFit: "contain" }} />
+                          <Image
+                            src={optimizeAdminPreview(imgUrl)}
+                            alt={`Gallery ${idx}`}
+                            width={55}
+                            height={55}
+                            loading="lazy"
+                            style={{ objectFit: "contain" }}
+                          />
                           <button
                             type="button"
                             onClick={() => {
@@ -1735,10 +1753,11 @@ export default function AdminDashboard() {
               <div style={{ display: "flex", gap: "20px", alignItems: "center" }}>
                 <div className={styles.tableThumbnail} style={{ width: "120px", height: "120px" }}>
                   <Image
-                    src={viewingProduct.imageUrl || "/images/products/hw2000.jpg"}
+                    src={optimizeAdminPreview(viewingProduct.imageUrl || "/images/products/hw2000.jpg")}
                     alt={viewingProduct.title}
                     width={110}
                     height={110}
+                    loading="lazy"
                     style={{ objectFit: "contain" }}
                   />
                 </div>
@@ -1772,7 +1791,14 @@ export default function AdminDashboard() {
                   <div className={styles.galleryThumbGrid} style={{ marginTop: "6px" }}>
                     {viewingProduct.gallery.map((img, idx) => (
                       <div key={idx} className={styles.galleryThumbCard}>
-                        <Image src={img} alt={`Gallery ${idx}`} width={60} height={60} style={{ objectFit: "contain" }} />
+                        <Image
+                          src={optimizeAdminPreview(img)}
+                          alt={`Gallery ${idx}`}
+                          width={60}
+                          height={60}
+                          loading="lazy"
+                          style={{ objectFit: "contain" }}
+                        />
                       </div>
                     ))}
                   </div>

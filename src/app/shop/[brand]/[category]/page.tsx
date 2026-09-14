@@ -9,6 +9,7 @@ import Header from "@/components/home/Header";
 import Footer from "@/components/home/Footer";
 import { useApp } from "@/context/AppContext";
 import { CATEGORIES_DATA, CategoryProduct } from "@/data/categories";
+import { optimizeProductCard } from "@/lib/imageOptimization";
 import styles from "./CategoryProductsPage.module.css";
 
 type PageProps = {
@@ -373,10 +374,12 @@ export default function CategoryProductsPage({ params }: PageProps) {
                     <Link href={`/product/${product.id}`} className={styles.imageLink}>
                       <div className={styles.imageContainer}>
                         <Image
-                          src={product.imageUrl}
+                          src={optimizeProductCard(product.imageUrl)}
                           alt={product.title}
                           width={220}
                           height={165}
+                          loading="lazy"
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
                           className={styles.image}
                           style={{ objectFit: "contain" }}
                         />
@@ -440,10 +443,12 @@ export default function CategoryProductsPage({ params }: PageProps) {
                     <Link href={`/product/${product.id}`} className={styles.imageLink}>
                       <div className={styles.imageContainer}>
                         <Image
-                          src={product.imageUrl}
+                          src={optimizeProductCard(product.imageUrl)}
                           alt={product.title}
                           width={220}
                           height={165}
+                          loading="lazy"
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
                           className={styles.image}
                           style={{ objectFit: "contain" }}
                         />
@@ -507,10 +512,12 @@ export default function CategoryProductsPage({ params }: PageProps) {
                     <Link href={`/product/${product.id}`} className={styles.imageLink}>
                       <div className={styles.imageContainer}>
                         <Image
-                          src={product.imageUrl}
+                          src={optimizeProductCard(product.imageUrl)}
                           alt={product.title}
                           width={220}
                           height={165}
+                          loading="lazy"
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
                           className={styles.image}
                           style={{ objectFit: "contain" }}
                         />

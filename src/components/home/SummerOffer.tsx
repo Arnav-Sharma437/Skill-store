@@ -1,10 +1,9 @@
-"use client";
-
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import styles from "./SummerOffer.module.css";
 import { SUMMER_OFFERS } from "@/data/home";
+import { optimizeProductDetail } from "@/lib/imageOptimization";
 
 export default function SummerOffer() {
   return (
@@ -29,10 +28,12 @@ export default function SummerOffer() {
                 <Link href={offer.link} key={`${offer.id}-1`} className={styles.bannerCard}>
                   <div className={styles.imageWrapper}>
                     <Image
-                      src={offer.imageUrl}
+                      src={optimizeProductDetail(offer.imageUrl)}
                       alt={offer.title}
                       width={560}
                       height={340}
+                      loading="lazy"
+                      sizes="(max-width: 768px) 100vw, 560px"
                       className={styles.image}
                       style={{ objectFit: "contain" }}
                     />
@@ -47,10 +48,12 @@ export default function SummerOffer() {
                 <Link href={offer.link} key={`${offer.id}-2`} className={styles.bannerCard}>
                   <div className={styles.imageWrapper}>
                     <Image
-                      src={offer.imageUrl}
+                      src={optimizeProductDetail(offer.imageUrl)}
                       alt={offer.title}
                       width={560}
                       height={340}
+                      loading="lazy"
+                      sizes="(max-width: 768px) 100vw, 560px"
                       className={styles.image}
                       style={{ objectFit: "contain" }}
                     />

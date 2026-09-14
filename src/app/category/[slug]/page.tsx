@@ -9,6 +9,7 @@ import Header from "@/components/home/Header";
 import Footer from "@/components/home/Footer";
 import { useApp } from "@/context/AppContext";
 import { CATEGORIES_DATA, CategoryDetail, CategoryProduct } from "@/data/categories";
+import { optimizeProductCard } from "@/lib/imageOptimization";
 import styles from "./CategoryPage.module.css";
 
 type PageProps = {
@@ -288,10 +289,12 @@ export default function CategoryPage({ params }: PageProps) {
                     <Link href={`/product/${product.id}`} className={styles.imageLink}>
                       <div className={styles.imageContainer}>
                         <Image
-                          src={product.imageUrl}
+                          src={optimizeProductCard(product.imageUrl)}
                           alt={product.title}
                           width={200}
                           height={170}
+                          loading="lazy"
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                           className={styles.image}
                           style={{ objectFit: "contain" }}
                         />

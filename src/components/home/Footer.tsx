@@ -28,6 +28,7 @@ export default function Footer() {
                 alt="Facebook" 
                 width={26} 
                 height={26} 
+                loading="lazy"
                 style={{ objectFit: 'contain' }}
               />
             </a>
@@ -43,6 +44,7 @@ export default function Footer() {
                 alt="Instagram" 
                 width={26} 
                 height={26} 
+                loading="lazy"
                 style={{ objectFit: 'contain' }}
               />
             </a>
@@ -58,6 +60,7 @@ export default function Footer() {
                 alt="WhatsApp" 
                 width={26} 
                 height={26} 
+                loading="lazy"
                 style={{ objectFit: 'contain' }}
               />
             </a>
@@ -76,6 +79,7 @@ export default function Footer() {
                 alt="Skill Store Logo" 
                 width={150} 
                 height={42} 
+                loading="lazy"
                 style={{ objectFit: 'contain' }}
               />
             </div>

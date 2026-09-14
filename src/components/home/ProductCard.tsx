@@ -4,6 +4,7 @@ import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useApp } from "@/context/AppContext";
+import { optimizeProductCard } from "@/lib/imageOptimization";
 import styles from "./ProductCard.module.css";
 import { Product } from "@/data/home";
 
@@ -63,11 +64,14 @@ export default function ProductCard({ product }: ProductCardProps) {
       <Link href={`/product/${product.id}`} className={styles.imageLink}>
         <div className={styles.imageContainer}>
           <Image
-            src={product.imageUrl}
+            src={optimizeProductCard(product.imageUrl)}
             alt={product.title}
             width={240}
             height={180}
+            loading="lazy"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
             className={styles.image}
+            style={{ objectFit: "contain" }}
           />
         </div>
       </Link>

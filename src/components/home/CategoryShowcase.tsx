@@ -1,8 +1,7 @@
-"use client";
-
 import React from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { optimizeProductCard } from "@/lib/imageOptimization";
 import styles from "./CategoryShowcase.module.css";
 
 export default function CategoryShowcase() {
@@ -92,10 +91,12 @@ export default function CategoryShowcase() {
                 <Link href={`/category/${cat.slug}`} key={`${cat.slug}-1`} className={styles.card}>
                   <div className={styles.imageBox}>
                     <Image
-                      src={cat.imageUrl}
+                      src={optimizeProductCard(cat.imageUrl)}
                       alt={cat.name}
                       width={140}
                       height={120}
+                      loading="lazy"
+                      sizes="140px"
                       className={styles.image}
                       style={{ objectFit: "contain" }}
                     />
@@ -121,10 +122,12 @@ export default function CategoryShowcase() {
                 <Link href={`/category/${cat.slug}`} key={`${cat.slug}-2`} className={styles.card}>
                   <div className={styles.imageBox}>
                     <Image
-                      src={cat.imageUrl}
+                      src={optimizeProductCard(cat.imageUrl)}
                       alt={cat.name}
                       width={140}
                       height={120}
+                      loading="lazy"
+                      sizes="140px"
                       className={styles.image}
                       style={{ objectFit: "contain" }}
                     />

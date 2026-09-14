@@ -9,6 +9,7 @@ import Header from "@/components/home/Header";
 import Footer from "@/components/home/Footer";
 import { useApp } from "@/context/AppContext";
 import { searchProductsAndCategories, CategoryProduct } from "@/data/categories";
+import { optimizeProductCard } from "@/lib/imageOptimization";
 import styles from "./SearchPage.module.css";
 
 const POPULAR_SEARCHES = [
@@ -249,10 +250,12 @@ function SearchContent() {
                   <Link href={`/product/${product.id}`} className={styles.imageLink}>
                     <div className={styles.imageContainer}>
                       <Image
-                        src={product.imageUrl}
+                        src={optimizeProductCard(product.imageUrl)}
                         alt={product.title}
                         width={200}
                         height={170}
+                        loading="lazy"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
                         className={styles.image}
                         style={{ objectFit: "contain" }}
                       />

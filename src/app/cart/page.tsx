@@ -8,6 +8,7 @@ import AnnouncementBar from "@/components/home/AnnouncementBar";
 import Header from "@/components/home/Header";
 import Footer from "@/components/home/Footer";
 import { useApp } from "@/context/AppContext";
+import { optimizeGalleryThumbnail } from "@/lib/imageOptimization";
 import styles from "./CartPage.module.css";
 
 interface RazorpayResponse {
@@ -378,10 +379,11 @@ export default function CartPage() {
                   <div key={item.id} className={styles.cartItemCard}>
                     <div className={styles.itemImageContainer}>
                       <Image 
-                        src={item.imageUrl} 
+                        src={optimizeGalleryThumbnail(item.imageUrl)} 
                         alt={item.title} 
                         width={100} 
                         height={100} 
+                        loading="lazy"
                         className={styles.itemImage}
                       />
                     </div>

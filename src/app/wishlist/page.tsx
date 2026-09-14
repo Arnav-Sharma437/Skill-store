@@ -7,6 +7,7 @@ import AnnouncementBar from "@/components/home/AnnouncementBar";
 import Header from "@/components/home/Header";
 import Footer from "@/components/home/Footer";
 import { useApp } from "@/context/AppContext";
+import { optimizeProductCard } from "@/lib/imageOptimization";
 import styles from "./WishlistPage.module.css";
 
 export default function WishlistPage() {
@@ -60,10 +61,11 @@ export default function WishlistPage() {
                   <Link href={`/product/${item.id}`} className={styles.imageLink}>
                     <div className={styles.imageContainer}>
                       <Image
-                        src={item.imageUrl}
+                        src={optimizeProductCard(item.imageUrl)}
                         alt={item.title}
                         width={220}
                         height={165}
+                        loading="lazy"
                         className={styles.image}
                         style={{ objectFit: "contain" }}
                       />

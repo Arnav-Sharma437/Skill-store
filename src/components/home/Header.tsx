@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useApp } from "@/context/AppContext";
 import { searchProductsAndCategories, CategoryProduct } from "@/data/categories";
+import { optimizeGalleryThumbnail } from "@/lib/imageOptimization";
 import styles from "./Header.module.css";
 
 export default function Header() {
@@ -233,10 +234,11 @@ export default function Header() {
                         >
                           <div className={styles.liveProdImgBox}>
                             <Image 
-                              src={prod.imageUrl} 
+                              src={optimizeGalleryThumbnail(prod.imageUrl)} 
                               alt={prod.title} 
                               width={40} 
                               height={40} 
+                              loading="lazy"
                               style={{ objectFit: 'contain' }}
                             />
                           </div>

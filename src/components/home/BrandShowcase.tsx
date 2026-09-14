@@ -82,6 +82,7 @@ export default function BrandShowcase() {
                       alt={`${brand.name} Logo`}
                       width={brand.width}
                       height={brand.height}
+                      loading="lazy"
                       className={styles.brandLogo}
                       style={{ objectFit: "contain" }}
                     />
@@ -108,6 +109,7 @@ export default function BrandShowcase() {
                       alt={`${brand.name} Logo`}
                       width={brand.width}
                       height={brand.height}
+                      loading="lazy"
                       className={styles.brandLogo}
                       style={{ objectFit: "contain" }}
                     />

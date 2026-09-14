@@ -15,6 +15,7 @@ export default function BrandsSection() {
           alt="TUQO" 
           width={130} 
           height={40} 
+          loading="lazy"
           style={{ objectFit: "contain" }}
         />
       </Link>
@@ -26,6 +27,7 @@ export default function BrandsSection() {
           alt="COSTEC" 
           width={130} 
           height={38} 
+          loading="lazy"
           style={{ objectFit: "contain" }}
         />
       </Link>
@@ -37,6 +39,7 @@ export default function BrandsSection() {
           alt="METSO" 
           width={130} 
           height={40} 
+          loading="lazy"
           style={{ objectFit: "contain" }}
         />
       </Link>
@@ -48,6 +51,7 @@ export default function BrandsSection() {
           alt="PUMPKIN" 
           width={140} 
           height={40} 
+          loading="lazy"
           style={{ objectFit: "contain" }}
         />
       </Link>
@@ -59,6 +63,7 @@ export default function BrandsSection() {
           alt="MITSUKI" 
           width={130} 
           height={36} 
+          loading="lazy"
           style={{ objectFit: "contain" }}
         />
       </Link>
@@ -70,6 +75,7 @@ export default function BrandsSection() {
           alt="Ultra TOUCH" 
           width={130} 
           height={38} 
+          loading="lazy"
           style={{ objectFit: "contain" }}
         />
       </Link>
