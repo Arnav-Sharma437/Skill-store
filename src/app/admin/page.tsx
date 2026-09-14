@@ -146,6 +146,7 @@ export default function AdminDashboard() {
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [isUploadingVideo, setIsUploadingVideo] = useState(false);
   const [isUploadingGallery, setIsUploadingGallery] = useState(false);
+  const [isUploadingBanner, setIsUploadingBanner] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
   // Product Form State
@@ -271,16 +272,18 @@ export default function AdminDashboard() {
   // --- Upload Handlers ---
   const handleFileUpload = async (
     file: File,
-    targetType: "main_image" | "video" | "gallery"
+    targetType: "main_image" | "video" | "gallery" | "banner"
   ) => {
     setUploadError(null);
     if (targetType === "main_image") setIsUploadingImage(true);
     if (targetType === "video") setIsUploadingVideo(true);
     if (targetType === "gallery") setIsUploadingGallery(true);
+    if (targetType === "banner") setIsUploadingBanner(true);
 
     try {
       const formData = new FormData();
       formData.append("file", file);
+      formData.append("folder", targetType === "banner" ? "skill-store/banners" : "skill-store/products");
 
       const res = await fetch("/api/admin/upload", {
         method: "POST",
@@ -301,6 +304,8 @@ export default function AdminDashboard() {
           ...prev,
           gallery: [...prev.gallery, data.url],
         }));
+      } else if (targetType === "banner") {
+        setBannerForm((prev) => ({ ...prev, imageUrl: data.url }));
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Error uploading file";
@@ -310,6 +315,7 @@ export default function AdminDashboard() {
       if (targetType === "main_image") setIsUploadingImage(false);
       if (targetType === "video") setIsUploadingVideo(false);
       if (targetType === "gallery") setIsUploadingGallery(false);
+      if (targetType === "banner") setIsUploadingBanner(false);
     }
   };
 
@@ -1274,7 +1280,7 @@ export default function AdminDashboard() {
                       <h3>{editingBannerId ? "Edit Hero Banner" : "Add New Banner"}</h3>
                       <form onSubmit={handleBannerSubmit} className={styles.form}>
                         <div className={styles.inputField}>
-                          <label htmlFor="form-banner-id">Banner ID</label>
+                          <label htmlFor="form-banner-id">Banner ID *</label>
                           <input
                             id="form-banner-id"
                             type="text"
@@ -1286,16 +1292,43 @@ export default function AdminDashboard() {
                           />
                         </div>
 
-                        <div className={styles.inputField}>
-                          <label htmlFor="form-banner-image">Banner Image URL</label>
-                          <input
-                            id="form-banner-image"
-                            type="text"
-                            placeholder="e.g. /images/banners/banner1.jpg"
-                            value={bannerForm.imageUrl}
-                            onChange={(e) => setBannerForm({ ...bannerForm, imageUrl: e.target.value })}
-                            required
-                          />
+                        {/* Banner Image Upload & URL input */}
+                        <div className={styles.mediaUploadBox}>
+                          <label><strong>Banner Image * (Upload from device or paste URL)</strong></label>
+                          <div className={styles.uploadRow}>
+                            <input
+                              id="form-banner-image"
+                              type="text"
+                              placeholder="e.g. /images/banners/banner1.jpg or upload below"
+                              value={bannerForm.imageUrl}
+                              onChange={(e) => setBannerForm({ ...bannerForm, imageUrl: e.target.value })}
+                              required
+                              style={{ flex: 1 }}
+                            />
+                            <label className={styles.uploadBtn}>
+                              {isUploadingBanner ? "Uploading..." : "📁 Upload Banner"}
+                              <input
+                                type="file"
+                                accept="image/*"
+                                style={{ display: "none" }}
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) handleFileUpload(file, "banner");
+                                }}
+                              />
+                            </label>
+                          </div>
+                          {bannerForm.imageUrl && (
+                            <div className={styles.mediaPreview} style={{ width: "100%", height: "90px", marginTop: "4px" }}>
+                              <Image
+                                src={bannerForm.imageUrl}
+                                alt="Banner Preview"
+                                width={240}
+                                height={80}
+                                style={{ objectFit: "contain", maxHeight: "80px" }}
+                              />
+                            </div>
+                          )}
                         </div>
 
                         <div className={styles.inputField}>
