@@ -96,14 +96,34 @@ export async function POST(req: NextRequest) {
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
+    const isSvg = mimeType === "image/svg+xml" || ext === ".svg";
+
+    // Configure Cloudinary upload options with incoming pre-storage compression and resizing
+    const uploadOptions: Record<string, unknown> = {
+      folder: folder,
+      public_id: publicId,
+      resource_type: isVideo ? "video" : "image",
+      overwrite: true,
+    };
+
+    // If it's a standard raster image (non-video, non-vector SVG):
+    // Permanently compress, resize to max width 1920px (maintaining aspect ratio), and convert to WebP
+    if (isImage && !isVideo && !isSvg) {
+      uploadOptions.format = "webp";
+      uploadOptions.transformation = [
+        {
+          width: 1920,
+          crop: "limit", // Resizes down to max width 1920px if larger, never upscales
+          quality: "auto:good", // Perceptual quality compression without visible loss
+          fetch_format: "webp", // Stores permanently as WebP
+        },
+      ];
+    }
+
     // Upload to Cloudinary using upload_stream
     const result = await new Promise<UploadApiResponse>((resolve, reject) => {
       const uploadStream = cloudinary.uploader.upload_stream(
-        {
-          folder: folder,
-          public_id: publicId,
-          resource_type: isVideo ? "video" : "auto",
-        },
+        uploadOptions,
         (error, uploadResult) => {
           if (error) {
             reject(error);

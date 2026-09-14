@@ -6,6 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { BRAND_CATEGORIES } from "@/data/home";
 import { optimizeAdminPreview } from "@/lib/imageOptimization";
+import { compressImageBeforeUpload } from "@/lib/clientImageCompressor";
 import styles from "./AdminPage.module.css";
 
 // --- Interfaces ---
@@ -282,8 +283,19 @@ export default function AdminDashboard() {
     if (targetType === "banner") setIsUploadingBanner(true);
 
     try {
+      // Automatically pre-compress and resize images (max width 1920px WebP) before upload
+      let fileToUpload = file;
+      if (targetType !== "video") {
+        fileToUpload = await compressImageBeforeUpload(file, {
+          maxWidth: 1920,
+          maxHeight: 1920,
+          quality: 0.85,
+          targetFormat: "image/webp",
+        });
+      }
+
       const formData = new FormData();
-      formData.append("file", file);
+      formData.append("file", fileToUpload);
       formData.append("folder", targetType === "banner" ? "skill-store/banners" : "skill-store/products");
 
       const res = await fetch("/api/admin/upload", {
