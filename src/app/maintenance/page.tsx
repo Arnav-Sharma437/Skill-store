@@ -1,6 +1,5 @@
 import React from "react";
 import Image from "next/image";
-import Link from "next/link";
 import type { Metadata } from "next";
 import styles from "./MaintenancePage.module.css";
 
@@ -89,17 +88,6 @@ export default function MaintenancePage() {
               +91 95006 94111
             </a>
           </div>
-        </div>
-
-        {/* Admin Gateway Access */}
-        <div className={styles.adminFooter}>
-          <Link href="/admin/login" className={styles.adminLink}>
-            <span>Admin Portal Access</span>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <path d="M5 12h14" />
-              <path d="m12 5 7 7-7 7" />
-            </svg>
-          </Link>
         </div>
       </main>
 
