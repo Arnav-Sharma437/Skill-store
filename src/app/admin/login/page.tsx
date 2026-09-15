@@ -14,7 +14,10 @@ export default function AdminLoginPage() {
   useEffect(() => {
     // If already logged in, redirect to admin
     const token = sessionStorage.getItem("skill_store_admin_token");
-    if (token === "logged_in") {
+    const hasCookie = typeof document !== "undefined" && document.cookie.includes("skill_store_admin_token=logged_in");
+    if (token === "logged_in" || hasCookie) {
+      if (!token) sessionStorage.setItem("skill_store_admin_token", "logged_in");
+      if (!hasCookie) document.cookie = "skill_store_admin_token=logged_in; path=/; max-age=604800; SameSite=Lax";
       router.push("/admin");
     }
   }, [router]);
@@ -28,6 +31,7 @@ export default function AdminLoginPage() {
     setTimeout(() => {
       if (email === "admin@skillstore.com" && password === "admin123") {
         sessionStorage.setItem("skill_store_admin_token", "logged_in");
+        document.cookie = "skill_store_admin_token=logged_in; path=/; max-age=604800; SameSite=Lax";
         router.push("/admin");
       } else {
         setError("Invalid email address or password. Please try again.");

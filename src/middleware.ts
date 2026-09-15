@@ -21,6 +21,12 @@ export function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
+  // If user is a logged-in admin, allow full access to the entire frontend so they can inspect and test products!
+  const adminCookie = req.cookies.get("skill_store_admin_token")?.value;
+  if (adminCookie === "logged_in") {
+    return NextResponse.next();
+  }
+
   const { pathname } = req.nextUrl;
 
   // 1. Allow Next.js internal files and static assets

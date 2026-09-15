@@ -255,9 +255,13 @@ export default function AdminDashboard() {
   // Auth check
   useEffect(() => {
     const token = sessionStorage.getItem("skill_store_admin_token");
-    if (token !== "logged_in") {
+    const hasCookie = typeof document !== "undefined" && document.cookie.includes("skill_store_admin_token=logged_in");
+    
+    if (token !== "logged_in" && !hasCookie) {
       router.push("/admin/login");
     } else {
+      if (!token) sessionStorage.setItem("skill_store_admin_token", "logged_in");
+      if (!hasCookie) document.cookie = "skill_store_admin_token=logged_in; path=/; max-age=604800; SameSite=Lax";
       Promise.resolve().then(() => {
         setAuthorized(true);
         initializeData();
@@ -268,6 +272,7 @@ export default function AdminDashboard() {
   // Sign out
   const handleSignOut = () => {
     sessionStorage.removeItem("skill_store_admin_token");
+    document.cookie = "skill_store_admin_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax";
     router.push("/admin/login");
   };
 
