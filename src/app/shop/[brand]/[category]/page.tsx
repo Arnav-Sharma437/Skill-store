@@ -167,11 +167,12 @@ export default function CategoryProductsPage({ params }: PageProps) {
     ];
   }, [brand, category, brandName, categoryName]);
 
-  // Combined product list
+  // Prioritize live DB products from MongoDB; fallback to initial static if DB has no products
   const categoryProducts = useMemo(() => {
-    const dbIds = new Set(dbProducts.map((p) => p.id));
-    const staticFiltered = fallbackProducts.filter((p) => !dbIds.has(p.id));
-    return [...dbProducts, ...staticFiltered];
+    if (dbProducts.length > 0) {
+      return dbProducts;
+    }
+    return fallbackProducts;
   }, [dbProducts, fallbackProducts]);
 
   // Star Ratings Helper

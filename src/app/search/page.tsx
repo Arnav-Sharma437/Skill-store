@@ -89,11 +89,12 @@ function SearchContent() {
     };
   }, [query]);
 
-  // Combined product list (Live DB first, then static)
+  // Prioritize live DB search results; fallback to static if DB has no results
   const combinedProducts = useMemo(() => {
-    const dbIds = new Set(dbProducts.map((p) => p.id));
-    const filteredStatic = staticResults.products.filter((p) => !dbIds.has(p.id));
-    return [...dbProducts, ...filteredStatic];
+    if (dbProducts.length > 0) {
+      return dbProducts;
+    }
+    return staticResults.products;
   }, [dbProducts, staticResults.products]);
 
   // Star Rating Helper

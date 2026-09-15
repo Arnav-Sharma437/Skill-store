@@ -49,6 +49,7 @@ export interface ICategory extends Document {
   brand: string;
   imageUrl: string;
   link: string;
+  description?: string;
 }
 
 const CategorySchema: Schema = new Schema(
@@ -58,6 +59,7 @@ const CategorySchema: Schema = new Schema(
     brand: { type: String, required: true }, // e.g. "tuqo", "pumpkin"
     imageUrl: { type: String, required: true },
     link: { type: String, required: true }, // e.g. "/shop/tuqo/high-pressure-washer"
+    description: { type: String, default: "" },
   },
   { timestamps: true }
 );

@@ -35,14 +35,7 @@ export default function BestSellerSection() {
             }));
 
             if (isMounted) {
-              // If DB has fewer than 4 products, combine with fallback for a full marquee track
-              if (dbProducts.length < 4) {
-                const existingIds = new Set(dbProducts.map((p) => p.id));
-                const fillers = BEST_SELLERS.filter((p) => !existingIds.has(p.id));
-                setProducts([...dbProducts, ...fillers]);
-              } else {
-                setProducts(dbProducts);
-              }
+              setProducts(dbProducts);
             }
           }
         }

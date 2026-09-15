@@ -73,12 +73,10 @@ export default function Header() {
       return { products: [], categories: [] };
     }
     const res = searchProductsAndCategories(searchQuery);
-    const dbIds = new Set(dbSearchProducts.map((p) => p.id));
-    const fallbackProds = res.products.filter((p) => !dbIds.has(p.id));
-    const combined = [...dbSearchProducts, ...fallbackProds].slice(0, 4);
+    const productsList = dbSearchProducts.length > 0 ? dbSearchProducts.slice(0, 4) : res.products.slice(0, 4);
 
     return {
-      products: combined,
+      products: productsList,
       categories: res.categories.slice(0, 3)
     };
   }, [searchQuery, dbSearchProducts]);

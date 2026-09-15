@@ -22,6 +22,7 @@ interface ICategory {
   brand: string;
   imageUrl: string;
   link: string;
+  description?: string;
 }
 
 interface IProduct {
@@ -113,7 +114,7 @@ const DEFAULT_SYSTEM_CATEGORIES: ICategory[] = Object.entries(BRAND_CATEGORIES).
 
 export default function AdminDashboard() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<"analytics" | "products" | "orders" | "banners">("analytics");
+  const [activeTab, setActiveTab] = useState<"analytics" | "products" | "categories" | "orders" | "banners">("analytics");
   const [authorized, setAuthorized] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -133,6 +134,9 @@ export default function AdminDashboard() {
   const [productBrandFilter, setProductBrandFilter] = useState("all");
   const [productStockFilter, setProductStockFilter] = useState("all");
 
+  const [categorySearch, setCategorySearch] = useState("");
+  const [categoryBrandFilter, setCategoryBrandFilter] = useState("all");
+
   const [orderSearch, setOrderSearch] = useState("");
   const [orderStatusFilter, setOrderStatusFilter] = useState("all");
   const [orderPaymentFilter, setOrderPaymentFilter] = useState("all");
@@ -144,11 +148,17 @@ export default function AdminDashboard() {
   const [deletingProductId, setDeletingProductId] = useState<string | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<IAdminOrder | null>(null);
 
+  // Category Modal States
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<ICategory | null>(null);
+  const [categoryActionLoading, setCategoryActionLoading] = useState<string | null>(null);
+
   // Upload States
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [isUploadingVideo, setIsUploadingVideo] = useState(false);
   const [isUploadingGallery, setIsUploadingGallery] = useState(false);
   const [isUploadingBanner, setIsUploadingBanner] = useState(false);
+  const [isUploadingCategoryImg, setIsUploadingCategoryImg] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
   // Product Form State
@@ -167,6 +177,17 @@ export default function AdminDashboard() {
     descriptionText: "",
     specificationsText: "",
     whatsInBoxText: "",
+  });
+
+  // Category Form State
+  const [categoryForm, setCategoryForm] = useState({
+    id: "",
+    name: "",
+    brand: "tuqo",
+    customBrand: "",
+    imageUrl: "",
+    link: "",
+    description: "",
   });
 
   // Banner Form State
@@ -279,13 +300,14 @@ export default function AdminDashboard() {
   // --- Upload Handlers ---
   const handleFileUpload = async (
     file: File,
-    targetType: "main_image" | "video" | "gallery" | "banner"
+    targetType: "main_image" | "video" | "gallery" | "banner" | "category"
   ) => {
     setUploadError(null);
     if (targetType === "main_image") setIsUploadingImage(true);
     if (targetType === "video") setIsUploadingVideo(true);
     if (targetType === "gallery") setIsUploadingGallery(true);
     if (targetType === "banner") setIsUploadingBanner(true);
+    if (targetType === "category") setIsUploadingCategoryImg(true);
 
     try {
       // Automatically pre-compress and resize images (max width 1920px WebP) before upload
@@ -299,9 +321,13 @@ export default function AdminDashboard() {
         });
       }
 
+      let uploadFolder = "skill-store/products";
+      if (targetType === "banner") uploadFolder = "skill-store/banners";
+      if (targetType === "category") uploadFolder = "skill-store/categories";
+
       const formData = new FormData();
       formData.append("file", fileToUpload);
-      formData.append("folder", targetType === "banner" ? "skill-store/banners" : "skill-store/products");
+      formData.append("folder", uploadFolder);
 
       const res = await fetch("/api/admin/upload", {
         method: "POST",
@@ -324,6 +350,8 @@ export default function AdminDashboard() {
         }));
       } else if (targetType === "banner") {
         setBannerForm((prev) => ({ ...prev, imageUrl: data.url }));
+      } else if (targetType === "category") {
+        setCategoryForm((prev) => ({ ...prev, imageUrl: data.url }));
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Error uploading file";
@@ -334,6 +362,7 @@ export default function AdminDashboard() {
       if (targetType === "video") setIsUploadingVideo(false);
       if (targetType === "gallery") setIsUploadingGallery(false);
       if (targetType === "banner") setIsUploadingBanner(false);
+      if (targetType === "category") setIsUploadingCategoryImg(false);
     }
   };
 
@@ -500,6 +529,110 @@ export default function AdminDashboard() {
       }
     } catch {
       alert("Network error deleting banner");
+    }
+  };
+
+  // --- Category CRUD Handlers ---
+  const openAddCategoryModal = () => {
+    setEditingCategory(null);
+    setCategoryForm({
+      id: "",
+      name: "",
+      brand: "tuqo",
+      customBrand: "",
+      imageUrl: "",
+      link: "",
+      description: "",
+    });
+    setUploadError(null);
+    setIsCategoryModalOpen(true);
+  };
+
+  const openEditCategoryModal = (cat: ICategory) => {
+    setEditingCategory(cat);
+    const standardBrands = ["tuqo", "pumpkin", "mitsuki", "metso", "costec", "ultratouch"];
+    const isStandard = standardBrands.includes((cat.brand || "").toLowerCase());
+    setCategoryForm({
+      id: cat.id,
+      name: cat.name,
+      brand: isStandard ? cat.brand.toLowerCase() : "custom",
+      customBrand: isStandard ? "" : cat.brand,
+      imageUrl: cat.imageUrl,
+      link: cat.link,
+      description: cat.description || "",
+    });
+    setUploadError(null);
+    setIsCategoryModalOpen(true);
+  };
+
+  const handleCategorySubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!categoryForm.name.trim()) {
+      alert("Please enter a category name");
+      return;
+    }
+    if (!categoryForm.imageUrl.trim()) {
+      alert("Please upload or provide an image for the category");
+      return;
+    }
+
+    const finalBrand = categoryForm.brand === "custom" 
+      ? (categoryForm.customBrand.trim() || "tuqo")
+      : categoryForm.brand;
+
+    const slug = categoryForm.id.trim() || categoryForm.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    const finalLink = categoryForm.link.trim() || `/category/${slug}`;
+
+    setCategoryActionLoading("save");
+    try {
+      const isEdit = !!editingCategory;
+      const res = await fetch("/api/admin/categories", {
+        method: isEdit ? "PUT" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: slug,
+          name: categoryForm.name.trim(),
+          brand: finalBrand,
+          imageUrl: categoryForm.imageUrl.trim(),
+          link: finalLink,
+          description: categoryForm.description.trim(),
+        }),
+      });
+
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.error || "Failed to save category");
+      }
+
+      await fetchCategories();
+      setIsCategoryModalOpen(false);
+      setEditingCategory(null);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Error saving category";
+      alert(`Error: ${msg}`);
+    } finally {
+      setCategoryActionLoading(null);
+    }
+  };
+
+  const handleDeleteCategory = async (catId: string) => {
+    if (!confirm(`Are you sure you want to delete category "${catId}"?`)) return;
+
+    setCategoryActionLoading(catId);
+    try {
+      const res = await fetch(`/api/admin/categories?id=${encodeURIComponent(catId)}`, {
+        method: "DELETE",
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.error || "Failed to delete category");
+      }
+      await fetchCategories();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Error deleting category";
+      alert(`Error: ${msg}`);
+    } finally {
+      setCategoryActionLoading(null);
     }
   };
 
@@ -743,6 +876,25 @@ export default function AdminDashboard() {
               </svg>
               <span>Products Catalogue</span>
               {products.length > 0 && <span className={styles.tabBadge}>{products.length}</span>}
+            </button>
+
+            <button
+              onClick={() => {
+                setActiveTab("categories");
+                setIsMobileMenuOpen(false);
+              }}
+              className={`${styles.sidebarTab} ${activeTab === "categories" ? styles.activeTab : ""}`}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className={styles.tabIcon}>
+                <line x1="8" y1="6" x2="21" y2="6"></line>
+                <line x1="8" y1="12" x2="21" y2="12"></line>
+                <line x1="8" y1="18" x2="21" y2="18"></line>
+                <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                <line x1="3" y1="18" x2="3.01" y2="18"></line>
+              </svg>
+              <span>Categories</span>
+              {categories.length > 0 && <span className={styles.tabBadge}>{categories.length}</span>}
             </button>
 
             <button
@@ -1286,7 +1438,130 @@ export default function AdminDashboard() {
               )}
 
               {/* ======================================================== */}
-              {/* TAB 4: HERO BANNERS MANAGEMENT                          */}
+              {/* TAB 4: CATEGORIES MANAGEMENT                            */}
+              {/* ======================================================== */}
+              {activeTab === "categories" && (
+                <div className={styles.tabContent}>
+                  <div className={styles.flexHeader}>
+                    <div>
+                      <h2>Categories Catalogue</h2>
+                      <p style={{ color: "#64748b", fontSize: "13px", marginTop: "2px" }}>
+                        Manage store categories, brands, and catalog classifications
+                      </p>
+                    </div>
+                    <button onClick={openAddCategoryModal} className={styles.addProductBtn}>
+                      <span>+ Add New Category</span>
+                    </button>
+                  </div>
+
+                  {/* Search & Filter Bar */}
+                  <div className={styles.searchFilterGrid} style={{ marginTop: "16px", gridTemplateColumns: "1fr 200px" }}>
+                    <div className={styles.searchBox}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2.5" className={styles.searchIcon}>
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                      </svg>
+                      <input
+                        type="text"
+                        placeholder="Search categories by name, slug or brand..."
+                        value={categorySearch}
+                        onChange={(e) => setCategorySearch(e.target.value)}
+                        className={styles.searchInput}
+                      />
+                    </div>
+
+                    <select
+                      value={categoryBrandFilter}
+                      onChange={(e) => setCategoryBrandFilter(e.target.value)}
+                      className={styles.filterSelect}
+                    >
+                      <option value="all">All Brands</option>
+                      <option value="tuqo">TUQO</option>
+                      <option value="pumpkin">PUMPKIN</option>
+                      <option value="mitsuki">MITSUKI</option>
+                      <option value="metso">METSO</option>
+                      <option value="costec">COSTEC</option>
+                      <option value="ultratouch">Ultra TOUCH</option>
+                    </select>
+                  </div>
+
+                  {/* Categories Grid */}
+                  <div className={styles.categoryGrid}>
+                    {categories
+                      .filter((c) => {
+                        const matchesSearch = !categorySearch.trim() || 
+                          c.name.toLowerCase().includes(categorySearch.toLowerCase()) ||
+                          c.id.toLowerCase().includes(categorySearch.toLowerCase()) ||
+                          c.brand.toLowerCase().includes(categorySearch.toLowerCase());
+                        const matchesBrand = categoryBrandFilter === "all" || c.brand.toLowerCase() === categoryBrandFilter.toLowerCase();
+                        return matchesSearch && matchesBrand;
+                      })
+                      .map((cat) => {
+                        const linkedProds = products.filter(
+                          (p) => p.category?.toLowerCase() === cat.id.toLowerCase() || p.category?.toLowerCase() === cat.name.toLowerCase()
+                        );
+                        return (
+                          <div key={cat.id} className={styles.categoryCard}>
+                            <div className={styles.categoryCardTop}>
+                              <div className={styles.categoryThumbBox}>
+                                <Image
+                                  src={optimizeAdminPreview(cat.imageUrl || "/images/products/hw2000.jpg")}
+                                  alt={cat.name}
+                                  width={50}
+                                  height={50}
+                                  loading="lazy"
+                                  style={{ objectFit: "contain" }}
+                                />
+                              </div>
+                              <div className={styles.categoryCardInfo}>
+                                <h3 className={styles.categoryCardTitle} title={cat.name}>
+                                  {cat.name}
+                                </h3>
+                                <div className={styles.categoryCardMeta}>
+                                  <span className={styles.categoryBrandTag}>{cat.brand}</span>
+                                  <span className={styles.categorySlugBadge}>{cat.id}</span>
+                                </div>
+                              </div>
+                            </div>
+
+                            {cat.description && (
+                              <p style={{ fontSize: "12px", color: "#64748b", margin: 0, lineHeight: 1.4 }}>
+                                {cat.description}
+                              </p>
+                            )}
+
+                            <div className={styles.categoryCardBottom}>
+                              <span className={styles.categoryProdCount}>
+                                📦 {linkedProds.length} Products
+                              </span>
+                              <div className={styles.categoryCardActions}>
+                                <button
+                                  onClick={() => openEditCategoryModal(cat)}
+                                  className={styles.iconActionBtn}
+                                  title="Edit Category"
+                                >
+                                  ✏️
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteCategory(cat.id)}
+                                  className={styles.iconActionBtn}
+                                  style={{ color: "#ef4444" }}
+                                  disabled={categoryActionLoading === cat.id}
+                                  title="Delete Category"
+                                >
+                                  {categoryActionLoading === cat.id ? "..." : "🗑️"}
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                  </div>
+                </div>
+              )}
+
+              {/* ======================================================== */}
+              {/* TAB 5: HERO BANNERS MANAGEMENT                          */}
               {/* ======================================================== */}
               {activeTab === "banners" && (
                 <div className={styles.tabContent}>
@@ -2029,11 +2304,203 @@ export default function AdminDashboard() {
                   </select>
                 </div>
 
-                <button onClick={() => setSelectedOrder(null)} className={styles.cancelBtn}>
-                  Close
-                </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ============================================================ */}
+      {/* MODAL 5: ADD / EDIT CATEGORY MODAL                           */}
+      {/* ============================================================ */}
+      {isCategoryModalOpen && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalCard} style={{ maxWidth: "560px" }}>
+            <div className={styles.modalHeader}>
+              <div>
+                <h3 style={{ margin: 0 }}>
+                  {editingCategory ? "Edit Category" : "Add New Category"}
+                </h3>
+                <span style={{ fontSize: "12px", color: "#64748b" }}>
+                  Define category name, brand, image, and dynamic slug
+                </span>
+              </div>
+              <button
+                onClick={() => {
+                  setIsCategoryModalOpen(false);
+                  setEditingCategory(null);
+                }}
+                className={styles.closeBtn}
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleCategorySubmit} className={styles.form} style={{ marginTop: "16px" }}>
+              {uploadError && (
+                <div style={{ padding: "10px", background: "#fee2e2", color: "#b91c1c", borderRadius: "8px", fontSize: "13px" }}>
+                  {uploadError}
+                </div>
+              )}
+
+              {/* Category Name */}
+              <div className={styles.inputField}>
+                <label htmlFor="cat-form-name">Category Name *</label>
+                <input
+                  id="cat-form-name"
+                  type="text"
+                  placeholder="e.g. High Pressure Washers, Foam Guns"
+                  value={categoryForm.name}
+                  onChange={(e) => {
+                    const name = e.target.value;
+                    const autoSlug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+                    setCategoryForm((prev) => ({
+                      ...prev,
+                      name,
+                      id: editingCategory ? prev.id : autoSlug,
+                      link: editingCategory ? prev.link : `/category/${autoSlug}`,
+                    }));
+                  }}
+                  required
+                />
+              </div>
+
+              {/* Category ID / Slug */}
+              <div className={styles.inputField}>
+                <label htmlFor="cat-form-id">Category ID / Slug *</label>
+                <input
+                  id="cat-form-id"
+                  type="text"
+                  placeholder="e.g. high-pressure-washer"
+                  value={categoryForm.id}
+                  onChange={(e) => setCategoryForm({ ...categoryForm, id: e.target.value })}
+                  required
+                  disabled={!!editingCategory}
+                />
+                <span style={{ fontSize: "11px", color: "#64748b", marginTop: "2px" }}>
+                  Used in URLs (e.g. /category/{categoryForm.id || "slug"})
+                </span>
+              </div>
+
+              {/* Brand Selector */}
+              <div className={styles.inputField}>
+                <label htmlFor="cat-form-brand">Brand *</label>
+                <select
+                  id="cat-form-brand"
+                  value={categoryForm.brand}
+                  onChange={(e) => setCategoryForm({ ...categoryForm, brand: e.target.value })}
+                >
+                  <option value="tuqo">TUQO</option>
+                  <option value="pumpkin">PUMPKIN</option>
+                  <option value="mitsuki">MITSUKI</option>
+                  <option value="metso">METSO</option>
+                  <option value="costec">COSTEC</option>
+                  <option value="ultratouch">Ultra TOUCH</option>
+                  <option value="custom">Other / Custom Brand</option>
+                </select>
+              </div>
+
+              {categoryForm.brand === "custom" && (
+                <div className={styles.inputField}>
+                  <label htmlFor="cat-form-custom-brand">Custom Brand Name *</label>
+                  <input
+                    id="cat-form-custom-brand"
+                    type="text"
+                    placeholder="Enter custom brand"
+                    value={categoryForm.customBrand}
+                    onChange={(e) => setCategoryForm({ ...categoryForm, customBrand: e.target.value })}
+                    required
+                  />
+                </div>
+              )}
+
+              {/* Category Image Upload */}
+              <div className={styles.mediaUploadBox}>
+                <label><strong>Category Image * (Upload or paste URL)</strong></label>
+                <div className={styles.uploadRow}>
+                  <input
+                    id="cat-form-image"
+                    type="text"
+                    placeholder="https://res.cloudinary.com/... or upload"
+                    value={categoryForm.imageUrl}
+                    onChange={(e) => setCategoryForm({ ...categoryForm, imageUrl: e.target.value })}
+                    required
+                    style={{ flex: 1, minWidth: "140px" }}
+                  />
+                  <label className={styles.uploadBtn}>
+                    {isUploadingCategoryImg ? "Uploading..." : "📁 Upload Image"}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      style={{ display: "none" }}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleFileUpload(file, "category");
+                      }}
+                    />
+                  </label>
+                </div>
+                {categoryForm.imageUrl && (
+                  <div className={styles.mediaPreview} style={{ marginTop: "8px" }}>
+                    <Image
+                      src={optimizeAdminPreview(categoryForm.imageUrl)}
+                      alt="Category Preview"
+                      width={64}
+                      height={64}
+                      loading="lazy"
+                      style={{ objectFit: "contain" }}
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Target Link */}
+              <div className={styles.inputField}>
+                <label htmlFor="cat-form-link">Target Store Link</label>
+                <input
+                  id="cat-form-link"
+                  type="text"
+                  placeholder="/category/slug or /shop/brand/category"
+                  value={categoryForm.link}
+                  onChange={(e) => setCategoryForm({ ...categoryForm, link: e.target.value })}
+                />
+              </div>
+
+              {/* Description */}
+              <div className={styles.inputField}>
+                <label htmlFor="cat-form-desc">Category Description (Optional)</label>
+                <textarea
+                  id="cat-form-desc"
+                  rows={2}
+                  placeholder="Short description of this category for store catalog..."
+                  value={categoryForm.description}
+                  onChange={(e) => setCategoryForm({ ...categoryForm, description: e.target.value })}
+                  style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1.5px solid #cbd5e1" }}
+                />
+              </div>
+
+              {/* Action Buttons */}
+              <div className={styles.modalActions} style={{ marginTop: "20px" }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsCategoryModalOpen(false);
+                    setEditingCategory(null);
+                  }}
+                  className={styles.cancelBtn}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={categoryActionLoading === "save" || isUploadingCategoryImg}
+                  className={styles.submitBtn}
+                  style={{ marginTop: 0 }}
+                >
+                  {categoryActionLoading === "save" ? "Saving..." : editingCategory ? "Update Category" : "Save Category"}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

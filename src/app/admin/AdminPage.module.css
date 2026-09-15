@@ -1310,3 +1310,112 @@
     align-items: stretch;
   }
 }
+
+/* ======================================================== */
+/* Category Card Grid Styles                                */
+/* ======================================================== */
+.categoryGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.categoryCard {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.categoryCard:hover {
+  border-color: #38b6ff;
+  box-shadow: 0 4px 12px rgba(56, 182, 255, 0.12);
+  transform: translateY(-2px);
+}
+
+.categoryCardTop {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.categoryThumbBox {
+  width: 54px;
+  height: 54px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.categoryCardInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.categoryCardTitle {
+  font-size: 14px;
+  font-weight: 750;
+  color: #0f172a;
+  margin: 0 0 4px 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.categoryCardMeta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.categorySlugBadge {
+  font-size: 11px;
+  color: #64748b;
+  background: #f1f5f9;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: monospace;
+}
+
+.categoryBrandTag {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #0369a1;
+  background: #e0f2fe;
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+.categoryCardBottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid #f1f5f9;
+  padding-top: 10px;
+  margin-top: auto;
+}
+
+.categoryProdCount {
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.categoryCardActions {
+  display: flex;
+  gap: 6px;
+}
+

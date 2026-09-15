@@ -1,68 +1,108 @@
-import React from "react";
+"use client";
+
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { optimizeProductCard } from "@/lib/imageOptimization";
 import styles from "./CategoryShowcase.module.css";
 
+interface CategoryItem {
+  slug: string;
+  name: string;
+  count?: string;
+  imageUrl?: string;
+  badge?: string;
+}
+
+const defaultCategories: CategoryItem[] = [
+  {
+    slug: "high-pressure-washer",
+    name: "High Pressure Washers",
+    count: "12+ Models",
+    imageUrl: "/images/products/hw2000.jpg",
+    badge: "Best Seller"
+  },
+  {
+    slug: "cordless-tools",
+    name: "Cordless Tools & Drills",
+    count: "8+ Models",
+    imageUrl: "/images/products/cdw400.jpg",
+    badge: "Wireless Power"
+  },
+  {
+    slug: "air-compressor",
+    name: "Air Compressors",
+    count: "6+ Models",
+    imageUrl: "/images/products/compressor.jpg",
+    badge: "Silent & Direct"
+  },
+  {
+    slug: "accessories-spares",
+    name: "Accessories & Spares",
+    count: "25+ Items",
+    imageUrl: "/images/products/nozzle_tips.jpg",
+    badge: "Genuine Brass"
+  },
+  {
+    slug: "vaccum-cleaner",
+    name: "Vacuum Cleaners",
+    count: "5+ Models",
+    imageUrl: "/images/products/cdw400.jpg",
+    badge: "Wet & Dry"
+  },
+  {
+    slug: "autocare-detailing",
+    name: "Autocare & Detailing",
+    count: "10+ Items",
+    imageUrl: "/images/products/trigger_gun.jpg",
+    badge: "Pro Finish"
+  },
+  {
+    slug: "power-tools",
+    name: "Heavy Power Tools",
+    count: "14+ Tools",
+    imageUrl: "/images/products/hw2000.jpg",
+    badge: "High Torque"
+  },
+  {
+    slug: "hand-tools",
+    name: "Precision Hand Tools",
+    count: "18+ Sets",
+    imageUrl: "/images/products/nozzle_tips.jpg",
+    badge: "CR-V Steel"
+  }
+];
+
+interface ApiCategory {
+  slug?: string;
+  id?: string;
+  name?: string;
+  productCount?: number;
+  image?: string;
+}
+
 export default function CategoryShowcase() {
-  const topCategories = [
-    {
-      slug: "high-pressure-washer",
-      name: "High Pressure Washers",
-      count: "12+ Models",
-      imageUrl: "/images/products/hw2000.jpg",
-      badge: "Best Seller"
-    },
-    {
-      slug: "cordless-tools",
-      name: "Cordless Tools & Drills",
-      count: "8+ Models",
-      imageUrl: "/images/products/cdw400.jpg",
-      badge: "Wireless Power"
-    },
-    {
-      slug: "air-compressor",
-      name: "Air Compressors",
-      count: "6+ Models",
-      imageUrl: "/images/products/compressor.jpg",
-      badge: "Silent & Direct"
-    },
-    {
-      slug: "accessories-spares",
-      name: "Accessories & Spares",
-      count: "25+ Items",
-      imageUrl: "/images/products/nozzle_tips.jpg",
-      badge: "Genuine Brass"
-    },
-    {
-      slug: "vaccum-cleaner",
-      name: "Vacuum Cleaners",
-      count: "5+ Models",
-      imageUrl: "/images/products/cdw400.jpg",
-      badge: "Wet & Dry"
-    },
-    {
-      slug: "autocare-detailing",
-      name: "Autocare & Detailing",
-      count: "10+ Items",
-      imageUrl: "/images/products/trigger_gun.jpg",
-      badge: "Pro Finish"
-    },
-    {
-      slug: "power-tools",
-      name: "Heavy Power Tools",
-      count: "14+ Tools",
-      imageUrl: "/images/products/hw2000.jpg",
-      badge: "High Torque"
-    },
-    {
-      slug: "hand-tools",
-      name: "Precision Hand Tools",
-      count: "18+ Sets",
-      imageUrl: "/images/products/nozzle_tips.jpg",
-      badge: "CR-V Steel"
-    }
-  ];
+  const [categories, setCategories] = useState<CategoryItem[]>(defaultCategories);
+
+  useEffect(() => {
+    fetch("/api/categories")
+      .then((res) => res.json())
+      .then((data: { success?: boolean; categories?: ApiCategory[] }) => {
+        if (data.success && Array.isArray(data.categories) && data.categories.length > 0) {
+          const mapped: CategoryItem[] = data.categories.map((c) => ({
+            slug: c.slug || c.id || "",
+            name: c.name || "",
+            count: c.productCount !== undefined ? `${c.productCount} Products` : "Featured",
+            imageUrl: c.image || "/images/products/hw2000.jpg",
+            badge: "Genuine"
+          }));
+          setCategories(mapped);
+        }
+      })
+      .catch((err) => console.error("Error loading categories:", err));
+  }, []);
+
+  const topCategories = categories;
 
   return (
     <section className={styles.section}>

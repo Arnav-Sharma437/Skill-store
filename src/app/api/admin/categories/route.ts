@@ -22,18 +22,25 @@ export async function POST(req: NextRequest) {
   try {
     await connectToDatabase();
     const body = await req.json();
-    const { id, name, brand, imageUrl, link } = body;
+    const { id, name, brand, imageUrl, link, description } = body;
 
     if (!id || !name || !brand || !imageUrl) {
-      return NextResponse.json({ success: false, error: "Missing required fields" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "Missing required fields (ID, Name, Brand, Image)" }, { status: 400 });
+    }
+
+    const cleanId = id.trim().toLowerCase().replace(/\s+/g, "-");
+    const existing = await Category.findOne({ id: cleanId });
+    if (existing) {
+      return NextResponse.json({ success: false, error: `Category with ID/slug "${cleanId}" already exists.` }, { status: 400 });
     }
 
     const newCategory = await Category.create({
-      id,
-      name,
-      brand: brand.toLowerCase(),
-      imageUrl,
-      link: link || `/shop/${brand.toLowerCase()}/${id.toLowerCase()}`,
+      id: cleanId,
+      name: name.trim(),
+      brand: brand.trim().toLowerCase(),
+      imageUrl: imageUrl.trim(),
+      link: link ? link.trim() : `/category/${cleanId}`,
+      description: description ? description.trim() : "",
     });
 
     return NextResponse.json({ success: true, data: newCategory });
@@ -47,15 +54,22 @@ export async function PUT(req: NextRequest) {
   try {
     await connectToDatabase();
     const body = await req.json();
-    const { id, name, brand, imageUrl, link } = body;
+    const { id, name, brand, imageUrl, link, description } = body;
 
     if (!id) {
       return NextResponse.json({ success: false, error: "Missing category ID" }, { status: 400 });
     }
 
+    const updateFields: Record<string, unknown> = {};
+    if (name !== undefined) updateFields.name = name.trim();
+    if (brand !== undefined) updateFields.brand = brand.trim().toLowerCase();
+    if (imageUrl !== undefined) updateFields.imageUrl = imageUrl.trim();
+    if (link !== undefined) updateFields.link = link.trim();
+    if (description !== undefined) updateFields.description = description.trim();
+
     const updatedCategory = await Category.findOneAndUpdate(
-      { id },
-      { name, brand: brand?.toLowerCase(), imageUrl, link },
+      { id: id.trim() },
+      { $set: updateFields },
       { new: true }
     );
 
