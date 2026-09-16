@@ -8,7 +8,7 @@ import AnnouncementBar from "@/components/home/AnnouncementBar";
 import Header from "@/components/home/Header";
 import Footer from "@/components/home/Footer";
 import { useApp } from "@/context/AppContext";
-import { CATEGORIES_DATA, CategoryProduct } from "@/data/categories";
+import { CategoryProduct } from "@/data/categories";
 import { optimizeProductCard } from "@/lib/imageOptimization";
 import styles from "./CategoryProductsPage.module.css";
 

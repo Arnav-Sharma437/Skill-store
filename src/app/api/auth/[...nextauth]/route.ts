@@ -3,14 +3,66 @@ import GoogleProvider from "next-auth/providers/google";
 import dbConnect from "@/lib/db/mongodb";
 import User from "@/models/User";
 
+// Dynamically configure and guarantee canonical environment URL
+const configureEnvironment = (req?: Request) => {
+  const host = req?.headers.get("x-forwarded-host") || req?.headers.get("host") || "";
+  const isLocal =
+    host.includes("localhost") ||
+    host.includes("127.0.0.1") ||
+    (process.env.NODE_ENV === "development" && !host.includes("skillstore.in"));
+
+  if (isLocal) {
+    const proto = req?.headers.get("x-forwarded-proto") || "http";
+    const localUrl = `${proto}://${host || "localhost:3000"}`;
+    process.env.NEXTAUTH_URL = localUrl;
+    process.env.AUTH_URL = localUrl;
+  } else {
+    // Production / Vercel: strictly enforce canonical domain
+    process.env.NEXTAUTH_URL = "https://skillstore.in";
+    process.env.AUTH_URL = "https://skillstore.in";
+    process.env.NEXT_PUBLIC_APP_URL = "https://skillstore.in";
+  }
+};
+
+// Initial setup on module load
+if (process.env.NODE_ENV === "production" || !process.env.NEXTAUTH_URL) {
+  configureEnvironment();
+}
+
 export const authOptions: AuthOptions = {
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID || "",
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+      authorization: {
+        params: {
+          prompt: "select_account",
+          access_type: "offline",
+          response_type: "code",
+        },
+      },
     }),
   ],
   callbacks: {
+    async redirect({ url, baseUrl }) {
+      // Allows relative callback URLs
+      if (url.startsWith("/")) return `${baseUrl}${url}`;
+      // Allows callback URLs on the same origin or skillstore.in
+      try {
+        const parsedUrl = new URL(url);
+        const parsedBase = new URL(baseUrl);
+        if (
+          parsedUrl.origin === parsedBase.origin ||
+          parsedUrl.hostname === "skillstore.in" ||
+          parsedUrl.hostname.includes("localhost")
+        ) {
+          return url;
+        }
+      } catch {
+        // invalid URL format, fallback to baseUrl
+      }
+      return baseUrl;
+    },
     async signIn({ user, account }) {
       if (account?.provider === "google") {
         try {
@@ -59,6 +111,11 @@ export const authOptions: AuthOptions = {
   debug: process.env.NODE_ENV === "development",
 };
 
-const handler = NextAuth(authOptions);
+const handler = async (req: Request, context: unknown) => {
+  configureEnvironment(req);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return NextAuth(authOptions)(req, context as any);
+};
 
 export { handler as GET, handler as POST };
+

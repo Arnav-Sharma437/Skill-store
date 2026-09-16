@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, use, useEffect, useCallback } from "react";
+import React, { useState, useMemo, use, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -84,30 +84,18 @@ export default function ProductPage({ params }: PageProps) {
     comment: "",
   });
 
-  // Fetch approved reviews
-  const loadReviews = useCallback(async () => {
-    try {
-      const res = await fetch(`/api/reviews?productId=${encodeURIComponent(id)}`);
-      if (res.ok) {
-        const json = await res.json();
-        if (json.reviews && Array.isArray(json.reviews)) {
-          setReviews(json.reviews);
-        }
-      }
-    } catch (e) {
-      console.error("Error loading reviews:", e);
-    }
-  }, [id]);
-
-  // Fetch live product from MongoDB
+  // Fetch live product & reviews from MongoDB
   useEffect(() => {
     let isMounted = true;
-    async function fetchProduct() {
-      setLoading(true);
+    async function loadData() {
       try {
-        const res = await fetch(`/api/products/${encodeURIComponent(id)}`);
-        if (res.ok) {
-          const json = await res.json();
+        const [prodRes, revRes] = await Promise.all([
+          fetch(`/api/products/${encodeURIComponent(id)}`),
+          fetch(`/api/reviews?productId=${encodeURIComponent(id)}`),
+        ]);
+
+        if (prodRes.ok) {
+          const json = await prodRes.json();
           if (json.success && json.data) {
             const d = json.data;
             const normalized: ProductData = {
@@ -128,7 +116,7 @@ export default function ProductPage({ params }: PageProps) {
               description: d.description || [],
               specifications: d.specifications || [],
               whatsInBox: d.whatsInBox || [],
-              inStock: d.inStock !== false
+              inStock: d.inStock !== false,
             };
 
             if (isMounted) {
@@ -142,6 +130,13 @@ export default function ProductPage({ params }: PageProps) {
         } else {
           if (isMounted) setNotFound(true);
         }
+
+        if (revRes.ok) {
+          const revJson = await revRes.json();
+          if (isMounted && revJson.reviews && Array.isArray(revJson.reviews)) {
+            setReviews(revJson.reviews);
+          }
+        }
       } catch {
         if (isMounted) setNotFound(true);
       } finally {
@@ -149,13 +144,13 @@ export default function ProductPage({ params }: PageProps) {
       }
     }
 
-    fetchProduct();
-    loadReviews();
+    loadData();
 
     return () => {
       isMounted = false;
     };
-  }, [id, loadReviews]);
+  }, [id]);
+
 
   // Submit review handler
   const handleReviewSubmit = async (e: React.FormEvent) => {
