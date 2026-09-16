@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, use, useEffect } from "react";
+import React, { useState, useMemo, use, useEffect, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -8,7 +8,6 @@ import AnnouncementBar from "@/components/home/AnnouncementBar";
 import Header from "@/components/home/Header";
 import Footer from "@/components/home/Footer";
 import { useApp } from "@/context/AppContext";
-import { getProductById } from "@/data/categories";
 import { optimizeProductDetail, optimizeGalleryThumbnail, optimizeProductCard } from "@/lib/imageOptimization";
 import styles from "./ProductPage.module.css";
 
@@ -21,39 +20,18 @@ const RECENT_PRODUCTS = [
   { id: "acc-5", title: "High Pressure Washer Water Hose 5 Meters", price: 1200, imageUrl: "/images/products/hw2000.jpg", rating: 5, ratingCount: 241 }
 ];
 
-// Verified Product Reviews
-const PRODUCT_REVIEWS = [
-  {
-    id: 1,
-    name: "Maheshwaran S.",
-    location: "Coimbatore, Tamil Nadu",
-    rating: 5,
-    date: "August 2026",
-    badge: "Verified Buyer",
-    title: "Exceptional Cleaning Pressure & Rock-Solid Build Quality",
-    comment: "Purchased this washer for regular auto detailing and patio cleaning. The motor runs smoothly with consistent pressure output. High grade brass attachments and prompt delivery from Skill Store."
-  },
-  {
-    id: 2,
-    name: "Karan Gill",
-    location: "Delhi NCR",
-    rating: 5,
-    date: "July 2026",
-    badge: "Verified Buyer",
-    title: "Great Value for Heavy Duty Workshop Work",
-    comment: "Very easy to assemble, lightweight yet powerful. The pressure gun and adjustable nozzles make washing cars and machinery effortless. 100% genuine spares."
-  },
-  {
-    id: 3,
-    name: "Deepak Varma",
-    location: "Bengaluru, Karnataka",
-    rating: 5,
-    date: "June 2026",
-    badge: "Verified Buyer",
-    title: "Original Genuine Machine & Super Fast Dispatch",
-    comment: "Received the package in 2 days. 100% authentic manufacturer warranty and very reliable performance. Highly recommended machinery store in India!"
-  }
-];
+interface ReviewItem {
+  _id: string;
+  productId: string;
+  productTitle?: string;
+  userName: string;
+  userEmail?: string;
+  rating: number;
+  title?: string;
+  comment: string;
+  status: "pending" | "approved" | "rejected";
+  createdAt: string;
+}
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -86,42 +64,46 @@ export default function ProductPage({ params }: PageProps) {
   const router = useRouter();
   const { addToCart, toggleWishlist, isInWishlist } = useApp();
 
-  // Initial fallback resolution
-  const initialProduct = useMemo(() => {
-    const found = getProductById(id);
-    if (found) {
-      return {
-        ...found,
-        category: found.categorySlug || "high-pressure-washer",
-        inStock: found.inStock !== false
-      };
-    }
-
-    return {
-      id: id,
-      title: "Machinery Product " + id,
-      price: 4999,
-      originalPrice: 6999,
-      imageUrl: "/images/products/hw2000.jpg",
-      rating: 5,
-      ratingCount: 241,
-      brand: "TUQO",
-      categorySlug: "high-pressure-washer",
-      categoryName: "High Pressure Washer",
-      subType: "domestic" as const,
-      inStock: true
-    };
-  }, [id]);
-
-  const [product, setProduct] = useState<ProductData>(initialProduct);
-  const [selectedImage, setSelectedImage] = useState<string>(initialProduct.imageUrl);
+  const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
+  const [product, setProduct] = useState<ProductData | null>(null);
+  const [selectedImage, setSelectedImage] = useState<string>("");
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState("description");
+
+  // Live reviews state
+  const [reviews, setReviews] = useState<ReviewItem[]>([]);
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [submittingReview, setSubmittingReview] = useState(false);
+  const [reviewSuccessMsg, setReviewSuccessMsg] = useState("");
+  const [reviewForm, setReviewForm] = useState({
+    userName: "",
+    userEmail: "",
+    rating: 5,
+    title: "",
+    comment: "",
+  });
+
+  // Fetch approved reviews
+  const loadReviews = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/reviews?productId=${encodeURIComponent(id)}`);
+      if (res.ok) {
+        const json = await res.json();
+        if (json.reviews && Array.isArray(json.reviews)) {
+          setReviews(json.reviews);
+        }
+      }
+    } catch (e) {
+      console.error("Error loading reviews:", e);
+    }
+  }, [id]);
 
   // Fetch live product from MongoDB
   useEffect(() => {
     let isMounted = true;
     async function fetchProduct() {
+      setLoading(true);
       try {
         const res = await fetch(`/api/products/${encodeURIComponent(id)}`);
         if (res.ok) {
@@ -137,7 +119,7 @@ export default function ProductPage({ params }: PageProps) {
               videoUrl: d.videoUrl || "",
               gallery: Array.isArray(d.gallery) ? d.gallery : [],
               rating: d.rating || 5,
-              ratingCount: d.ratingCount || 10,
+              ratingCount: d.ratingCount || 0,
               brand: d.brand ? d.brand.toUpperCase() : "TUQO",
               category: d.category || "high-pressure-washer",
               categorySlug: d.category ? d.category.toLowerCase().replace(/\s+/g, "-") : "high-pressure-washer",
@@ -152,26 +134,78 @@ export default function ProductPage({ params }: PageProps) {
             if (isMounted) {
               setProduct(normalized);
               setSelectedImage(normalized.imageUrl);
+              setNotFound(false);
             }
+          } else {
+            if (isMounted) setNotFound(true);
           }
+        } else {
+          if (isMounted) setNotFound(true);
         }
       } catch {
-        // Keep initial fallback product
+        if (isMounted) setNotFound(true);
+      } finally {
+        if (isMounted) setLoading(false);
       }
     }
 
     fetchProduct();
+    loadReviews();
+
     return () => {
       isMounted = false;
     };
-  }, [id]);
+  }, [id, loadReviews]);
 
-  const isFavourite = isInWishlist(product.id);
-  const savings = Math.max(0, product.originalPrice - product.price);
-  const savingsPercent = product.originalPrice > 0 ? Math.round((savings / product.originalPrice) * 100) : 0;
+  // Submit review handler
+  const handleReviewSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!reviewForm.userName.trim() || !reviewForm.comment.trim()) {
+      alert("Please provide your name and review comment.");
+      return;
+    }
+
+    setSubmittingReview(true);
+    try {
+      const res = await fetch("/api/reviews", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          productId: id,
+          productTitle: product?.title || id,
+          userName: reviewForm.userName,
+          userEmail: reviewForm.userEmail,
+          rating: reviewForm.rating,
+          title: reviewForm.title,
+          comment: reviewForm.comment,
+        }),
+      });
+
+      if (res.ok) {
+        setReviewSuccessMsg("Thank you! Your review has been submitted and will appear once approved by the admin.");
+        setReviewForm({ userName: "", userEmail: "", rating: 5, title: "", comment: "" });
+        setTimeout(() => {
+          setIsReviewModalOpen(false);
+          setReviewSuccessMsg("");
+        }, 3000);
+      } else {
+        const data = await res.json();
+        alert(data.error || "Failed to submit review.");
+      }
+    } catch {
+      alert("Error submitting review. Please try again.");
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
+
+  const isFavourite = product ? isInWishlist(product.id) : false;
+  const savings = product ? Math.max(0, product.originalPrice - product.price) : 0;
+  const savingsPercent = product && product.originalPrice > 0 ? Math.round((savings / product.originalPrice) * 100) : 0;
 
   // Gallery thumbnails
   const gallery = useMemo(() => {
+    if (!product) return [];
     const list: string[] = [];
     if (product.imageUrl) list.push(product.imageUrl);
     if (product.gallery && Array.isArray(product.gallery)) {
@@ -196,15 +230,17 @@ export default function ProductPage({ params }: PageProps) {
     });
 
     return list;
-  }, [product.imageUrl, product.gallery]);
+  }, [product]);
 
   const handleNextImage = () => {
+    if (!gallery.length) return;
     const currentIndex = gallery.indexOf(selectedImage);
     const nextIndex = (currentIndex + 1) % gallery.length;
     setSelectedImage(gallery[nextIndex]);
   };
 
   const handlePrevImage = () => {
+    if (!gallery.length) return;
     const currentIndex = gallery.indexOf(selectedImage);
     const prevIndex = (currentIndex - 1 + gallery.length) % gallery.length;
     setSelectedImage(gallery[prevIndex]);
@@ -212,51 +248,106 @@ export default function ProductPage({ params }: PageProps) {
 
   // Convert description to string array
   const descItems = useMemo(() => {
+    if (!product) return [];
     if (Array.isArray(product.description) && product.description.length > 0) {
-      return product.description;
+      return product.description.filter(Boolean);
     }
     if (typeof product.description === "string" && product.description.trim()) {
-      return product.description.split("\n").filter(Boolean);
+      return product.description.split("\n").map((s) => s.trim()).filter(Boolean);
     }
     return [
-      "HIGH PERFORMANCE OUTPUT - Experience powerful high performance cleaning with our precision-engineered machine.",
-      "VERSATILE ALL-WEATHER OPERATION - Equipped with multi-functional quick connectors and spray accessories.",
-      "PORTABLE & EASY TO ASSEMBLE - Designed for convenient handling and hassle-free operation.",
-      "LOW NOISE MOTOR - Built with high efficiency cooling and vibration dampening technology."
+      "HIGH PERFORMANCE OUTPUT - Precision-engineered machinery for professional use.",
+      "VERSATILE & RELIABLE - Equipped for robust multi-purpose operation.",
+      "PORTABLE & ERGONOMIC - Designed for convenient handling and hassle-free operation."
     ];
-  }, [product.description]);
+  }, [product]);
 
   const specItems = useMemo(() => {
+    if (!product) return [];
     if (Array.isArray(product.specifications) && product.specifications.length > 0) {
-      return product.specifications;
+      return product.specifications.filter(Boolean);
     }
     if (typeof product.specifications === "string" && product.specifications.trim()) {
-      return product.specifications.split("\n").filter(Boolean);
+      return product.specifications.split("\n").map((s) => s.trim()).filter(Boolean);
     }
     return [
       `Brand: ${product.brand || "SkillStore"}`,
       `Model SKU: ${product.id}`,
       `Category: ${product.categoryName || "Machinery"}`,
-      "Operating Voltage: 220V - 240V / 24V DC",
-      "Construction: Reinforced Industrial Composite",
+      "Operating Voltage: 220V - 240V / 50Hz",
       "Warranty: 1 Year Official Manufacturer Warranty"
     ];
-  }, [product.specifications, product.brand, product.id, product.categoryName]);
+  }, [product]);
 
   const boxItems = useMemo(() => {
+    if (!product) return [];
     if (Array.isArray(product.whatsInBox) && product.whatsInBox.length > 0) {
-      return product.whatsInBox;
+      return product.whatsInBox.filter(Boolean);
     }
     if (typeof product.whatsInBox === "string" && product.whatsInBox.trim()) {
-      return product.whatsInBox.split("\n").filter(Boolean);
+      return product.whatsInBox.split("\n").map((s) => s.trim()).filter(Boolean);
     }
     return [
       `1x ${product.title}`,
-      "1x Pressure Nozzle Set / Adapters",
-      "1x Quick Connector Coupler",
+      "1x Accessories / Fittings Set",
       "1x User Instruction Manual & Warranty Card"
     ];
-  }, [product.whatsInBox, product.title]);
+  }, [product]);
+
+  // Live rating calculation from approved reviews if available
+  const displayRating = useMemo(() => {
+    if (reviews.length > 0) {
+      const sum = reviews.reduce((acc, r) => acc + r.rating, 0);
+      return (sum / reviews.length).toFixed(1);
+    }
+    return product ? (product.rating || 5).toFixed(1) : "5.0";
+  }, [reviews, product]);
+
+  const totalReviewsCount = useMemo(() => {
+    if (reviews.length > 0) return reviews.length;
+    return product?.ratingCount || 0;
+  }, [reviews, product]);
+
+  // Loading state
+  if (loading) {
+    return (
+      <>
+        <AnnouncementBar />
+        <Header />
+        <main className={styles.main}>
+          <div className="container" style={{ padding: "80px 20px", textAlign: "center" }}>
+            <div style={{ display: "inline-block", width: "40px", height: "40px", border: "4px solid #e2e8f0", borderTopColor: "#132c66", borderRadius: "50%", animation: "spin 1s linear infinite" }}></div>
+            <p style={{ marginTop: "16px", color: "#64748b", fontWeight: 600 }}>Loading product details...</p>
+          </div>
+        </main>
+        <Footer />
+      </>
+    );
+  }
+
+  // Not Found / Deleted Product Screen
+  if (notFound || !product) {
+    return (
+      <>
+        <AnnouncementBar />
+        <Header />
+        <main className={styles.main}>
+          <div className="container">
+            <div className={styles.notFoundContainer}>
+              <h1 className={styles.notFoundTitle}>Product Not Found</h1>
+              <p className={styles.notFoundText}>
+                The product you are looking for has been removed, deleted, or is no longer available.
+              </p>
+              <Link href="/categories" className={styles.notFoundBtn}>
+                Browse All Categories &amp; Products
+              </Link>
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </>
+    );
+  }
 
   const isInStock = product.inStock !== false;
 
@@ -390,12 +481,12 @@ export default function ProductPage({ params }: PageProps) {
               <div className={styles.ratingsRow}>
                 <div className={styles.stars}>
                   {[1, 2, 3, 4, 5].map((s) => (
-                    <svg key={s} width="16" height="16" viewBox="0 0 24 24" fill={s <= product.rating ? "#ffd300" : "#d1d5db"} stroke={s <= product.rating ? "#ffd300" : "#d1d5db"} strokeWidth="1">
+                    <svg key={s} width="16" height="16" viewBox="0 0 24 24" fill={s <= Math.round(Number(displayRating)) ? "#ffd300" : "#d1d5db"} stroke={s <= Math.round(Number(displayRating)) ? "#ffd300" : "#d1d5db"} strokeWidth="1">
                       <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
                     </svg>
                   ))}
                 </div>
-                <span className={styles.reviewsCount}>({product.ratingCount || 241} Verified Customer Reviews)</span>
+                <span className={styles.reviewsCount}>({totalReviewsCount} Verified Customer {totalReviewsCount === 1 ? "Review" : "Reviews"})</span>
               </div>
 
               {/* Quantity Picker */}
@@ -478,45 +569,14 @@ export default function ProductPage({ params }: PageProps) {
                 )}
               </div>
 
-              {/* Product Info List */}
+              {/* Dynamic Product Info List (Description from MongoDB) */}
               <div className={styles.infoSection}>
                 <h4 className={styles.infoHeading}>PRODUCT INFORMATION</h4>
                 <ul className={styles.infoList}>
-                  <li>HIGH PERFORMANCE HEAVY-DUTY INDUSTRIAL MOTOR</li>
-                  <li>LOW NOISE &amp; ULTRA RELIABLE MECHANISM</li>
-                  <li>LIGHTWEIGHT, COMPACT &amp; EASY ERGONOMIC HANDLING</li>
-                  <li>SOLID BRASS FITTINGS &amp; PREMIUM PRESSURE TOLERANCE</li>
-                  <li>DRAW WATER FROM BUCKETS, TANKS OR TAP CONNECTORS</li>
+                  {descItems.map((item, idx) => (
+                    <li key={idx}>{item}</li>
+                  ))}
                 </ul>
-              </div>
-
-              {/* Trust Badges */}
-              <div className={styles.badgesRow}>
-                <div className={styles.badgeItem}>
-                  <div className={styles.badgeCircle}>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#132c66" strokeWidth="2.5">
-                      <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
-                    </svg>
-                  </div>
-                  <span>Top Brands</span>
-                </div>
-                <div className={styles.badgeItem}>
-                  <div className={styles.badgeCircle}>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#132c66" strokeWidth="2.5">
-                      <polyline points="20 6 9 17 4 12"></polyline>
-                    </svg>
-                  </div>
-                  <span>100% Verified</span>
-                </div>
-                <div className={styles.badgeItem}>
-                  <div className={styles.badgeCircle}>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#132c66" strokeWidth="2.5">
-                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                      <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-                    </svg>
-                  </div>
-                  <span>Safe Payments</span>
-                </div>
               </div>
             </div>
           </div>
@@ -585,34 +645,32 @@ export default function ProductPage({ params }: PageProps) {
             {/* Ratings Overview Card */}
             <div className={styles.reviewsSummaryCard}>
               <div className={styles.scoreCol}>
-                <span className={styles.bigScore}>4.9</span>
+                <span className={styles.bigScore}>{displayRating}</span>
                 <div className={styles.stars}>
                   {[1, 2, 3, 4, 5].map((s) => (
-                    <svg key={s} width="18" height="18" viewBox="0 0 24 24" fill="#ffd300" stroke="#ffd300" strokeWidth="1">
+                    <svg key={s} width="18" height="18" viewBox="0 0 24 24" fill={s <= Math.round(Number(displayRating)) ? "#ffd300" : "#d1d5db"} stroke={s <= Math.round(Number(displayRating)) ? "#ffd300" : "#d1d5db"} strokeWidth="1">
                       <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
                     </svg>
                   ))}
                 </div>
-                <span className={styles.totalReviewsCount}>Based on {product.ratingCount || 241} verified reviews</span>
+                <span className={styles.totalReviewsCount}>Based on {totalReviewsCount} verified reviews</span>
               </div>
 
-              {/* Progress Bars */}
+              {/* Dynamic Progress Bars */}
               <div className={styles.barsCol}>
-                {[
-                  { star: "5 Star", pct: 88 },
-                  { star: "4 Star", pct: 9 },
-                  { star: "3 Star", pct: 2 },
-                  { star: "2 Star", pct: 1 },
-                  { star: "1 Star", pct: 0 }
-                ].map((row, idx) => (
-                  <div key={idx} className={styles.barRow}>
-                    <span className={styles.barLabel}>{row.star}</span>
-                    <div className={styles.barTrack}>
-                      <div className={styles.barFill} style={{ width: `${row.pct}%` }}></div>
+                {[5, 4, 3, 2, 1].map((starNum) => {
+                  const matchingCount = reviews.filter((r) => r.rating === starNum).length;
+                  const pct = reviews.length > 0 ? Math.round((matchingCount / reviews.length) * 100) : (starNum === 5 ? 100 : 0);
+                  return (
+                    <div key={starNum} className={styles.barRow}>
+                      <span className={styles.barLabel}>{starNum} Star</span>
+                      <div className={styles.barTrack}>
+                        <div className={styles.barFill} style={{ width: `${pct}%` }}></div>
+                      </div>
+                      <span className={styles.barPct}>{pct}%</span>
                     </div>
-                    <span className={styles.barPct}>{row.pct}%</span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               {/* Action Column */}
@@ -620,7 +678,7 @@ export default function ProductPage({ params }: PageProps) {
                 <h4>Have you used this product?</h4>
                 <p>Share your review to help other workshop owners and detailers make the right choice.</p>
                 <button 
-                  onClick={() => alert("Thank you for your feedback! Review submission dialog will open.")} 
+                  onClick={() => setIsReviewModalOpen(true)} 
                   className={styles.writeReviewBtn}
                 >
                   Write a Product Review
@@ -629,43 +687,59 @@ export default function ProductPage({ params }: PageProps) {
             </div>
 
             {/* Reviews List Cards */}
-            <div className={styles.reviewsListGrid}>
-              {PRODUCT_REVIEWS.map((rev) => (
-                <div key={rev.id} className={styles.reviewCard}>
-                  <div className={styles.reviewCardHeader}>
-                    <div className={styles.authorBadgeGroup}>
-                      <div className={styles.reviewAvatar}>
-                        {rev.name.split(" ").map((n) => n[0]).join("")}
+            {reviews.length > 0 ? (
+              <div className={styles.reviewsListGrid}>
+                {reviews.map((rev) => (
+                  <div key={rev._id} className={styles.reviewCard}>
+                    <div className={styles.reviewCardHeader}>
+                      <div className={styles.authorBadgeGroup}>
+                        <div className={styles.reviewAvatar}>
+                          {rev.userName.split(" ").map((n) => n[0]).join("").toUpperCase() || "U"}
+                        </div>
+                        <div>
+                          <h4 className={styles.reviewerName}>{rev.userName}</h4>
+                          <span className={styles.reviewerLocation}>Verified Customer</span>
+                        </div>
                       </div>
-                      <div>
-                        <h4 className={styles.reviewerName}>{rev.name}</h4>
-                        <span className={styles.reviewerLocation}>{rev.location}</span>
+                      <div className={styles.dateAndBadge}>
+                        <span className={styles.verifiedBuyerTag}>
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                          </svg>
+                          Verified Buyer
+                        </span>
+                        <span className={styles.reviewDate}>
+                          {new Date(rev.createdAt).toLocaleDateString("en-IN", { month: "short", year: "numeric" })}
+                        </span>
                       </div>
                     </div>
-                    <div className={styles.dateAndBadge}>
-                      <span className={styles.verifiedBuyerTag}>
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                          <polyline points="20 6 9 17 4 12"></polyline>
+
+                    <div className={styles.reviewStarsRow}>
+                      {[...Array(rev.rating)].map((_, i) => (
+                        <svg key={i} width="14" height="14" viewBox="0 0 24 24" fill="#ffd300" stroke="#ffd300" strokeWidth="1">
+                          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
                         </svg>
-                        {rev.badge}
-                      </span>
-                      <span className={styles.reviewDate}>{rev.date}</span>
+                      ))}
                     </div>
-                  </div>
 
-                  <div className={styles.reviewStarsRow}>
-                    {[...Array(rev.rating)].map((_, i) => (
-                      <svg key={i} width="14" height="14" viewBox="0 0 24 24" fill="#ffd300" stroke="#ffd300" strokeWidth="1">
-                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-                      </svg>
-                    ))}
+                    {rev.title && <h5 className={styles.reviewTitle}>{rev.title}</h5>}
+                    <p className={styles.reviewComment}>&ldquo;{rev.comment}&rdquo;</p>
                   </div>
-
-                  <h5 className={styles.reviewTitle}>{rev.title}</h5>
-                  <p className={styles.reviewComment}>&ldquo;{rev.comment}&rdquo;</p>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div style={{ textAlign: "center", padding: "36px 20px", background: "#ffffff", borderRadius: "12px", border: "1px dashed #cbd5e1", marginTop: "24px" }}>
+                <p style={{ margin: 0, color: "#64748b", fontSize: "14px", fontWeight: 600 }}>
+                  No customer reviews yet. Be the first to share your experience with this machine!
+                </p>
+                <button
+                  onClick={() => setIsReviewModalOpen(true)}
+                  style={{ marginTop: "12px", background: "#132c66", color: "#ffffff", border: "none", padding: "8px 18px", borderRadius: "6px", fontWeight: 700, cursor: "pointer", fontSize: "13px" }}
+                >
+                  Write the First Review
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Section: Based on your recent views */}
@@ -787,6 +861,117 @@ export default function ProductPage({ params }: PageProps) {
           </div>
         </div>
       </main>
+
+      {/* Write a Product Review Modal */}
+      {isReviewModalOpen && (
+        <div className={styles.modalOverlay} onClick={() => !submittingReview && setIsReviewModalOpen(false)}>
+          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h3 className={styles.modalTitle}>Write a Review</h3>
+              <button
+                type="button"
+                className={styles.modalCloseBtn}
+                onClick={() => setIsReviewModalOpen(false)}
+                aria-label="Close modal"
+              >
+                &times;
+              </button>
+            </div>
+
+            {reviewSuccessMsg ? (
+              <div style={{ padding: "20px 0", textAlign: "center" }}>
+                <div style={{ fontSize: "36px", marginBottom: "10px" }}>✅</div>
+                <h4 style={{ color: "#16a34a", fontSize: "16px", marginBottom: "8px", fontWeight: 800 }}>Review Submitted</h4>
+                <p style={{ color: "#475569", fontSize: "13.5px" }}>{reviewSuccessMsg}</p>
+              </div>
+            ) : (
+              <form onSubmit={handleReviewSubmit} className={styles.reviewForm}>
+                <div className={styles.formGroup}>
+                  <label className={styles.formLabel}>Rating *</label>
+                  <div className={styles.starRatingPicker}>
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        type="button"
+                        key={star}
+                        onClick={() => setReviewForm({ ...reviewForm, rating: star })}
+                        className={styles.starPickBtn}
+                      >
+                        <svg
+                          width="26"
+                          height="26"
+                          viewBox="0 0 24 24"
+                          fill={star <= reviewForm.rating ? "#ffd300" : "#d1d5db"}
+                          stroke={star <= reviewForm.rating ? "#ffd300" : "#d1d5db"}
+                          strokeWidth="1"
+                        >
+                          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                        </svg>
+                      </button>
+                    ))}
+                    <span style={{ fontSize: "13px", fontWeight: 700, color: "#132c66", marginLeft: "6px" }}>
+                      {reviewForm.rating} of 5 Stars
+                    </span>
+                  </div>
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label className={styles.formLabel}>Your Name *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Rahul Sharma"
+                    value={reviewForm.userName}
+                    onChange={(e) => setReviewForm({ ...reviewForm, userName: e.target.value })}
+                    className={styles.formInput}
+                  />
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label className={styles.formLabel}>Your Email (Optional)</label>
+                  <input
+                    type="email"
+                    placeholder="e.g. rahul@example.com"
+                    value={reviewForm.userEmail}
+                    onChange={(e) => setReviewForm({ ...reviewForm, userEmail: e.target.value })}
+                    className={styles.formInput}
+                  />
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label className={styles.formLabel}>Review Headline / Title</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Excellent pressure washer for workshop!"
+                    value={reviewForm.title}
+                    onChange={(e) => setReviewForm({ ...reviewForm, title: e.target.value })}
+                    className={styles.formInput}
+                  />
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label className={styles.formLabel}>Detailed Review *</label>
+                  <textarea
+                    required
+                    rows={4}
+                    placeholder="Share your detailed experience with the performance, build quality, fittings and usage..."
+                    value={reviewForm.comment}
+                    onChange={(e) => setReviewForm({ ...reviewForm, comment: e.target.value })}
+                    className={styles.formTextarea}
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={submittingReview}
+                  className={styles.formSubmitBtn}
+                >
+                  {submittingReview ? "Submitting..." : "Submit Review"}
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
 
       <Footer />
     </>

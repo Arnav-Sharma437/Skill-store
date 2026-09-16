@@ -60,6 +60,19 @@ interface IEnquiry {
   createdAt: string;
 }
 
+interface IAdminReview {
+  _id: string;
+  productId: string;
+  productTitle?: string;
+  userName: string;
+  userEmail?: string;
+  rating: number;
+  title?: string;
+  comment: string;
+  status: "pending" | "approved" | "rejected";
+  createdAt: string;
+}
+
 interface IAdminOrder {
   id: string;
   orderNumber: string;
@@ -122,7 +135,7 @@ const DEFAULT_SYSTEM_CATEGORIES: ICategory[] = Object.entries(BRAND_CATEGORIES).
 
 export default function AdminDashboard() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<"analytics" | "products" | "categories" | "orders" | "banners">("analytics");
+  const [activeTab, setActiveTab] = useState<"analytics" | "products" | "categories" | "orders" | "banners" | "reviews">("analytics");
   const [authorized, setAuthorized] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -132,6 +145,9 @@ export default function AdminDashboard() {
   const [categories, setCategories] = useState<ICategory[]>(DEFAULT_SYSTEM_CATEGORIES);
   const [products, setProducts] = useState<IProduct[]>([]);
   const [enquiries, setEnquiries] = useState<IEnquiry[]>([]);
+  const [reviews, setReviews] = useState<IAdminReview[]>([]);
+  const [reviewFilter, setReviewFilter] = useState<string>("all");
+  const [reviewActionLoading, setReviewActionLoading] = useState<string | null>(null);
   const [orders, setOrders] = useState<IAdminOrder[]>([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [orderActionLoading, setOrderActionLoading] = useState<string | null>(null);
@@ -261,6 +277,18 @@ export default function AdminDashboard() {
     }
   }, []);
 
+  const fetchReviews = useCallback(async () => {
+    try {
+      const res = await fetch("/api/admin/reviews");
+      const json = await res.json();
+      if (json.reviews && Array.isArray(json.reviews)) {
+        setReviews(json.reviews);
+      }
+    } catch (e) {
+      console.error("Error fetching reviews:", e);
+    }
+  }, []);
+
   const fetchOrders = useCallback(async () => {
     setOrdersLoading(true);
     try {
@@ -285,6 +313,7 @@ export default function AdminDashboard() {
         fetchCategories(),
         fetchProducts(),
         fetchEnquiries(),
+        fetchReviews(),
         fetchOrders(),
       ]);
     } catch (e) {
@@ -292,7 +321,8 @@ export default function AdminDashboard() {
     } finally {
       setLoading(false);
     }
-  }, [fetchBanners, fetchCategories, fetchProducts, fetchEnquiries, fetchOrders]);
+  }, [fetchBanners, fetchCategories, fetchProducts, fetchEnquiries, fetchReviews, fetchOrders]);
+
 
   // Auth check
   useEffect(() => {
@@ -764,7 +794,54 @@ export default function AdminDashboard() {
     }
   };
 
-  // --- Filtered Product & Order Datasets ---
+  // --- Review Moderation Actions ---
+  const handleUpdateReviewStatus = async (id: string, status: "approved" | "rejected" | "pending") => {
+    setReviewActionLoading(id);
+    try {
+      const res = await fetch("/api/admin/reviews", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, status }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        await fetchReviews();
+      } else {
+        alert(json.error || "Failed to update review status");
+      }
+    } catch {
+      alert("Network error updating review");
+    } finally {
+      setReviewActionLoading(null);
+    }
+  };
+
+  const handleDeleteReview = async (id: string) => {
+    if (!confirm("Are you sure you want to permanently delete this customer review?")) return;
+    setReviewActionLoading(id);
+    try {
+      const res = await fetch(`/api/admin/reviews?id=${encodeURIComponent(id)}`, {
+        method: "DELETE",
+      });
+      const json = await res.json();
+      if (json.success) {
+        await fetchReviews();
+      } else {
+        alert(json.error || "Failed to delete review");
+      }
+    } catch {
+      alert("Network error deleting review");
+    } finally {
+      setReviewActionLoading(null);
+    }
+  };
+
+  // --- Filtered Datasets ---
+  const filteredReviews = useMemo(() => {
+    if (reviewFilter === "all") return reviews;
+    return reviews.filter((r) => r.status === reviewFilter);
+  }, [reviews, reviewFilter]);
+
   const filteredProducts = useMemo(() => {
     return products.filter((p) => {
       const matchesSearch =
@@ -804,6 +881,7 @@ export default function AdminDashboard() {
       return matchesSearch && matchesStatus && matchesPayment;
     });
   }, [orders, orderSearch, orderStatusFilter, orderPaymentFilter]);
+
 
   // --- Analytics Calculations ---
   const analyticsData = useMemo(() => {
@@ -964,7 +1042,26 @@ export default function AdminDashboard() {
               </svg>
               <span>Hero Banners</span>
             </button>
+
+            <button
+              onClick={() => {
+                setActiveTab("reviews");
+                setIsMobileMenuOpen(false);
+              }}
+              className={`${styles.sidebarTab} ${activeTab === "reviews" ? styles.activeTab : ""}`}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className={styles.tabIcon}>
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+              </svg>
+              <span>Customer Reviews</span>
+              {reviews.filter((r) => r.status === "pending").length > 0 && (
+                <span className={styles.tabBadge} style={{ background: "#f59e0b" }}>
+                  {reviews.filter((r) => r.status === "pending").length}
+                </span>
+              )}
+            </button>
           </nav>
+
 
           <Link href="/" className={styles.viewWebsiteLink}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -1758,10 +1855,177 @@ export default function AdminDashboard() {
                   </div>
                 </div>
               )}
+
+              {/* ======================================================== */}
+              {/* TAB 6: CUSTOMER REVIEWS MODERATION                      */}
+              {/* ======================================================== */}
+              {activeTab === "reviews" && (
+                <div className={styles.tabContent}>
+                  <div className={styles.tabHeaderRow}>
+                    <div>
+                      <h2>Customer Reviews Moderation ({reviews.length})</h2>
+                      <p>Review, approve, or reject customer feedback before it appears on the live store product pages.</p>
+                    </div>
+                    <div className={styles.filterGroup}>
+                      {["all", "pending", "approved", "rejected"].map((st) => (
+                        <button
+                          key={st}
+                          onClick={() => setReviewFilter(st)}
+                          className={`${styles.filterBtn} ${reviewFilter === st ? styles.activeFilter : ""}`}
+                          style={{ textTransform: "capitalize" }}
+                        >
+                          {st} {st === "pending" && reviews.filter((r) => r.status === "pending").length > 0 && `(${reviews.filter((r) => r.status === "pending").length})`}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {filteredReviews.length === 0 ? (
+                    <div className={styles.emptyState}>
+                      <p>No reviews found matching the selected filter ({reviewFilter}).</p>
+                    </div>
+                  ) : (
+                    <div className={styles.tableCard}>
+                      <table className={styles.dataTable}>
+                        <thead>
+                          <tr>
+                            <th>Rating &amp; Review</th>
+                            <th>Reviewer</th>
+                            <th>Product Info</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                            <th style={{ textAlign: "right" }}>Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {filteredReviews.map((rev) => (
+                            <tr key={rev._id}>
+                              <td style={{ minWidth: "260px" }}>
+                                <div style={{ display: "flex", gap: "2px", marginBottom: "4px" }}>
+                                  {[1, 2, 3, 4, 5].map((s) => (
+                                    <svg
+                                      key={s}
+                                      width="14"
+                                      height="14"
+                                      viewBox="0 0 24 24"
+                                      fill={s <= rev.rating ? "#ffd300" : "#d1d5db"}
+                                      stroke={s <= rev.rating ? "#ffd300" : "#d1d5db"}
+                                      strokeWidth="1"
+                                    >
+                                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                    </svg>
+                                  ))}
+                                </div>
+                                {rev.title && <div style={{ fontWeight: "700", fontSize: "13px", color: "#132c66" }}>{rev.title}</div>}
+                                <div style={{ fontSize: "12.5px", color: "#475569", marginTop: "2px", lineHeight: 1.4 }}>
+                                  &ldquo;{rev.comment}&rdquo;
+                                </div>
+                              </td>
+                              <td>
+                                <div style={{ fontWeight: "700", color: "#0f172a", fontSize: "13px" }}>{rev.userName}</div>
+                                {rev.userEmail && <div style={{ fontSize: "11px", color: "#64748b" }}>{rev.userEmail}</div>}
+                              </td>
+                              <td>
+                                <div style={{ fontWeight: "700", fontSize: "12px", color: "#132c66" }}>SKU: {rev.productId}</div>
+                                {rev.productTitle && (
+                                  <div style={{ fontSize: "11px", color: "#64748b", maxWidth: "160px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                    {rev.productTitle}
+                                  </div>
+                                )}
+                              </td>
+                              <td style={{ fontSize: "12px", color: "#64748b", whiteSpace: "nowrap" }}>
+                                {new Date(rev.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                              </td>
+                              <td>
+                                <span
+                                  style={{
+                                    display: "inline-block",
+                                    padding: "4px 8px",
+                                    borderRadius: "6px",
+                                    fontSize: "11px",
+                                    fontWeight: "800",
+                                    textTransform: "uppercase",
+                                    background:
+                                      rev.status === "approved"
+                                        ? "#dcfce7"
+                                        : rev.status === "rejected"
+                                        ? "#fee2e2"
+                                        : "#fef3c7",
+                                    color:
+                                      rev.status === "approved"
+                                        ? "#166534"
+                                        : rev.status === "rejected"
+                                        ? "#991b1b"
+                                        : "#92400e",
+                                  }}
+                                >
+                                  {rev.status}
+                                </span>
+                              </td>
+                              <td style={{ textAlign: "right" }}>
+                                <div style={{ display: "flex", gap: "6px", justifyContent: "flex-end" }}>
+                                  {rev.status !== "approved" && (
+                                    <button
+                                      onClick={() => handleUpdateReviewStatus(rev._id, "approved")}
+                                      disabled={reviewActionLoading === rev._id}
+                                      style={{
+                                        background: "#16a34a",
+                                        color: "#fff",
+                                        border: "none",
+                                        borderRadius: "6px",
+                                        padding: "6px 10px",
+                                        fontSize: "11.5px",
+                                        fontWeight: "700",
+                                        cursor: "pointer",
+                                      }}
+                                      title="Approve Review"
+                                    >
+                                      ✓ Approve
+                                    </button>
+                                  )}
+                                  {rev.status !== "rejected" && (
+                                    <button
+                                      onClick={() => handleUpdateReviewStatus(rev._id, "rejected")}
+                                      disabled={reviewActionLoading === rev._id}
+                                      style={{
+                                        background: "#eab308",
+                                        color: "#fff",
+                                        border: "none",
+                                        borderRadius: "6px",
+                                        padding: "6px 10px",
+                                        fontSize: "11.5px",
+                                        fontWeight: "700",
+                                        cursor: "pointer",
+                                      }}
+                                      title="Reject Review"
+                                    >
+                                      ✕ Reject
+                                    </button>
+                                  )}
+                                  <button
+                                    onClick={() => handleDeleteReview(rev._id)}
+                                    disabled={reviewActionLoading === rev._id}
+                                    className={styles.deleteBtn}
+                                    style={{ padding: "6px 10px", fontSize: "11.5px" }}
+                                    title="Delete Review"
+                                  >
+                                    🗑️
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              )}
             </>
           )}
         </main>
       </div>
+
 
       {/* ============================================================ */}
       {/* MODAL 1: ADD / EDIT PRODUCT WITH UPLOADS & GALLERY           */}
@@ -2075,39 +2339,49 @@ export default function AdminDashboard() {
 
               {/* 4. Specifications & Highlights */}
               <div className={styles.formSection}>
-                <div className={styles.sectionHeader}>4. Descriptions &amp; Specs (One line per point)</div>
+                <div className={styles.sectionHeader}>4. Product Description &amp; Specifications (One line per bullet point)</div>
                 <div className={styles.inputGrid3}>
                   <div className={styles.inputField}>
-                    <label>Features &amp; Highlights</label>
+                    <label><strong>Product Description / Features *</strong></label>
                     <textarea
-                      rows={2}
-                      placeholder="Induction Motor 140 Bar&#10;Self-priming function&#10;Auto-stop system"
+                      rows={4}
+                      placeholder="HIGH PERFORMANCE HEAVY-DUTY MOTOR&#10;SOLID BRASS FITTINGS &amp; PRESSURE HOSE&#10;DRAW WATER FROM BUCKETS, TANKS OR TAP"
                       value={productForm.descriptionText}
                       onChange={(e) => setProductForm({ ...productForm, descriptionText: e.target.value })}
                     />
+                    <span style={{ fontSize: "11px", color: "#64748b", marginTop: "4px", lineHeight: "1.3" }}>
+                      💡 Enter points on new lines. This replaces generic info and shows dynamically on product page!
+                    </span>
                   </div>
 
                   <div className={styles.inputField}>
-                    <label>Technical Specifications</label>
+                    <label><strong>Technical Specifications</strong></label>
                     <textarea
-                      rows={2}
-                      placeholder="Power: 2000W&#10;Pressure: 140 Bar&#10;Flow: 420 L/hr"
+                      rows={4}
+                      placeholder="Power: 2000W / 240V&#10;Pressure: 140 Bar Max&#10;Flow: 420 L/hr&#10;Warranty: 1 Year"
                       value={productForm.specificationsText}
                       onChange={(e) => setProductForm({ ...productForm, specificationsText: e.target.value })}
                     />
+                    <span style={{ fontSize: "11px", color: "#64748b", marginTop: "4px", lineHeight: "1.3" }}>
+                      💡 Enter each spec on a separate line.
+                    </span>
                   </div>
 
                   <div className={styles.inputField}>
-                    <label>What&apos;s in the Box</label>
+                    <label><strong>What&apos;s in the Box</strong></label>
                     <textarea
-                      rows={2}
-                      placeholder="1x Washer Machine&#10;1x Trigger Gun&#10;1x Hose Pipe"
+                      rows={4}
+                      placeholder="1x High Pressure Washer Machine&#10;1x Trigger Spray Gun&#10;1x 5m Pressure Hose Pipe"
                       value={productForm.whatsInBoxText}
                       onChange={(e) => setProductForm({ ...productForm, whatsInBoxText: e.target.value })}
                     />
+                    <span style={{ fontSize: "11px", color: "#64748b", marginTop: "4px", lineHeight: "1.3" }}>
+                      💡 Enter package contents on separate lines.
+                    </span>
                   </div>
                 </div>
               </div>
+
 
               {/* Modal Buttons */}
               <div className={styles.modalActions}>

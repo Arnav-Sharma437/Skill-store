@@ -117,6 +117,38 @@ const EnquirySchema: Schema = new Schema(
   { timestamps: true }
 );
 
+// Review Interface
+export interface IReview extends Document {
+  productId: string;
+  productTitle: string;
+  userName: string;
+  userEmail: string;
+  rating: number;
+  title: string;
+  comment: string;
+  status: "pending" | "approved" | "rejected";
+  createdAt: Date;
+}
+
+const ReviewSchema: Schema = new Schema(
+  {
+    productId: { type: String, required: true, index: true },
+    productTitle: { type: String, default: "" },
+    userName: { type: String, required: true },
+    userEmail: { type: String, default: "" },
+    rating: { type: Number, required: true, min: 1, max: 5 },
+    title: { type: String, default: "" },
+    comment: { type: String, required: true },
+    status: {
+      type: String,
+      enum: ["pending", "approved", "rejected"],
+      default: "pending",
+      index: true,
+    },
+  },
+  { timestamps: true }
+);
+
 // Exports
 export const Product: Model<IProduct> =
   mongoose.models.Product || mongoose.model<IProduct>("Product", ProductSchema);
@@ -130,5 +162,9 @@ export const Banner: Model<IBanner> =
 export const Enquiry: Model<IEnquiry> =
   mongoose.models.Enquiry || mongoose.model<IEnquiry>("Enquiry", EnquirySchema);
 
+export const Review: Model<IReview> =
+  mongoose.models.Review || mongoose.model<IReview>("Review", ReviewSchema);
+
 export { default as Order } from "@/models/Order";
 export type { IOrder, IOrderItem, IShippingAddress } from "@/models/Order";
+

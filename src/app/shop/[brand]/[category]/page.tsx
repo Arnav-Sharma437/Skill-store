@@ -24,6 +24,7 @@ export default function CategoryProductsPage({ params }: PageProps) {
   const [filterPrice, setFilterPrice] = useState("all");
   const [sortBy, setSortBy] = useState("default");
   const [dbProducts, setDbProducts] = useState<CategoryProduct[]>([]);
+  const [isProductsLoaded, setIsProductsLoaded] = useState(false);
 
   const formatTitle = (slug: string) => {
     return slug
@@ -70,11 +71,12 @@ export default function CategoryProductsPage({ params }: PageProps) {
 
             if (isMounted) {
               setDbProducts(mapped);
+              setIsProductsLoaded(true);
             }
           }
         }
       } catch {
-        // Fallback to static items
+        if (isMounted) setIsProductsLoaded(true);
       }
     }
 
@@ -86,94 +88,16 @@ export default function CategoryProductsPage({ params }: PageProps) {
 
   // Static Fallback items
   const fallbackProducts: CategoryProduct[] = useMemo(() => {
-    const directCat = CATEGORIES_DATA[category.toLowerCase()];
-    if (directCat && directCat.products && directCat.products.length > 0) {
-      return directCat.products;
-    }
+    return [];
+  }, []);
 
-    return [
-      {
-        id: `${brand}-${category}-1`,
-        title: `${brandName} Premium ${categoryName} Pro-Series 2000`,
-        price: 4999,
-        originalPrice: 6999,
-        imageUrl: "/images/products/hw2000.jpg",
-        rating: 5,
-        ratingCount: 241,
-        subType: "domestic" as const,
-        brand: brandName,
-        inStock: true
-      },
-      {
-        id: `${brand}-${category}-2`,
-        title: `${brandName} Cordless ${categoryName} Max Power 24V`,
-        price: 6299,
-        originalPrice: 8299,
-        imageUrl: "/images/products/cdw400.jpg",
-        rating: 5,
-        ratingCount: 380,
-        subType: "domestic" as const,
-        brand: brandName,
-        inStock: true
-      },
-      {
-        id: `${brand}-${category}-3`,
-        title: `${brandName} Heavy Duty Commercial ${categoryName} 2800 PSI`,
-        price: 14500,
-        originalPrice: 18500,
-        imageUrl: "/images/products/compressor.jpg",
-        rating: 4,
-        ratingCount: 195,
-        subType: "commercial" as const,
-        brand: brandName,
-        inStock: true
-      },
-      {
-        id: `${brand}-${category}-4`,
-        title: `${brandName} Industrial High Output ${categoryName} 3000 PSI`,
-        price: 18999,
-        originalPrice: 24500,
-        imageUrl: "/images/products/compressor.jpg",
-        rating: 5,
-        ratingCount: 140,
-        subType: "commercial" as const,
-        brand: brandName,
-        inStock: true
-      },
-      {
-        id: `${brand}-${category}-5`,
-        title: `${brandName} ${categoryName} Brass Coupler Connector Quick Join`,
-        price: 499,
-        originalPrice: 799,
-        imageUrl: "/images/products/nozzle_tips.jpg",
-        rating: 5,
-        ratingCount: 310,
-        subType: "accessory" as const,
-        brand: brandName,
-        inStock: true
-      },
-      {
-        id: `${brand}-${category}-6`,
-        title: `${brandName} High Pressure Trigger Gun & Spray Wand Set`,
-        price: 999,
-        originalPrice: 1499,
-        imageUrl: "/images/products/trigger_gun.jpg",
-        rating: 5,
-        ratingCount: 450,
-        subType: "accessory" as const,
-        brand: brandName,
-        inStock: true
-      }
-    ];
-  }, [brand, category, brandName, categoryName]);
-
-  // Prioritize live DB products from MongoDB; fallback to initial static if DB has no products
+  // Live DB products from MongoDB once loaded
   const categoryProducts = useMemo(() => {
-    if (dbProducts.length > 0) {
+    if (isProductsLoaded) {
       return dbProducts;
     }
     return fallbackProducts;
-  }, [dbProducts, fallbackProducts]);
+  }, [isProductsLoaded, dbProducts, fallbackProducts]);
 
   // Star Ratings Helper
   const renderStars = (rating: number) => {

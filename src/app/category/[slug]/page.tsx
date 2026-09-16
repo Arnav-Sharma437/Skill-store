@@ -25,6 +25,7 @@ export default function CategoryPage({ params }: PageProps) {
   const [filterPrice, setFilterPrice] = useState("all");
   const [sortBy, setSortBy] = useState("default");
   const [dbProducts, setDbProducts] = useState<CategoryProduct[]>([]);
+  const [isProductsLoaded, setIsProductsLoaded] = useState(false);
 
   // Format fallback title if slug not explicitly mapped
   const formatTitle = (rawSlug: string) => {
@@ -50,20 +51,7 @@ export default function CategoryPage({ params }: PageProps) {
         { name: "Air Compressor", slug: "air-compressor" },
         { name: "Accessories & Spares", slug: "accessories-spares" }
       ],
-      products: [
-        {
-          id: `prod-${slug}-1`,
-          title: `TUQO High Performance ${title} HW2000`,
-          price: 4999,
-          originalPrice: 6999,
-          imageUrl: "/images/products/hw2000.jpg",
-          rating: 5,
-          ratingCount: 240,
-          subType: "domestic",
-          brand: "TUQO",
-          inStock: true
-        }
-      ]
+      products: []
     };
   }, [slug]);
 
@@ -132,11 +120,12 @@ export default function CategoryPage({ params }: PageProps) {
 
             if (isMounted) {
               setDbProducts(mapped);
+              setIsProductsLoaded(true);
             }
           }
         }
       } catch {
-        // Keep initial static products
+        if (isMounted) setIsProductsLoaded(true);
       }
     }
 
@@ -150,7 +139,6 @@ export default function CategoryPage({ params }: PageProps) {
     if (dbCategory) {
       return {
         ...dbCategory,
-        // merge subcategories if both exist
         subCategories: dbCategory.subCategories && dbCategory.subCategories.length > 0
           ? dbCategory.subCategories
           : initialDetail.subCategories
@@ -159,13 +147,14 @@ export default function CategoryPage({ params }: PageProps) {
     return initialDetail;
   }, [dbCategory, initialDetail]);
 
-  // Prioritize live DB products from MongoDB; fallback to initial static if DB has no products
+  // Strictly use live DB products once loaded so deleted products never resurrect
   const allProducts = useMemo(() => {
-    if (dbProducts.length > 0) {
+    if (isProductsLoaded) {
       return dbProducts;
     }
     return initialDetail.products;
-  }, [dbProducts, initialDetail.products]);
+  }, [isProductsLoaded, dbProducts, initialDetail.products]);
+
 
   // Star Rating Helper
   const renderStars = (rating: number) => {
