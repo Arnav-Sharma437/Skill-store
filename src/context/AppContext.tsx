@@ -5,10 +5,16 @@ import { SessionProvider } from "next-auth/react";
 
 export interface CartItem {
   id: string;
+  productId?: string;
   title: string;
   price: number;
   imageUrl: string;
   quantity: number;
+  selectedVariant?: {
+    degree?: string;
+    size?: string;
+    style?: string;
+  };
 }
 
 export interface WishlistItem {
@@ -21,9 +27,19 @@ export interface WishlistItem {
 interface AppContextType {
   cart: CartItem[];
   wishlist: WishlistItem[];
-  addToCart: (product: { id: string; title: string; price: number; imageUrl: string }, quantity?: number) => void;
-  removeFromCart: (productId: string) => void;
-  updateCartQuantity: (productId: string, quantity: number) => void;
+  addToCart: (
+    product: {
+      id: string;
+      productId?: string;
+      title: string;
+      price: number;
+      imageUrl: string;
+      selectedVariant?: { degree?: string; size?: string; style?: string };
+    },
+    quantity?: number
+  ) => void;
+  removeFromCart: (cartItemId: string) => void;
+  updateCartQuantity: (cartItemId: string, quantity: number) => void;
   clearCart: () => void;
   toggleWishlist: (product: { id: string; title: string; price: number; imageUrl: string }) => void;
   isInWishlist: (productId: string) => boolean;
@@ -55,27 +71,54 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [wishlist]);
 
   // Add to cart
-  const addToCart = (product: { id: string; title: string; price: number; imageUrl: string }, quantity = 1) => {
+  const addToCart = (
+    product: {
+      id: string;
+      productId?: string;
+      title: string;
+      price: number;
+      imageUrl: string;
+      selectedVariant?: { degree?: string; size?: string; style?: string };
+    },
+    quantity = 1
+  ) => {
+    const pId = product.productId || product.id;
+    const varKey = product.selectedVariant
+      ? [product.selectedVariant.degree, product.selectedVariant.size, product.selectedVariant.style].filter(Boolean).join("-")
+      : "";
+    const uniqueCartId = varKey ? `${pId}-${varKey}` : pId;
+
     setCart((prev) => {
-      const existing = prev.find((item) => item.id === product.id);
+      const existing = prev.find((item) => item.id === uniqueCartId);
       if (existing) {
         return prev.map((item) =>
-          item.id === product.id ? { ...item, quantity: item.quantity + quantity } : item
+          item.id === uniqueCartId ? { ...item, quantity: item.quantity + quantity } : item
         );
       }
-      return [...prev, { ...product, quantity }];
+      return [
+        ...prev,
+        {
+          id: uniqueCartId,
+          productId: pId,
+          title: product.title,
+          price: product.price,
+          imageUrl: product.imageUrl,
+          quantity,
+          selectedVariant: product.selectedVariant,
+        },
+      ];
     });
   };
 
   // Remove from cart
-  const removeFromCart = (productId: string) => {
-    setCart((prev) => prev.filter((item) => item.id !== productId));
+  const removeFromCart = (cartItemId: string) => {
+    setCart((prev) => prev.filter((item) => item.id !== cartItemId));
   };
 
   // Update cart quantity
-  const updateCartQuantity = (productId: string, quantity: number) => {
+  const updateCartQuantity = (cartItemId: string, quantity: number) => {
     setCart((prev) =>
-      prev.map((item) => (item.id === productId ? { ...item, quantity } : item))
+      prev.map((item) => (item.id === cartItemId ? { ...item, quantity } : item))
     );
   };
 

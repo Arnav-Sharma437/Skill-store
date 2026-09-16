@@ -57,6 +57,9 @@ interface ProductData {
   specifications?: string[] | string;
   whatsInBox?: string[] | string;
   inStock?: boolean;
+  degrees?: string[];
+  sizes?: string[];
+  styles?: string[];
 }
 
 export default function ProductPage({ params }: PageProps) {
@@ -70,6 +73,11 @@ export default function ProductPage({ params }: PageProps) {
   const [selectedImage, setSelectedImage] = useState<string>("");
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState("description");
+
+  // Variant selection states
+  const [selectedDegree, setSelectedDegree] = useState<string>("");
+  const [selectedSize, setSelectedSize] = useState<string>("");
+  const [selectedStyle, setSelectedStyle] = useState<string>("");
 
   // Live reviews state
   const [reviews, setReviews] = useState<ReviewItem[]>([]);
@@ -117,11 +125,23 @@ export default function ProductPage({ params }: PageProps) {
               specifications: d.specifications || [],
               whatsInBox: d.whatsInBox || [],
               inStock: d.inStock !== false,
+              degrees: Array.isArray(d.degrees) ? d.degrees : [],
+              sizes: Array.isArray(d.sizes) ? d.sizes : [],
+              styles: Array.isArray(d.styles) ? d.styles : [],
             };
 
             if (isMounted) {
               setProduct(normalized);
               setSelectedImage(normalized.imageUrl);
+              if (normalized.degrees && normalized.degrees.length > 0) {
+                setSelectedDegree(normalized.degrees[0]);
+              }
+              if (normalized.sizes && normalized.sizes.length > 0) {
+                setSelectedSize(normalized.sizes[0]);
+              }
+              if (normalized.styles && normalized.styles.length > 0) {
+                setSelectedStyle(normalized.styles[0]);
+              }
               setNotFound(false);
             }
           } else {
@@ -197,6 +217,21 @@ export default function ProductPage({ params }: PageProps) {
   const isFavourite = product ? isInWishlist(product.id) : false;
   const savings = product ? Math.max(0, product.originalPrice - product.price) : 0;
   const savingsPercent = product && product.originalPrice > 0 ? Math.round((savings / product.originalPrice) * 100) : 0;
+
+  // Selected variant configuration
+  const currentVariant = useMemo(() => {
+    if (!product) return undefined;
+    const hasVar =
+      (product.degrees && product.degrees.length > 0) ||
+      (product.sizes && product.sizes.length > 0) ||
+      (product.styles && product.styles.length > 0);
+    if (!hasVar) return undefined;
+    return {
+      degree: selectedDegree || undefined,
+      size: selectedSize || undefined,
+      style: selectedStyle || undefined,
+    };
+  }, [product, selectedDegree, selectedSize, selectedStyle]);
 
   // Gallery thumbnails
   const gallery = useMemo(() => {
@@ -484,6 +519,76 @@ export default function ProductPage({ params }: PageProps) {
                 <span className={styles.reviewsCount}>({totalReviewsCount} Verified Customer {totalReviewsCount === 1 ? "Review" : "Reviews"})</span>
               </div>
 
+              {/* Variant Selectors: Degree, Size, Style */}
+              {((product.degrees && product.degrees.length > 0) ||
+                (product.sizes && product.sizes.length > 0) ||
+                (product.styles && product.styles.length > 0)) && (
+                <div className={styles.variantsContainer}>
+                  {/* Degree Selector */}
+                  {product.degrees && product.degrees.length > 0 && (
+                    <div className={styles.variantGroup}>
+                      <span className={styles.variantLabel}>
+                        Spray Angle (Degree): <strong className={styles.variantActiveVal}>{selectedDegree}</strong>
+                      </span>
+                      <div className={styles.variantPills}>
+                        {product.degrees.map((deg) => (
+                          <button
+                            key={deg}
+                            type="button"
+                            onClick={() => setSelectedDegree(deg)}
+                            className={`${styles.variantPill} ${selectedDegree === deg ? styles.variantPillActive : ""}`}
+                          >
+                            {deg}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Size Selector */}
+                  {product.sizes && product.sizes.length > 0 && (
+                    <div className={styles.variantGroup}>
+                      <span className={styles.variantLabel}>
+                        Size / Length: <strong className={styles.variantActiveVal}>{selectedSize}</strong>
+                      </span>
+                      <div className={styles.variantPills}>
+                        {product.sizes.map((sz) => (
+                          <button
+                            key={sz}
+                            type="button"
+                            onClick={() => setSelectedSize(sz)}
+                            className={`${styles.variantPill} ${selectedSize === sz ? styles.variantPillActive : ""}`}
+                          >
+                            {sz}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Style Selector */}
+                  {product.styles && product.styles.length > 0 && (
+                    <div className={styles.variantGroup}>
+                      <span className={styles.variantLabel}>
+                        Style / Type: <strong className={styles.variantActiveVal}>{selectedStyle}</strong>
+                      </span>
+                      <div className={styles.variantPills}>
+                        {product.styles.map((st) => (
+                          <button
+                            key={st}
+                            type="button"
+                            onClick={() => setSelectedStyle(st)}
+                            className={`${styles.variantPill} ${selectedStyle === st ? styles.variantPillActive : ""}`}
+                          >
+                            {st}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Quantity Picker */}
               {isInStock && (
                 <div className={styles.quantityContainer}>
@@ -520,9 +625,16 @@ export default function ProductPage({ params }: PageProps) {
                   <>
                     <button 
                       onClick={() => {
-                        for (let i = 0; i < quantity; i++) {
-                          addToCart({ id: product.id, title: product.title, price: product.price, imageUrl: product.imageUrl });
-                        }
+                        addToCart(
+                          {
+                            id: product.id,
+                            title: product.title,
+                            price: product.price,
+                            imageUrl: product.imageUrl,
+                            selectedVariant: currentVariant,
+                          },
+                          quantity
+                        );
                         router.push("/cart");
                       }}
                       className={styles.buyNowBtn}
@@ -531,9 +643,16 @@ export default function ProductPage({ params }: PageProps) {
                     </button>
                     <button 
                       onClick={() => {
-                        for (let i = 0; i < quantity; i++) {
-                          addToCart({ id: product.id, title: product.title, price: product.price, imageUrl: product.imageUrl });
-                        }
+                        addToCart(
+                          {
+                            id: product.id,
+                            title: product.title,
+                            price: product.price,
+                            imageUrl: product.imageUrl,
+                            selectedVariant: currentVariant,
+                          },
+                          quantity
+                        );
                       }}
                       className={styles.addToCartBtn}
                     >

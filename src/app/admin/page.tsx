@@ -52,6 +52,9 @@ interface IProduct {
   description?: string[];
   specifications?: string[];
   whatsInBox?: string[];
+  degrees?: string[];
+  sizes?: string[];
+  styles?: string[];
 }
 
 interface IEnquiry {
@@ -224,6 +227,9 @@ export default function AdminDashboard() {
     descriptionText: "",
     specificationsText: "",
     whatsInBoxText: "",
+    degreesText: "",
+    sizesText: "",
+    stylesText: "",
   });
 
 
@@ -553,6 +559,9 @@ export default function AdminDashboard() {
       descriptionText: "",
       specificationsText: "",
       whatsInBoxText: "",
+      degreesText: "",
+      sizesText: "",
+      stylesText: "",
     });
     setIsProductModalOpen(true);
   };
@@ -576,6 +585,9 @@ export default function AdminDashboard() {
       descriptionText: Array.isArray(prod.description) ? prod.description.join("\n") : "",
       specificationsText: Array.isArray(prod.specifications) ? prod.specifications.join("\n") : "",
       whatsInBoxText: Array.isArray(prod.whatsInBox) ? prod.whatsInBox.join("\n") : "",
+      degreesText: Array.isArray(prod.degrees) ? prod.degrees.join(", ") : "",
+      sizesText: Array.isArray(prod.sizes) ? prod.sizes.join(", ") : "",
+      stylesText: Array.isArray(prod.styles) ? prod.styles.join(", ") : "",
     });
     setIsProductModalOpen(true);
   };
@@ -600,6 +612,9 @@ export default function AdminDashboard() {
       description: productForm.descriptionText.split("\n").filter((l) => l.trim().length > 0),
       specifications: productForm.specificationsText.split("\n").filter((l) => l.trim().length > 0),
       whatsInBox: productForm.whatsInBoxText.split("\n").filter((l) => l.trim().length > 0),
+      degrees: productForm.degreesText.split(",").map((s) => s.trim()).filter(Boolean),
+      sizes: productForm.sizesText.split(",").map((s) => s.trim()).filter(Boolean),
+      styles: productForm.stylesText.split(",").map((s) => s.trim()).filter(Boolean),
     };
 
     try {
@@ -3479,6 +3494,53 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
+              {/* 5. Product Variants (Degree, Size, Style) */}
+              <div className={styles.formSection}>
+                <div className={styles.sectionHeader}>5. Product Variants (Degree, Size, Style - Optional)</div>
+                <div className={styles.inputGrid3}>
+                  <div className={styles.inputField}>
+                    <label htmlFor="form-prod-degrees"><strong>Degrees (Spray Angle)</strong></label>
+                    <input
+                      id="form-prod-degrees"
+                      type="text"
+                      placeholder="e.g. 0°, 15°, 25°, 40°, 60°"
+                      value={productForm.degreesText}
+                      onChange={(e) => setProductForm({ ...productForm, degreesText: e.target.value })}
+                    />
+                    <span style={{ fontSize: "11px", color: "#64748b", marginTop: "4px", lineHeight: "1.3" }}>
+                      💡 Separate multiple degrees with commas
+                    </span>
+                  </div>
+
+                  <div className={styles.inputField}>
+                    <label htmlFor="form-prod-sizes"><strong>Sizes / Lengths</strong></label>
+                    <input
+                      id="form-prod-sizes"
+                      type="text"
+                      placeholder="e.g. 5M, 10M, 15M, 1/4 inch, M22"
+                      value={productForm.sizesText}
+                      onChange={(e) => setProductForm({ ...productForm, sizesText: e.target.value })}
+                    />
+                    <span style={{ fontSize: "11px", color: "#64748b", marginTop: "4px", lineHeight: "1.3" }}>
+                      💡 Separate multiple sizes with commas
+                    </span>
+                  </div>
+
+                  <div className={styles.inputField}>
+                    <label htmlFor="form-prod-styles"><strong>Styles / Types</strong></label>
+                    <input
+                      id="form-prod-styles"
+                      type="text"
+                      placeholder="e.g. Standard, Quick Connect, Heavy Duty"
+                      value={productForm.stylesText}
+                      onChange={(e) => setProductForm({ ...productForm, stylesText: e.target.value })}
+                    />
+                    <span style={{ fontSize: "11px", color: "#64748b", marginTop: "4px", lineHeight: "1.3" }}>
+                      💡 Separate multiple styles with commas
+                    </span>
+                  </div>
+                </div>
+              </div>
 
               {/* Modal Buttons */}
               <div className={styles.modalActions}>

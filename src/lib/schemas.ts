@@ -1,5 +1,17 @@
 import mongoose, { Schema, Document, Model } from "mongoose";
 
+// Product Variant Interface
+export interface IProductVariant {
+  id?: string;
+  degree?: string;
+  size?: string;
+  style?: string;
+  price?: number;
+  originalPrice?: number;
+  inStock?: boolean;
+  imageUrl?: string;
+}
+
 // Product Interface
 export interface IProduct extends Document {
   id: string;
@@ -19,7 +31,25 @@ export interface IProduct extends Document {
   whatsInBox: string[];
   inStock: boolean;
   isBestSeller?: boolean;
+  degrees?: string[];
+  sizes?: string[];
+  styles?: string[];
+  variants?: IProductVariant[];
 }
+
+const ProductVariantSchema: Schema = new Schema(
+  {
+    id: { type: String, default: "" },
+    degree: { type: String, default: "" },
+    size: { type: String, default: "" },
+    style: { type: String, default: "" },
+    price: { type: Number },
+    originalPrice: { type: Number },
+    inStock: { type: Boolean, default: true },
+    imageUrl: { type: String, default: "" },
+  },
+  { _id: false }
+);
 
 const ProductSchema: Schema = new Schema(
   {
@@ -40,6 +70,10 @@ const ProductSchema: Schema = new Schema(
     whatsInBox: { type: [String], default: [] },
     inStock: { type: Boolean, default: true },
     isBestSeller: { type: Boolean, default: false },
+    degrees: { type: [String], default: [] },
+    sizes: { type: [String], default: [] },
+    styles: { type: [String], default: [] },
+    variants: { type: [ProductVariantSchema], default: [] },
   },
   { timestamps: true }
 );

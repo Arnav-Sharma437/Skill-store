@@ -134,8 +134,11 @@ export default function CartPage() {
       // 2. Request Server-side Order Creation with price recalculation
       const orderPayload = {
         items: cart.map((item) => ({
-          id: item.id,
+          id: item.productId || item.id,
           quantity: item.quantity,
+          title: item.title,
+          price: item.price,
+          selectedVariant: item.selectedVariant,
         })),
         customerDetails: {
           name: shippingAddress.name || session?.user?.name || "",
@@ -389,9 +392,30 @@ export default function CartPage() {
                     </div>
 
                     <div className={styles.itemDetails}>
-                      <Link href={`/product/${item.id}`} className={styles.itemTitleLink}>
+                      <Link href={`/product/${item.productId || item.id}`} className={styles.itemTitleLink}>
                         <h3 className={styles.itemTitle}>{item.title}</h3>
                       </Link>
+
+                      {item.selectedVariant && (item.selectedVariant.degree || item.selectedVariant.size || item.selectedVariant.style) && (
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", margin: "4px 0 6px 0" }}>
+                          {item.selectedVariant.degree && (
+                            <span style={{ fontSize: "11px", fontWeight: "700", background: "#f1f5f9", color: "#334155", padding: "2px 8px", borderRadius: "4px" }}>
+                              Degree: {item.selectedVariant.degree}
+                            </span>
+                          )}
+                          {item.selectedVariant.size && (
+                            <span style={{ fontSize: "11px", fontWeight: "700", background: "#f1f5f9", color: "#334155", padding: "2px 8px", borderRadius: "4px" }}>
+                              Size: {item.selectedVariant.size}
+                            </span>
+                          )}
+                          {item.selectedVariant.style && (
+                            <span style={{ fontSize: "11px", fontWeight: "700", background: "#f1f5f9", color: "#334155", padding: "2px 8px", borderRadius: "4px" }}>
+                              Style: {item.selectedVariant.style}
+                            </span>
+                          )}
+                        </div>
+                      )}
+
                       <span className={styles.itemPrice}>Rs. {item.price.toLocaleString("en-IN")}.00</span>
                     </div>
 

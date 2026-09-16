@@ -55,7 +55,11 @@ export async function POST(req: NextRequest) {
       specifications,
       whatsInBox,
       inStock,
-      isBestSeller
+      isBestSeller,
+      degrees,
+      sizes,
+      styles,
+      variants
     } = body;
 
     if (!id || !title || !price || !imageUrl || !brand || !category) {
@@ -85,7 +89,11 @@ export async function POST(req: NextRequest) {
       specifications: Array.isArray(specifications) ? specifications : (typeof specifications === "string" ? specifications.split("\n").filter(Boolean) : []),
       whatsInBox: Array.isArray(whatsInBox) ? whatsInBox : (typeof whatsInBox === "string" ? whatsInBox.split("\n").filter(Boolean) : []),
       inStock: inStock !== undefined ? inStock : true,
-      isBestSeller: Boolean(isBestSeller)
+      isBestSeller: Boolean(isBestSeller),
+      degrees: Array.isArray(degrees) ? degrees.map((d: string) => String(d).trim()).filter(Boolean) : (typeof degrees === "string" ? degrees.split(",").map((d: string) => d.trim()).filter(Boolean) : []),
+      sizes: Array.isArray(sizes) ? sizes.map((s: string) => String(s).trim()).filter(Boolean) : (typeof sizes === "string" ? sizes.split(",").map((s: string) => s.trim()).filter(Boolean) : []),
+      styles: Array.isArray(styles) ? styles.map((st: string) => String(st).trim()).filter(Boolean) : (typeof styles === "string" ? styles.split(",").map((st: string) => st.trim()).filter(Boolean) : []),
+      variants: Array.isArray(variants) ? variants : []
     });
 
     return NextResponse.json({ success: true, data: newProduct });
@@ -116,7 +124,11 @@ export async function PUT(req: NextRequest) {
       specifications,
       whatsInBox,
       inStock,
-      isBestSeller
+      isBestSeller,
+      degrees,
+      sizes,
+      styles,
+      variants
     } = body;
 
     if (!id) {
@@ -147,6 +159,18 @@ export async function PUT(req: NextRequest) {
     }
     if (inStock !== undefined) updateFields.inStock = Boolean(inStock);
     if (isBestSeller !== undefined) updateFields.isBestSeller = Boolean(isBestSeller);
+    if (degrees !== undefined) {
+      updateFields.degrees = Array.isArray(degrees) ? degrees.map((d: string) => String(d).trim()).filter(Boolean) : (typeof degrees === "string" ? degrees.split(",").map((d: string) => d.trim()).filter(Boolean) : []);
+    }
+    if (sizes !== undefined) {
+      updateFields.sizes = Array.isArray(sizes) ? sizes.map((s: string) => String(s).trim()).filter(Boolean) : (typeof sizes === "string" ? sizes.split(",").map((s: string) => s.trim()).filter(Boolean) : []);
+    }
+    if (styles !== undefined) {
+      updateFields.styles = Array.isArray(styles) ? styles.map((st: string) => String(st).trim()).filter(Boolean) : (typeof styles === "string" ? styles.split(",").map((st: string) => st.trim()).filter(Boolean) : []);
+    }
+    if (variants !== undefined) {
+      updateFields.variants = Array.isArray(variants) ? variants : [];
+    }
 
 
     const updatedProduct = await Product.findOneAndUpdate(
