@@ -45,6 +45,7 @@ interface IProduct {
   category: string;
   subCategory: string;
   inStock: boolean;
+  isBestSeller?: boolean;
   rating?: number;
   ratingCount?: number;
   description?: string[];
@@ -198,10 +199,12 @@ export default function AdminDashboard() {
     category: "high-pressure-washer",
     subCategory: "domestic",
     inStock: true,
+    isBestSeller: false,
     descriptionText: "",
     specificationsText: "",
     whatsInBoxText: "",
   });
+
 
   // Category Form State
   const [categoryForm, setCategoryForm] = useState<{
@@ -461,6 +464,7 @@ export default function AdminDashboard() {
       category: "high-pressure-washer",
       subCategory: "domestic",
       inStock: true,
+      isBestSeller: false,
       descriptionText: "",
       specificationsText: "",
       whatsInBoxText: "",
@@ -483,6 +487,7 @@ export default function AdminDashboard() {
       category: prod.category || "high-pressure-washer",
       subCategory: prod.subCategory || "domestic",
       inStock: prod.inStock !== false,
+      isBestSeller: Boolean(prod.isBestSeller),
       descriptionText: Array.isArray(prod.description) ? prod.description.join("\n") : "",
       specificationsText: Array.isArray(prod.specifications) ? prod.specifications.join("\n") : "",
       whatsInBoxText: Array.isArray(prod.whatsInBox) ? prod.whatsInBox.join("\n") : "",
@@ -506,6 +511,7 @@ export default function AdminDashboard() {
       category: productForm.category.toLowerCase(),
       subCategory: productForm.subCategory.toLowerCase(),
       inStock: productForm.inStock,
+      isBestSeller: Boolean(productForm.isBestSeller),
       description: productForm.descriptionText.split("\n").filter((l) => l.trim().length > 0),
       specifications: productForm.specificationsText.split("\n").filter((l) => l.trim().length > 0),
       whatsInBox: productForm.whatsInBoxText.split("\n").filter((l) => l.trim().length > 0),
@@ -528,6 +534,28 @@ export default function AdminDashboard() {
       alert("Network error saving product.");
     }
   };
+
+  const handleBestSellerToggle = async (prod: IProduct) => {
+    const updatedStatus = !prod.isBestSeller;
+    try {
+      const res = await fetch("/api/admin/products", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: prod.id, isBestSeller: updatedStatus }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        setProducts((prev) =>
+          prev.map((p) => (p.id === prod.id ? { ...p, isBestSeller: updatedStatus } : p))
+        );
+      } else {
+        alert(`Error updating best seller status: ${json.error}`);
+      }
+    } catch {
+      alert("Network error updating best seller status");
+    }
+  };
+
 
   const handleDeleteProduct = async (id: string) => {
     try {
@@ -1491,9 +1519,20 @@ export default function AdminDashboard() {
                                       />
                                     </div>
                                     <div>
-                                      <strong className={styles.tableNameCell}>{p.title}</strong>
-                                      <div style={{ fontSize: "11px", color: "#94a3b8" }}>
-                                        {p.subCategory ? `Sub: ${p.subCategory}` : ""}
+                                      <div>
+                                        <strong className={styles.tableNameCell}>{p.title}</strong>
+                                        <div style={{ display: "flex", gap: "6px", alignItems: "center", marginTop: "2px" }}>
+                                          {p.subCategory ? (
+                                            <span style={{ fontSize: "11px", color: "#94a3b8" }}>
+                                              Sub: {p.subCategory}
+                                            </span>
+                                          ) : null}
+                                          {p.isBestSeller && (
+                                            <span style={{ fontSize: "10.5px", background: "#fef3c7", color: "#b45309", padding: "1px 6px", borderRadius: "4px", fontWeight: "800" }}>
+                                              ⭐ Best Seller
+                                            </span>
+                                          )}
+                                        </div>
                                       </div>
                                     </div>
                                   </div>
@@ -1548,6 +1587,19 @@ export default function AdminDashboard() {
                                 </td>
                                 <td>
                                   <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                    {/* Best Seller Quick Toggle */}
+                                    <button
+                                      onClick={() => handleBestSellerToggle(p)}
+                                      className={styles.iconActionBtn}
+                                      style={{
+                                        background: p.isBestSeller ? "#fef3c7" : "#f1f5f9",
+                                        color: p.isBestSeller ? "#b45309" : "#94a3b8"
+                                      }}
+                                      title={p.isBestSeller ? "Remove from Best Seller Carousel" : "Add to Best Seller Carousel"}
+                                    >
+                                      ⭐
+                                    </button>
+
                                     {/* View Quick Preview */}
                                     <button
                                       onClick={() => setViewingProduct(p)}
@@ -2208,6 +2260,23 @@ export default function AdminDashboard() {
                       </label>
                       <span style={{ fontSize: "12px", fontWeight: "800", color: productForm.inStock ? "#10b981" : "#ef4444" }}>
                         {productForm.inStock ? "IN STOCK" : "OUT OF STOCK"}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className={styles.inputField} style={{ justifyContent: "center" }}>
+                    <label>Show in Best Seller Products</label>
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px", marginTop: "4px" }}>
+                      <label className={styles.switch}>
+                        <input
+                          type="checkbox"
+                          checked={Boolean(productForm.isBestSeller)}
+                          onChange={(e) => setProductForm({ ...productForm, isBestSeller: e.target.checked })}
+                        />
+                        <span className={styles.slider}></span>
+                      </label>
+                      <span style={{ fontSize: "12px", fontWeight: "800", color: productForm.isBestSeller ? "#eab308" : "#94a3b8" }}>
+                        {productForm.isBestSeller ? "⭐ BEST SELLER" : "NORMAL"}
                       </span>
                     </div>
                   </div>

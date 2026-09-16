@@ -54,7 +54,8 @@ export async function POST(req: NextRequest) {
       description,
       specifications,
       whatsInBox,
-      inStock
+      inStock,
+      isBestSeller
     } = body;
 
     if (!id || !title || !price || !imageUrl || !brand || !category) {
@@ -83,7 +84,8 @@ export async function POST(req: NextRequest) {
       description: Array.isArray(description) ? description : (typeof description === "string" ? description.split("\n").filter(Boolean) : []),
       specifications: Array.isArray(specifications) ? specifications : (typeof specifications === "string" ? specifications.split("\n").filter(Boolean) : []),
       whatsInBox: Array.isArray(whatsInBox) ? whatsInBox : (typeof whatsInBox === "string" ? whatsInBox.split("\n").filter(Boolean) : []),
-      inStock: inStock !== undefined ? inStock : true
+      inStock: inStock !== undefined ? inStock : true,
+      isBestSeller: Boolean(isBestSeller)
     });
 
     return NextResponse.json({ success: true, data: newProduct });
@@ -113,7 +115,8 @@ export async function PUT(req: NextRequest) {
       description,
       specifications,
       whatsInBox,
-      inStock
+      inStock,
+      isBestSeller
     } = body;
 
     if (!id) {
@@ -143,6 +146,8 @@ export async function PUT(req: NextRequest) {
       updateFields.whatsInBox = Array.isArray(whatsInBox) ? whatsInBox : (typeof whatsInBox === "string" ? whatsInBox.split("\n").filter(Boolean) : []);
     }
     if (inStock !== undefined) updateFields.inStock = Boolean(inStock);
+    if (isBestSeller !== undefined) updateFields.isBestSeller = Boolean(isBestSeller);
+
 
     const updatedProduct = await Product.findOneAndUpdate(
       { id },

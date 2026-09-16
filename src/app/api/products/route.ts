@@ -11,14 +11,20 @@ export async function GET(req: NextRequest) {
     const category = searchParams.get("category");
     const subCategory = searchParams.get("subCategory");
     const search = searchParams.get("search");
+    const bestSeller = searchParams.get("bestSeller") || searchParams.get("isBestSeller");
     const inStockOnly = searchParams.get("inStockOnly") !== "false";
     const limit = searchParams.get("limit") ? parseInt(searchParams.get("limit")!) : 0;
 
     const query: Record<string, unknown> = {};
 
+    if (bestSeller === "true") {
+      query.isBestSeller = true;
+    }
+
     if (inStockOnly) {
       query.inStock = true;
     }
+
 
     if (brand && brand !== "all") {
       query.brand = { $regex: new RegExp(`^${brand.trim()}$`, "i") };

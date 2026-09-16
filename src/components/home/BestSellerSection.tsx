@@ -3,19 +3,20 @@
 import React, { useState, useEffect } from "react";
 import styles from "./BestSellerSection.module.css";
 import ProductCard from "./ProductCard";
-import { BEST_SELLERS, Product } from "@/data/home";
+import { Product } from "@/data/home";
 
 export default function BestSellerSection() {
-  const [products, setProducts] = useState<Product[]>(BEST_SELLERS);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     let isMounted = true;
     async function loadBestSellers() {
       try {
-        const res = await fetch("/api/products?limit=12");
+        const res = await fetch("/api/products?bestSeller=true&limit=12");
         if (res.ok) {
           const json = await res.json();
-          if (json.success && Array.isArray(json.data) && json.data.length > 0) {
+          if (json.success && Array.isArray(json.data)) {
             const dbProducts: Product[] = json.data.map((item: {
               id: string;
               title: string;
@@ -39,8 +40,12 @@ export default function BestSellerSection() {
             }
           }
         }
-      } catch {
-        // Fallback to initial BEST_SELLERS on network error
+      } catch (err) {
+        console.error("Failed to load best seller products:", err);
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     }
     loadBestSellers();
@@ -48,6 +53,10 @@ export default function BestSellerSection() {
       isMounted = false;
     };
   }, []);
+
+  if (!loading && products.length === 0) {
+    return null;
+  }
 
   return (
     <section className={styles.section}>
@@ -63,22 +72,24 @@ export default function BestSellerSection() {
         </div>
 
         {/* Product Cards Row with Continuous Scrolling Marquee */}
-        <div className={styles.marqueeContainer}>
-          <div className={styles.marqueeTrack}>
-            {/* First list copy */}
-            <div className={styles.productRow}>
-              {products.map((product) => (
-                <ProductCard key={`${product.id}-1`} product={product} />
-              ))}
-            </div>
-            {/* Duplicated list copy for seamless infinite loop */}
-            <div className={styles.productRow} aria-hidden="true">
-              {products.map((product) => (
-                <ProductCard key={`${product.id}-2`} product={product} />
-              ))}
+        {products.length > 0 && (
+          <div className={styles.marqueeContainer}>
+            <div className={styles.marqueeTrack}>
+              {/* First list copy */}
+              <div className={styles.productRow}>
+                {products.map((product) => (
+                  <ProductCard key={`${product.id}-1`} product={product} />
+                ))}
+              </div>
+              {/* Duplicated list copy for seamless infinite loop */}
+              <div className={styles.productRow} aria-hidden="true">
+                {products.map((product) => (
+                  <ProductCard key={`${product.id}-2`} product={product} />
+                ))}
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
     </section>
   );

@@ -18,6 +18,7 @@ export interface IProduct extends Document {
   specifications: string[];
   whatsInBox: string[];
   inStock: boolean;
+  isBestSeller?: boolean;
 }
 
 const ProductSchema: Schema = new Schema(
@@ -38,9 +39,11 @@ const ProductSchema: Schema = new Schema(
     specifications: { type: [String], default: [] },
     whatsInBox: { type: [String], default: [] },
     inStock: { type: Boolean, default: true },
+    isBestSeller: { type: Boolean, default: false },
   },
   { timestamps: true }
 );
+
 
 // Subcategory Interface
 export interface ISubCategory {
