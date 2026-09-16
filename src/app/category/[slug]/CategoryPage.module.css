@@ -140,6 +140,13 @@
   transform: translateY(-1px);
 }
 
+.activeSubCatPill {
+  background: #ffd300 !important;
+  border-color: #ffd300 !important;
+  color: #132c66 !important;
+  font-weight: 850 !important;
+}
+
 /* Merged Banner Filter & Controls Strip */
 .bannerFilterRow {
   display: flex;

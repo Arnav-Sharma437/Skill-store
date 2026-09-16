@@ -42,6 +42,24 @@ const ProductSchema: Schema = new Schema(
   { timestamps: true }
 );
 
+// Subcategory Interface
+export interface ISubCategory {
+  id: string; // slug e.g. "domestic-pressure-washer"
+  name: string; // e.g. "Domestic Pressure Washer"
+  description?: string;
+  imageUrl?: string;
+}
+
+const SubCategorySchema: Schema = new Schema(
+  {
+    id: { type: String, required: true },
+    name: { type: String, required: true },
+    description: { type: String, default: "" },
+    imageUrl: { type: String, default: "" },
+  },
+  { _id: false }
+);
+
 // Category Interface
 export interface ICategory extends Document {
   id: string;
@@ -50,6 +68,7 @@ export interface ICategory extends Document {
   imageUrl: string;
   link: string;
   description?: string;
+  subcategories?: ISubCategory[];
 }
 
 const CategorySchema: Schema = new Schema(
@@ -60,6 +79,7 @@ const CategorySchema: Schema = new Schema(
     imageUrl: { type: String, required: true },
     link: { type: String, required: true }, // e.g. "/shop/tuqo/high-pressure-washer"
     description: { type: String, default: "" },
+    subcategories: { type: [SubCategorySchema], default: [] },
   },
   { timestamps: true }
 );

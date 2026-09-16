@@ -16,6 +16,13 @@ interface IBanner {
   link: string;
 }
 
+export interface ISubCategory {
+  id: string;
+  name: string;
+  description?: string;
+  imageUrl?: string;
+}
+
 interface ICategory {
   id: string;
   name: string;
@@ -23,6 +30,7 @@ interface ICategory {
   imageUrl: string;
   link: string;
   description?: string;
+  subcategories?: ISubCategory[];
 }
 
 interface IProduct {
@@ -180,7 +188,16 @@ export default function AdminDashboard() {
   });
 
   // Category Form State
-  const [categoryForm, setCategoryForm] = useState({
+  const [categoryForm, setCategoryForm] = useState<{
+    id: string;
+    name: string;
+    brand: string;
+    customBrand: string;
+    imageUrl: string;
+    link: string;
+    description: string;
+    subcategories: ISubCategory[];
+  }>({
     id: "",
     name: "",
     brand: "tuqo",
@@ -188,7 +205,11 @@ export default function AdminDashboard() {
     imageUrl: "",
     link: "",
     description: "",
+    subcategories: [],
   });
+
+  const [newSubCatName, setNewSubCatName] = useState("");
+  const [newSubCatSlug, setNewSubCatSlug] = useState("");
 
   // Banner Form State
   const [bannerForm, setBannerForm] = useState({ id: "", imageUrl: "", link: "" });
@@ -543,7 +564,10 @@ export default function AdminDashboard() {
       imageUrl: "",
       link: "",
       description: "",
+      subcategories: [],
     });
+    setNewSubCatName("");
+    setNewSubCatSlug("");
     setUploadError(null);
     setIsCategoryModalOpen(true);
   };
@@ -560,9 +584,37 @@ export default function AdminDashboard() {
       imageUrl: cat.imageUrl,
       link: cat.link,
       description: cat.description || "",
+      subcategories: Array.isArray(cat.subcategories) ? [...cat.subcategories] : [],
     });
+    setNewSubCatName("");
+    setNewSubCatSlug("");
     setUploadError(null);
     setIsCategoryModalOpen(true);
+  };
+
+  const handleAddSubCategory = () => {
+    if (!newSubCatName.trim()) return;
+    const name = newSubCatName.trim();
+    const slug = newSubCatSlug.trim() || name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    
+    if (categoryForm.subcategories.some((s) => s.id === slug)) {
+      alert(`Subcategory with slug "${slug}" is already added.`);
+      return;
+    }
+
+    setCategoryForm((prev) => ({
+      ...prev,
+      subcategories: [...prev.subcategories, { id: slug, name }],
+    }));
+    setNewSubCatName("");
+    setNewSubCatSlug("");
+  };
+
+  const handleRemoveSubCategory = (subId: string) => {
+    setCategoryForm((prev) => ({
+      ...prev,
+      subcategories: prev.subcategories.filter((s) => s.id !== subId),
+    }));
   };
 
   const handleCategorySubmit = async (e: React.FormEvent) => {
@@ -596,6 +648,7 @@ export default function AdminDashboard() {
           imageUrl: categoryForm.imageUrl.trim(),
           link: finalLink,
           description: categoryForm.description.trim(),
+          subcategories: categoryForm.subcategories,
         }),
       });
 
@@ -1525,9 +1578,19 @@ export default function AdminDashboard() {
                             </div>
 
                             {cat.description && (
-                              <p style={{ fontSize: "12px", color: "#64748b", margin: 0, lineHeight: 1.4 }}>
+                              <p style={{ fontSize: "12px", color: "#64748b", margin: "4px 0", lineHeight: 1.4 }}>
                                 {cat.description}
                               </p>
+                            )}
+
+                            {cat.subcategories && cat.subcategories.length > 0 && (
+                              <div className={styles.subCatGridPills}>
+                                {cat.subcategories.map((sub) => (
+                                  <span key={sub.id} className={styles.subCatGridPill} title={`Slug: ${sub.id}`}>
+                                    {sub.name}
+                                  </span>
+                                ))}
+                              </div>
                             )}
 
                             <div className={styles.categoryCardBottom}>
@@ -1786,7 +1849,12 @@ export default function AdminDashboard() {
                     <select
                       id="form-prod-category"
                       value={productForm.category}
-                      onChange={(e) => setProductForm({ ...productForm, category: e.target.value })}
+                      onChange={(e) => {
+                        const nextCatId = e.target.value;
+                        const matchedCat = categories.find((c) => c.id.toLowerCase() === nextCatId.toLowerCase());
+                        const defaultSub = matchedCat?.subcategories?.[0]?.id || "domestic";
+                        setProductForm({ ...productForm, category: nextCatId, subCategory: defaultSub });
+                      }}
                     >
                       {categories.map((cat) => (
                         <option key={cat.id} value={cat.id}>
@@ -1798,13 +1866,40 @@ export default function AdminDashboard() {
 
                   <div className={styles.inputField}>
                     <label htmlFor="form-prod-subcat">Sub-Category</label>
-                    <input
-                      id="form-prod-subcat"
-                      type="text"
-                      placeholder="e.g. domestic, commercial, accessory"
-                      value={productForm.subCategory}
-                      onChange={(e) => setProductForm({ ...productForm, subCategory: e.target.value })}
-                    />
+                    {(() => {
+                      const activeCat = categories.find(
+                        (c) => c.id.toLowerCase() === productForm.category.toLowerCase()
+                      );
+                      const subcats = activeCat?.subcategories || [];
+                      if (subcats.length > 0) {
+                        return (
+                          <select
+                            id="form-prod-subcat"
+                            value={productForm.subCategory}
+                            onChange={(e) => setProductForm({ ...productForm, subCategory: e.target.value })}
+                          >
+                            {subcats.map((sub) => (
+                              <option key={sub.id} value={sub.id}>
+                                {sub.name}
+                              </option>
+                            ))}
+                            <option value="domestic">Domestic</option>
+                            <option value="commercial">Commercial / Industrial</option>
+                            <option value="accessory">Accessories &amp; Spares</option>
+                            <option value="general">General</option>
+                          </select>
+                        );
+                      }
+                      return (
+                        <input
+                          id="form-prod-subcat"
+                          type="text"
+                          placeholder="e.g. domestic, commercial, accessory"
+                          value={productForm.subCategory}
+                          onChange={(e) => setProductForm({ ...productForm, subCategory: e.target.value })}
+                        />
+                      );
+                    })()}
                   </div>
                 </div>
               </div>
@@ -2477,6 +2572,75 @@ export default function AdminDashboard() {
                   onChange={(e) => setCategoryForm({ ...categoryForm, description: e.target.value })}
                   style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1.5px solid #cbd5e1" }}
                 />
+              </div>
+
+              {/* Sub-Categories Section */}
+              <div className={styles.subCategoryBuilder}>
+                <label style={{ fontSize: "13px", fontWeight: "750", color: "#0f172a" }}>
+                  🗂️ Sub-Categories ({categoryForm.subcategories.length})
+                </label>
+                <span style={{ fontSize: "11.5px", color: "#64748b" }}>
+                  Define sub-categories to organize products under this category (e.g., Domestic, Commercial, Spares)
+                </span>
+
+                <div className={styles.subCatInputRow}>
+                  <input
+                    type="text"
+                    placeholder="Sub-category Name (e.g. Domestic Washer)"
+                    value={newSubCatName}
+                    onChange={(e) => setNewSubCatName(e.target.value)}
+                    className={styles.subCatInput}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleAddSubCategory();
+                      }
+                    }}
+                  />
+                  <input
+                    type="text"
+                    placeholder="Slug (optional, auto-generated)"
+                    value={newSubCatSlug}
+                    onChange={(e) => setNewSubCatSlug(e.target.value)}
+                    className={styles.subCatInput}
+                    style={{ maxWidth: "160px" }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleAddSubCategory();
+                      }
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddSubCategory}
+                    className={styles.addSubCatBtn}
+                  >
+                    + Add
+                  </button>
+                </div>
+
+                {categoryForm.subcategories.length > 0 ? (
+                  <div className={styles.subCatTagList}>
+                    {categoryForm.subcategories.map((sub) => (
+                      <div key={sub.id} className={styles.subCatTagItem}>
+                        <span>{sub.name} <code style={{ fontSize: "10px", color: "#64748b" }}>({sub.id})</code></span>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveSubCategory(sub.id)}
+                          className={styles.subCatRemoveBtn}
+                          title="Remove Subcategory"
+                        >
+                          &times;
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div style={{ fontSize: "12px", color: "#94a3b8", fontStyle: "italic" }}>
+                    No sub-categories added yet. Type a name above and click &quot;+ Add&quot;.
+                  </div>
+                )}
               </div>
 
               {/* Action Buttons */}

@@ -19,7 +19,41 @@ export default function Header() {
   const [activeSubmenu, setActiveSubmenu] = useState<string | null>(null);
   
   const [dbSearchProducts, setDbSearchProducts] = useState<CategoryProduct[]>([]);
+  const [dbCategories, setDbCategories] = useState<Array<{
+    id: string;
+    name: string;
+    subcategories?: Array<{ id: string; name: string }>;
+  }>>([]);
   const searchContainerRef = useRef<HTMLDivElement | null>(null);
+
+  // Fetch categories from DB
+  useEffect(() => {
+    fetch("/api/categories")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && Array.isArray(data.categories) && data.categories.length > 0) {
+          const mapped = data.categories.map((c: {
+            id?: string;
+            slug?: string;
+            name?: string;
+            subcategories?: Array<{ id: string; name: string }>;
+            subCategories?: Array<{ slug: string; name: string }>;
+          }) => {
+            const rawSub = c.subcategories || c.subCategories || [];
+            return {
+              id: c.slug || c.id || "",
+              name: c.name || "",
+              subcategories: rawSub.map((s) => ({
+                id: (s as { id?: string; slug?: string }).id || (s as { slug?: string }).slug || "",
+                name: s.name || "",
+              })),
+            };
+          });
+          setDbCategories(mapped);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   // Fetch live search products from DB
   useEffect(() => {
@@ -347,142 +381,211 @@ export default function Header() {
             {/* Category Dropdown Menu */}
             {isCategoryOpen && (
               <div className={styles.categoryDropdown}>
-                {/* 1. High Pressure Washer */}
-                <div 
-                  className={`${styles.dropdownItem} ${activeSubmenu === "washer" ? styles.dropdownItemActive : ""}`}
-                  onMouseEnter={() => setActiveSubmenu("washer")}
-                >
-                  <Link href="/category/high-pressure-washer" className={styles.dropdownLeft}>
-                    <span className={styles.menuIcon}>
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <rect x="5" y="6" width="10" height="14" rx="2"></rect>
-                        <path d="M10 2v4"></path>
-                        <path d="M15 10h4l2 4v4"></path>
-                        <path d="M7 14h6"></path>
-                      </svg>
-                    </span>
-                    <span>HIGH PRESSURE WASHER</span>
-                  </Link>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={styles.submenuCaret}>
-                    <polyline points="9 18 15 12 9 6"></polyline>
-                  </svg>
+                {dbCategories.length > 0 ? (
+                  dbCategories.map((cat) => {
+                    const hasSubcats = cat.subcategories && cat.subcategories.length > 0;
+                    const isActive = activeSubmenu === cat.id;
 
-                  {/* Washer Submenu */}
-                  {activeSubmenu === "washer" && (
-                    <div className={styles.submenuBox}>
-                      <Link href="/category/domestic-pressure-washer" className={styles.submenuItem}>
-                        <span>DOMESTIC PRESSURE WASHER</span>
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                          <polyline points="9 18 15 12 9 6"></polyline>
-                        </svg>
+                    if (hasSubcats) {
+                      return (
+                        <div
+                          key={cat.id}
+                          className={`${styles.dropdownItem} ${isActive ? styles.dropdownItemActive : ""}`}
+                          onMouseEnter={() => setActiveSubmenu(cat.id)}
+                        >
+                          <Link href={`/category/${cat.id}`} className={styles.dropdownLeft}>
+                            <span className={styles.menuIcon}>
+                              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                <line x1="3" y1="9" x2="21" y2="9"></line>
+                                <line x1="9" y1="21" x2="9" y2="9"></line>
+                              </svg>
+                            </span>
+                            <span>{cat.name.toUpperCase()}</span>
+                          </Link>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={styles.submenuCaret}>
+                            <polyline points="9 18 15 12 9 6"></polyline>
+                          </svg>
+
+                          {isActive && (
+                            <div className={styles.submenuBox}>
+                              {cat.subcategories!.map((sub) => (
+                                <Link
+                                  key={sub.id}
+                                  href={`/category/${cat.id}?subCategory=${encodeURIComponent(sub.id)}`}
+                                  className={styles.submenuItem}
+                                >
+                                  <span>{sub.name.toUpperCase()}</span>
+                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                    <polyline points="9 18 15 12 9 6"></polyline>
+                                  </svg>
+                                </Link>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <Link
+                        key={cat.id}
+                        href={`/category/${cat.id}`}
+                        className={styles.dropdownItem}
+                        onMouseEnter={() => setActiveSubmenu(null)}
+                      >
+                        <div className={styles.dropdownLeft}>
+                          <span className={styles.menuIcon}>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <circle cx="12" cy="12" r="9"></circle>
+                              <polyline points="12 6 12 12 14 14"></polyline>
+                            </svg>
+                          </span>
+                          <span>{cat.name.toUpperCase()}</span>
+                        </div>
                       </Link>
-                      <Link href="/category/professional-pressure-washer" className={styles.submenuItem}>
-                        <span>PROFESSIONAL PRESSURE WASHER</span>
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                          <polyline points="9 18 15 12 9 6"></polyline>
-                        </svg>
+                    );
+                  })
+                ) : (
+                  <>
+                    {/* 1. High Pressure Washer */}
+                    <div 
+                      className={`${styles.dropdownItem} ${activeSubmenu === "washer" ? styles.dropdownItemActive : ""}`}
+                      onMouseEnter={() => setActiveSubmenu("washer")}
+                    >
+                      <Link href="/category/high-pressure-washer" className={styles.dropdownLeft}>
+                        <span className={styles.menuIcon}>
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <rect x="5" y="6" width="10" height="14" rx="2"></rect>
+                            <path d="M10 2v4"></path>
+                            <path d="M15 10h4l2 4v4"></path>
+                            <path d="M7 14h6"></path>
+                          </svg>
+                        </span>
+                        <span>HIGH PRESSURE WASHER</span>
                       </Link>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={styles.submenuCaret}>
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                      </svg>
+
+                      {/* Washer Submenu */}
+                      {activeSubmenu === "washer" && (
+                        <div className={styles.submenuBox}>
+                          <Link href="/category/domestic-pressure-washer" className={styles.submenuItem}>
+                            <span>DOMESTIC PRESSURE WASHER</span>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                              <polyline points="9 18 15 12 9 6"></polyline>
+                            </svg>
+                          </Link>
+                          <Link href="/category/professional-pressure-washer" className={styles.submenuItem}>
+                            <span>PROFESSIONAL PRESSURE WASHER</span>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                              <polyline points="9 18 15 12 9 6"></polyline>
+                            </svg>
+                          </Link>
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
 
-                {/* 2. Vaccum Cleaner */}
-                <Link href="/category/vaccum-cleaner" className={styles.dropdownItem} onMouseEnter={() => setActiveSubmenu(null)}>
-                  <div className={styles.dropdownLeft}>
-                    <span className={styles.menuIcon}>
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <rect x="4" y="10" width="10" height="10" rx="3"></rect>
-                        <path d="M14 13h3a3 3 0 0 1 3 3v4"></path>
-                        <path d="M9 10V5a2 2 0 0 0-2-2H5"></path>
-                        <circle cx="7" cy="16" r="1.5"></circle>
-                      </svg>
-                    </span>
-                    <span>VACCUM CLEANER</span>
-                  </div>
-                </Link>
+                    {/* 2. Vaccum Cleaner */}
+                    <Link href="/category/vaccum-cleaner" className={styles.dropdownItem} onMouseEnter={() => setActiveSubmenu(null)}>
+                      <div className={styles.dropdownLeft}>
+                        <span className={styles.menuIcon}>
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <rect x="4" y="10" width="10" height="10" rx="3"></rect>
+                            <path d="M14 13h3a3 3 0 0 1 3 3v4"></path>
+                            <path d="M9 10V5a2 2 0 0 0-2-2H5"></path>
+                            <circle cx="7" cy="16" r="1.5"></circle>
+                          </svg>
+                        </span>
+                        <span>VACCUM CLEANER</span>
+                      </div>
+                    </Link>
 
-                {/* 3. Autocare Detailing */}
-                <Link href="/category/autocare-detailing" className={styles.dropdownItem} onMouseEnter={() => setActiveSubmenu(null)}>
-                  <div className={styles.dropdownLeft}>
-                    <span className={styles.menuIcon}>
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"></path>
-                        <circle cx="7" cy="17" r="2"></circle>
-                        <circle cx="17" cy="17" r="2"></circle>
-                        <path d="M5 2l1 2 2 1-2 1-1 2-1-2-2-1 2-1z"></path>
-                      </svg>
-                    </span>
-                    <span>AUTOCARE DETAILING</span>
-                  </div>
-                </Link>
+                    {/* 3. Autocare Detailing */}
+                    <Link href="/category/autocare-detailing" className={styles.dropdownItem} onMouseEnter={() => setActiveSubmenu(null)}>
+                      <div className={styles.dropdownLeft}>
+                        <span className={styles.menuIcon}>
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"></path>
+                            <circle cx="7" cy="17" r="2"></circle>
+                            <circle cx="17" cy="17" r="2"></circle>
+                            <path d="M5 2l1 2 2 1-2 1-1 2-1-2-2-1 2-1z"></path>
+                          </svg>
+                        </span>
+                        <span>AUTOCARE DETAILING</span>
+                      </div>
+                    </Link>
 
-                {/* 4. Accessories & Spares */}
-                <Link href="/category/accessories-spares" className={styles.dropdownItem} onMouseEnter={() => setActiveSubmenu(null)}>
-                  <div className={styles.dropdownLeft}>
-                    <span className={styles.menuIcon}>
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <circle cx="12" cy="12" r="3"></circle>
-                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-                      </svg>
-                    </span>
-                    <span>ACCESSORIES &amp; SPARES</span>
-                  </div>
-                </Link>
+                    {/* 4. Accessories & Spares */}
+                    <Link href="/category/accessories-spares" className={styles.dropdownItem} onMouseEnter={() => setActiveSubmenu(null)}>
+                      <div className={styles.dropdownLeft}>
+                        <span className={styles.menuIcon}>
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="12" cy="12" r="3"></circle>
+                            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                          </svg>
+                        </span>
+                        <span>ACCESSORIES &amp; SPARES</span>
+                      </div>
+                    </Link>
 
-                {/* 5. Air Compressor */}
-                <div 
-                  className={`${styles.dropdownItem} ${activeSubmenu === "compressor" ? styles.dropdownItemActive : ""}`}
-                  onMouseEnter={() => setActiveSubmenu("compressor")}
-                >
-                  <Link href="/category/air-compressor" className={styles.dropdownLeft}>
-                    <span className={styles.menuIcon}>
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <rect x="3" y="9" width="18" height="8" rx="4"></rect>
-                        <circle cx="7" cy="19" r="2"></circle>
-                        <circle cx="17" cy="19" r="2"></circle>
-                        <path d="M12 9V5"></path>
-                        <circle cx="12" cy="4" r="2"></circle>
-                      </svg>
-                    </span>
-                    <span>AIR COMPRESSOR</span>
-                  </Link>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={styles.submenuCaret}>
-                    <polyline points="9 18 15 12 9 6"></polyline>
-                  </svg>
-
-                  {/* Compressor Submenu */}
-                  {activeSubmenu === "compressor" && (
-                    <div className={styles.submenuBox}>
-                      <Link href="/category/oil-free-compressor" className={styles.submenuItem}>
-                        <span>OIL FREE COMPRESSOR</span>
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                          <polyline points="9 18 15 12 9 6"></polyline>
-                        </svg>
+                    {/* 5. Air Compressor */}
+                    <div 
+                      className={`${styles.dropdownItem} ${activeSubmenu === "compressor" ? styles.dropdownItemActive : ""}`}
+                      onMouseEnter={() => setActiveSubmenu("compressor")}
+                    >
+                      <Link href="/category/air-compressor" className={styles.dropdownLeft}>
+                        <span className={styles.menuIcon}>
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <rect x="3" y="9" width="18" height="8" rx="4"></rect>
+                            <circle cx="7" cy="19" r="2"></circle>
+                            <circle cx="17" cy="19" r="2"></circle>
+                            <path d="M12 9V5"></path>
+                            <circle cx="12" cy="4" r="2"></circle>
+                          </svg>
+                        </span>
+                        <span>AIR COMPRESSOR</span>
                       </Link>
-                      <Link href="/category/oil-type-compressor" className={styles.submenuItem}>
-                        <span>OIL TYPE COMPRESSOR</span>
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                          <polyline points="9 18 15 12 9 6"></polyline>
-                        </svg>
-                      </Link>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={styles.submenuCaret}>
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                      </svg>
+
+                      {/* Compressor Submenu */}
+                      {activeSubmenu === "compressor" && (
+                        <div className={styles.submenuBox}>
+                          <Link href="/category/oil-free-compressor" className={styles.submenuItem}>
+                            <span>OIL FREE COMPRESSOR</span>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                              <polyline points="9 18 15 12 9 6"></polyline>
+                            </svg>
+                          </Link>
+                          <Link href="/category/oil-type-compressor" className={styles.submenuItem}>
+                            <span>OIL TYPE COMPRESSOR</span>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                              <polyline points="9 18 15 12 9 6"></polyline>
+                            </svg>
+                          </Link>
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
 
-                {/* 6. Cordless Tools */}
-                <Link href="/category/cordless-tools" className={styles.dropdownItem} onMouseEnter={() => setActiveSubmenu(null)}>
-                  <div className={styles.dropdownLeft}>
-                    <span className={styles.menuIcon}>
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M14 4H5a1 1 0 0 0-1 1v4a1 1 0 0 0 1 1h9l4-3V5l-4-1z"></path>
-                        <path d="M8 10v7a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2v-7"></path>
-                        <path d="M18 6h3v2h-3"></path>
-                        <rect x="7" y="19" width="8" height="3" rx="1"></rect>
-                      </svg>
-                    </span>
-                    <span>CORDLESS TOOLS</span>
-                  </div>
-                </Link>
+                    {/* 6. Cordless Tools */}
+                    <Link href="/category/cordless-tools" className={styles.dropdownItem} onMouseEnter={() => setActiveSubmenu(null)}>
+                      <div className={styles.dropdownLeft}>
+                        <span className={styles.menuIcon}>
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M14 4H5a1 1 0 0 0-1 1v4a1 1 0 0 0 1 1h9l4-3V5l-4-1z"></path>
+                            <path d="M8 10v7a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2v-7"></path>
+                            <path d="M18 6h3v2h-3"></path>
+                            <rect x="7" y="19" width="8" height="3" rx="1"></rect>
+                          </svg>
+                        </span>
+                        <span>CORDLESS TOOLS</span>
+                      </div>
+                    </Link>
+                  </>
+                )}
               </div>
             )}
           </div>

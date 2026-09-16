@@ -67,14 +67,44 @@ export default function CategoryPage({ params }: PageProps) {
     };
   }, [slug]);
 
-  // Fetch live products from MongoDB for this category
+  const [dbCategory, setDbCategory] = useState<CategoryDetail | null>(null);
+
+  // Fetch live products and category details from MongoDB for this category
   useEffect(() => {
     let isMounted = true;
-    async function loadCategoryProducts() {
+
+    async function loadCategoryData() {
       try {
-        const res = await fetch(`/api/products?category=${encodeURIComponent(slug)}`);
-        if (res.ok) {
-          const json = await res.json();
+        const [prodRes, catRes] = await Promise.all([
+          fetch(`/api/products?category=${encodeURIComponent(slug)}`),
+          fetch(`/api/categories?slug=${encodeURIComponent(slug)}`),
+        ]);
+
+        if (catRes.ok) {
+          const catJson = await catRes.json();
+          if (catJson.success && Array.isArray(catJson.categories) && catJson.categories.length > 0) {
+            const rawCat = catJson.categories[0];
+            const rawSubcats = rawCat.subcategories || rawCat.subCategories || [];
+            const subCategories = rawSubcats.map((s: { id?: string; slug?: string; name: string }) => ({
+              slug: s.id || s.slug || "",
+              name: s.name || ""
+            }));
+
+            if (isMounted) {
+              setDbCategory({
+                slug: rawCat.id || slug,
+                name: rawCat.name || formatTitle(slug),
+                subtitle: "PREMIUM SELECTION",
+                description: rawCat.description || `Browse our professional quality range of ${rawCat.name || formatTitle(slug)}.`,
+                subCategories,
+                products: []
+              });
+            }
+          }
+        }
+
+        if (prodRes.ok) {
+          const json = await prodRes.json();
           if (json.success && Array.isArray(json.data)) {
             const mapped: CategoryProduct[] = json.data.map((item: {
               id: string;
@@ -110,11 +140,24 @@ export default function CategoryPage({ params }: PageProps) {
       }
     }
 
-    loadCategoryProducts();
+    loadCategoryData();
     return () => {
       isMounted = false;
     };
   }, [slug]);
+
+  const currentCategoryDetail = useMemo(() => {
+    if (dbCategory) {
+      return {
+        ...dbCategory,
+        // merge subcategories if both exist
+        subCategories: dbCategory.subCategories && dbCategory.subCategories.length > 0
+          ? dbCategory.subCategories
+          : initialDetail.subCategories
+      };
+    }
+    return initialDetail;
+  }, [dbCategory, initialDetail]);
 
   // Prioritize live DB products from MongoDB; fallback to initial static if DB has no products
   const allProducts = useMemo(() => {
@@ -152,7 +195,11 @@ export default function CategoryPage({ params }: PageProps) {
 
     // Filter by Type
     if (filterType !== "all") {
-      list = list.filter((p) => p.subType === filterType);
+      const target = filterType.toLowerCase();
+      list = list.filter((p) => {
+        const sub = (p.subType || "").toLowerCase();
+        return sub === target || sub.includes(target) || target.includes(sub);
+      });
     }
 
     // Filter by Price
@@ -190,7 +237,7 @@ export default function CategoryPage({ params }: PageProps) {
               <span className={styles.separator}>/</span>
               <Link href="/categories">CATEGORIES</Link>
               <span className={styles.separator}>/</span>
-              <span className={styles.activeCrumb}>{initialDetail.name.toUpperCase()}</span>
+              <span className={styles.activeCrumb}>{currentCategoryDetail.name.toUpperCase()}</span>
             </div>
           </div>
         </div>
@@ -210,19 +257,35 @@ export default function CategoryPage({ params }: PageProps) {
                 </svg>
                 <span>Back</span>
               </button>
-              <span className={styles.bannerSubtitle}>{initialDetail.subtitle}</span>
+              <span className={styles.bannerSubtitle}>{currentCategoryDetail.subtitle}</span>
             </div>
 
-            <h1 className={styles.bannerTitle}>{initialDetail.name}</h1>
-            <p className={styles.bannerDesc}>{initialDetail.description}</p>
+            <h1 className={styles.bannerTitle}>{currentCategoryDetail.name}</h1>
+            <p className={styles.bannerDesc}>{currentCategoryDetail.description}</p>
             
-            {initialDetail.subCategories && initialDetail.subCategories.length > 0 && (
+            {currentCategoryDetail.subCategories && currentCategoryDetail.subCategories.length > 0 && (
               <div className={styles.subCatPills}>
-                {initialDetail.subCategories.map((sub) => (
-                  <Link href={`/category/${sub.slug}`} key={sub.slug} className={styles.subCatPill}>
-                    {sub.name} &rarr;
-                  </Link>
-                ))}
+                <button
+                  type="button"
+                  onClick={() => setFilterType("all")}
+                  className={`${styles.subCatPill} ${filterType === "all" ? styles.activeSubCatPill : ""}`}
+                >
+                  All
+                </button>
+                {currentCategoryDetail.subCategories.map((sub) => {
+                  const subKey = sub.slug || sub.name;
+                  const isActive = filterType.toLowerCase() === subKey.toLowerCase();
+                  return (
+                    <button
+                      type="button"
+                      key={subKey}
+                      onClick={() => setFilterType(isActive ? "all" : subKey)}
+                      className={`${styles.subCatPill} ${isActive ? styles.activeSubCatPill : ""}`}
+                    >
+                      {sub.name}
+                    </button>
+                  );
+                })}
               </div>
             )}
 
@@ -241,6 +304,11 @@ export default function CategoryPage({ params }: PageProps) {
                     aria-label="Filter by Type"
                   >
                     <option value="all">Category: All Types</option>
+                    {currentCategoryDetail.subCategories && currentCategoryDetail.subCategories.map((sub) => (
+                      <option key={sub.slug || sub.name} value={sub.slug || sub.name}>
+                        {sub.name}
+                      </option>
+                    ))}
                     <option value="domestic">Domestic</option>
                     <option value="commercial">Commercial / Industrial</option>
                     <option value="accessory">Accessories &amp; Spares</option>

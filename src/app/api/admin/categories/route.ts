@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
   try {
     await connectToDatabase();
     const body = await req.json();
-    const { id, name, brand, imageUrl, link, description } = body;
+    const { id, name, brand, imageUrl, link, description, subcategories } = body;
 
     if (!id || !name || !brand || !imageUrl) {
       return NextResponse.json({ success: false, error: "Missing required fields (ID, Name, Brand, Image)" }, { status: 400 });
@@ -34,6 +34,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: `Category with ID/slug "${cleanId}" already exists.` }, { status: 400 });
     }
 
+    // Sanitize subcategories
+    const cleanSubcategories = Array.isArray(subcategories)
+      ? subcategories
+          .filter((s: { name?: string; id?: string }) => s && (s.name || s.id))
+          .map((s: { id?: string; name: string; description?: string; imageUrl?: string }) => ({
+            id: (s.id || s.name).trim().toLowerCase().replace(/\s+/g, "-"),
+            name: s.name.trim(),
+            description: s.description ? s.description.trim() : "",
+            imageUrl: s.imageUrl ? s.imageUrl.trim() : "",
+          }))
+      : [];
+
     const newCategory = await Category.create({
       id: cleanId,
       name: name.trim(),
@@ -41,6 +53,7 @@ export async function POST(req: NextRequest) {
       imageUrl: imageUrl.trim(),
       link: link ? link.trim() : `/category/${cleanId}`,
       description: description ? description.trim() : "",
+      subcategories: cleanSubcategories,
     });
 
     return NextResponse.json({ success: true, data: newCategory });
@@ -54,7 +67,7 @@ export async function PUT(req: NextRequest) {
   try {
     await connectToDatabase();
     const body = await req.json();
-    const { id, name, brand, imageUrl, link, description } = body;
+    const { id, name, brand, imageUrl, link, description, subcategories } = body;
 
     if (!id) {
       return NextResponse.json({ success: false, error: "Missing category ID" }, { status: 400 });
@@ -66,6 +79,16 @@ export async function PUT(req: NextRequest) {
     if (imageUrl !== undefined) updateFields.imageUrl = imageUrl.trim();
     if (link !== undefined) updateFields.link = link.trim();
     if (description !== undefined) updateFields.description = description.trim();
+    if (subcategories !== undefined && Array.isArray(subcategories)) {
+      updateFields.subcategories = subcategories
+        .filter((s: { name?: string; id?: string }) => s && (s.name || s.id))
+        .map((s: { id?: string; name: string; description?: string; imageUrl?: string }) => ({
+          id: (s.id || s.name).trim().toLowerCase().replace(/\s+/g, "-"),
+          name: s.name.trim(),
+          description: s.description ? s.description.trim() : "",
+          imageUrl: s.imageUrl ? s.imageUrl.trim() : "",
+        }));
+    }
 
     const updatedCategory = await Category.findOneAndUpdate(
       { id: id.trim() },

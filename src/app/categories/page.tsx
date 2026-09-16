@@ -1,4 +1,6 @@
-import React from "react";
+"use client";
+
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import AnnouncementBar from "@/components/home/AnnouncementBar";
@@ -8,10 +10,19 @@ import { CATEGORIES_DATA } from "@/data/categories";
 import { optimizeGalleryThumbnail } from "@/lib/imageOptimization";
 import styles from "./CategoriesPage.module.css";
 
-export const metadata = {
-  title: "Shop By Categories - Skill Store",
-  description: "Browse our complete range of high pressure washers, vacuum cleaners, air compressors, power tools, and accessories.",
-};
+interface DisplaySubCategory {
+  name: string;
+  slug: string;
+}
+
+interface DisplayCategory {
+  slug: string;
+  name: string;
+  description: string;
+  imageUrl: string;
+  productCount: number;
+  subCategories?: DisplaySubCategory[];
+}
 
 export default function CategoriesPage() {
   const primaryCategorySlugs = [
@@ -22,12 +33,27 @@ export default function CategoriesPage() {
     "air-compressor",
     "cordless-tools"
   ];
-  const categoriesList = primaryCategorySlugs
-    .map((slug) => CATEGORIES_DATA[slug])
-    .filter(Boolean);
+
+  const defaultList: DisplayCategory[] = primaryCategorySlugs
+    .map((slug) => {
+      const staticCat = CATEGORIES_DATA[slug];
+      if (!staticCat) return null;
+      return {
+        slug: staticCat.slug,
+        name: staticCat.name,
+        description: staticCat.description,
+        imageUrl: getCategoryImage(staticCat.slug),
+        productCount: staticCat.products.length,
+        subCategories: staticCat.subCategories || []
+      };
+    })
+    .filter(Boolean) as DisplayCategory[];
+
+  const [categoriesList, setCategoriesList] = useState<DisplayCategory[]>(defaultList);
 
   // Helper images for top categories
-  const getCategoryImage = (slug: string) => {
+  function getCategoryImage(slug: string, fallbackImg?: string) {
+    if (fallbackImg && fallbackImg.startsWith("http")) return fallbackImg;
     switch (slug) {
       case "high-pressure-washer":
       case "domestic-pressure-washer":
@@ -48,9 +74,50 @@ export default function CategoriesPage() {
       case "hand-tools":
         return "/images/products/nozzle_tips.jpg";
       default:
-        return "/images/products/hw2000.jpg";
+        return fallbackImg || "/images/products/hw2000.jpg";
     }
-  };
+  }
+
+  useEffect(() => {
+    fetch("/api/categories")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && Array.isArray(data.categories) && data.categories.length > 0) {
+          const mapped: DisplayCategory[] = data.categories.map((c: {
+            id?: string;
+            slug?: string;
+            name?: string;
+            description?: string;
+            imageUrl?: string;
+            image?: string;
+            productCount?: number;
+            subcategories?: Array<{ id: string; name: string }>;
+            subCategories?: Array<{ slug: string; name: string }>;
+          }) => {
+            const rawSubcats = c.subcategories || c.subCategories || [];
+            const subCategories: DisplaySubCategory[] = rawSubcats.map((s) => ({
+              slug: (s as { id?: string; slug?: string }).id || (s as { slug?: string }).slug || "",
+              name: s.name || ""
+            }));
+
+            const slug = c.slug || c.id || "";
+            return {
+              slug,
+              name: c.name || slug,
+              description: c.description || `Explore our high-quality range of ${c.name || slug}.`,
+              imageUrl: getCategoryImage(slug, c.imageUrl || c.image),
+              productCount: c.productCount !== undefined ? c.productCount : 0,
+              subCategories
+            };
+          });
+
+          if (mapped.length > 0) {
+            setCategoriesList(mapped);
+          }
+        }
+      })
+      .catch((err) => console.error("Error loading categories:", err));
+  }, []);
 
   return (
     <>
@@ -84,7 +151,7 @@ export default function CategoriesPage() {
                 <div className={styles.cardTop}>
                   <div className={styles.imageWrapper}>
                     <Image
-                      src={optimizeGalleryThumbnail(getCategoryImage(cat.slug))}
+                      src={optimizeGalleryThumbnail(cat.imageUrl)}
                       alt={cat.name}
                       width={70}
                       height={70}
@@ -94,7 +161,7 @@ export default function CategoriesPage() {
                   </div>
                   <div className={styles.cardMeta}>
                     <h2 className={styles.categoryName}>{cat.name}</h2>
-                    <span className={styles.productCount}>{cat.products.length} Products</span>
+                    <span className={styles.productCount}>{cat.productCount} Products</span>
                   </div>
                 </div>
 
@@ -103,7 +170,7 @@ export default function CategoriesPage() {
                 {cat.subCategories && cat.subCategories.length > 0 && (
                   <div className={styles.subCatLinks}>
                     {cat.subCategories.map((sub) => (
-                      <span key={sub.slug} className={styles.subCatTag}>
+                      <span key={sub.slug || sub.name} className={styles.subCatTag}>
                         {sub.name}
                       </span>
                     ))}
