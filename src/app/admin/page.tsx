@@ -7,6 +7,7 @@ import Link from "next/link";
 import { BRAND_CATEGORIES } from "@/data/home";
 import { optimizeAdminPreview } from "@/lib/imageOptimization";
 import { compressImageBeforeUpload } from "@/lib/clientImageCompressor";
+import { DEFAULT_HOME_SETTINGS, IBrandItem, IUspItem, ISummerOfferItem } from "@/lib/homeDefaults";
 import styles from "./AdminPage.module.css";
 
 // --- Interfaces ---
@@ -136,7 +137,7 @@ const DEFAULT_SYSTEM_CATEGORIES: ICategory[] = Object.entries(BRAND_CATEGORIES).
 
 export default function AdminDashboard() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<"analytics" | "products" | "categories" | "orders" | "banners" | "reviews">("analytics");
+  const [activeTab, setActiveTab] = useState<"analytics" | "products" | "categories" | "orders" | "banners" | "homepage" | "reviews">("analytics");
   const [authorized, setAuthorized] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -152,6 +153,26 @@ export default function AdminDashboard() {
   const [orders, setOrders] = useState<IAdminOrder[]>([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [orderActionLoading, setOrderActionLoading] = useState<string | null>(null);
+
+  // Homepage CMS State
+  const [homeSettings, setHomeSettings] = useState<{
+    announcement: { enabled: boolean; text: string };
+    brandsSection: { enabled: boolean; title: string; subtitle: string; brands: IBrandItem[] };
+    trustMarquee: { enabled: boolean; items: IUspItem[] };
+    summerOffer: { enabled: boolean; title: string; offers: ISummerOfferItem[] };
+  }>({
+    announcement: { ...DEFAULT_HOME_SETTINGS.announcement },
+    brandsSection: { ...DEFAULT_HOME_SETTINGS.brandsSection, brands: [...DEFAULT_HOME_SETTINGS.brandsSection.brands] },
+    trustMarquee: { ...DEFAULT_HOME_SETTINGS.trustMarquee, items: [...DEFAULT_HOME_SETTINGS.trustMarquee.items] },
+    summerOffer: { ...DEFAULT_HOME_SETTINGS.summerOffer, offers: [...DEFAULT_HOME_SETTINGS.summerOffer.offers] },
+  });
+  const [homeCmsSavingSection, setHomeCmsSavingSection] = useState<string | null>(null);
+  const [homeCmsSuccessMsg, setHomeCmsSuccessMsg] = useState<string | null>(null);
+  const [newUspInput, setNewUspInput] = useState("");
+  const [newBrandForm, setNewBrandForm] = useState({ name: "", slug: "", logo: "", tagline: "" });
+  const [newOfferForm, setNewOfferForm] = useState({ title: "", imageUrl: "", link: "/shop" });
+  const [isUploadingBrandLogo, setIsUploadingBrandLogo] = useState(false);
+  const [isUploadingOfferImg, setIsUploadingOfferImg] = useState(false);
 
   // Search & Filter States
   const [productSearch, setProductSearch] = useState("");
@@ -307,6 +328,69 @@ export default function AdminDashboard() {
     }
   }, []);
 
+  const fetchHomeSettings = useCallback(async () => {
+    try {
+      const res = await fetch("/api/admin/home-settings");
+      const json = await res.json();
+      if (json.success && json.data) {
+        setHomeSettings(json.data);
+      }
+    } catch (e) {
+      console.error("Failed to fetch home settings:", e);
+    }
+  }, []);
+
+  const saveHomeSettingsSection = async (
+    sectionKey: "announcement" | "brandsSection" | "trustMarquee" | "summerOffer",
+    updatedData: unknown
+  ) => {
+    setHomeCmsSavingSection(sectionKey);
+    setHomeCmsSuccessMsg(null);
+    try {
+      const res = await fetch("/api/admin/home-settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ [sectionKey]: updatedData }),
+      });
+      const json = await res.json();
+      if (json.success && json.data) {
+        setHomeSettings(json.data);
+        setHomeCmsSuccessMsg(`Saved ${sectionKey} settings successfully!`);
+        setTimeout(() => setHomeCmsSuccessMsg(null), 3500);
+      } else {
+        alert(`Error saving: ${json.error || "Failed to save settings"}`);
+      }
+    } catch {
+      alert("Network error saving homepage settings.");
+    } finally {
+      setHomeCmsSavingSection(null);
+    }
+  };
+
+  const uploadCustomMedia = async (file: File, folder: string = "skill-store/homepage"): Promise<string | null> => {
+    try {
+      const compressed = await compressImageBeforeUpload(file, {
+        maxWidth: 1920,
+        maxHeight: 1920,
+        quality: 0.85,
+        targetFormat: "image/webp",
+      });
+      const formData = new FormData();
+      formData.append("file", compressed);
+      formData.append("folder", folder);
+      const res = await fetch("/api/admin/upload", { method: "POST", body: formData });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "Upload failed");
+      }
+      return data.url;
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Error uploading file";
+      alert(`Upload error: ${msg}`);
+      return null;
+    }
+  };
+
   const initializeData = useCallback(async () => {
     setLoading(true);
     try {
@@ -318,13 +402,14 @@ export default function AdminDashboard() {
         fetchEnquiries(),
         fetchReviews(),
         fetchOrders(),
+        fetchHomeSettings(),
       ]);
     } catch (e) {
       console.error("Initialization failed", e);
     } finally {
       setLoading(false);
     }
-  }, [fetchBanners, fetchCategories, fetchProducts, fetchEnquiries, fetchReviews, fetchOrders]);
+  }, [fetchBanners, fetchCategories, fetchProducts, fetchEnquiries, fetchReviews, fetchOrders, fetchHomeSettings]);
 
 
   // Auth check
@@ -1069,6 +1154,20 @@ export default function AdminDashboard() {
                 <polyline points="21 15 16 10 5 21"></polyline>
               </svg>
               <span>Hero Banners</span>
+            </button>
+
+            <button
+              onClick={() => {
+                setActiveTab("homepage");
+                setIsMobileMenuOpen(false);
+              }}
+              className={`${styles.sidebarTab} ${activeTab === "homepage" ? styles.activeTab : ""}`}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className={styles.tabIcon}>
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                <polyline points="9 22 9 12 15 12 15 22"></polyline>
+              </svg>
+              <span>Homepage CMS</span>
             </button>
 
             <button
@@ -1909,7 +2008,936 @@ export default function AdminDashboard() {
               )}
 
               {/* ======================================================== */}
-              {/* TAB 6: CUSTOMER REVIEWS MODERATION                      */}
+              {/* TAB 6: HOMEPAGE CMS MANAGEMENT                          */}
+              {/* ======================================================== */}
+              {activeTab === "homepage" && (
+                <div className={styles.tabContent}>
+                  <div className={styles.flexHeader}>
+                    <div>
+                      <h2>Homepage Sections CMS</h2>
+                      <p style={{ margin: "4px 0 0 0", color: "#64748b", fontSize: "13.5px" }}>
+                        Manage Announcement Bar, Shop by Brands, Trust/USP Line, and Premium Summer Offers in real-time.
+                      </p>
+                    </div>
+                    {homeCmsSuccessMsg && (
+                      <div style={{ background: "#ecfdf5", border: "1px solid #10b981", color: "#065f46", padding: "8px 16px", borderRadius: "8px", fontWeight: "700", fontSize: "13px" }}>
+                        ✓ {homeCmsSuccessMsg}
+                      </div>
+                    )}
+                  </div>
+
+                  <div style={{ display: "flex", flexDirection: "column", gap: "28px", marginTop: "16px" }}>
+
+                    {/* --- 1. TOP ANNOUNCEMENT BAR --- */}
+                    <div className={styles.formCard} style={{ background: "#ffffff", borderRadius: "12px", border: "1px solid #e2e8f0", padding: "24px" }}>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid #e2e8f0", paddingBottom: "16px", marginBottom: "20px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                          <span style={{ fontSize: "20px" }}>📢</span>
+                          <div>
+                            <h3 style={{ margin: 0, fontSize: "16px", fontWeight: "800", color: "#0f172a" }}>1. Top Announcement / Scrolling Line</h3>
+                            <span style={{ fontSize: "12px", color: "#64748b" }}>Top black bar displaying promotional scrolling announcements.</span>
+                          </div>
+                        </div>
+
+                        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                          <label className={styles.switch}>
+                            <input
+                              type="checkbox"
+                              checked={homeSettings.announcement.enabled}
+                              onChange={(e) =>
+                                setHomeSettings((prev) => ({
+                                  ...prev,
+                                  announcement: { ...prev.announcement, enabled: e.target.checked },
+                                }))
+                              }
+                            />
+                            <span className={styles.slider}></span>
+                          </label>
+                          <span style={{ fontSize: "12px", fontWeight: "800", color: homeSettings.announcement.enabled ? "#10b981" : "#94a3b8" }}>
+                            {homeSettings.announcement.enabled ? "ENABLED" : "DISABLED"}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className={styles.form}>
+                        <div className={styles.inputField}>
+                          <label htmlFor="announcement-text">Announcement Message Text *</label>
+                          <input
+                            id="announcement-text"
+                            type="text"
+                            value={homeSettings.announcement.text}
+                            onChange={(e) =>
+                              setHomeSettings((prev) => ({
+                                ...prev,
+                                announcement: { ...prev.announcement, text: e.target.value },
+                              }))
+                            }
+                            placeholder="e.g. *2% Discount On Prepaid Orders / Free Shipment & COD Available*"
+                          />
+                        </div>
+
+                        {/* Live Preview Box */}
+                        <div style={{ background: "#000000", color: "#ffffff", padding: "10px 16px", borderRadius: "6px", fontSize: "12px", fontWeight: "700", textAlign: "center", letterSpacing: "0.5px" }}>
+                          {homeSettings.announcement.text || "No announcement text entered."}
+                        </div>
+
+                        <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "10px" }}>
+                          <button
+                            type="button"
+                            onClick={() => saveHomeSettingsSection("announcement", homeSettings.announcement)}
+                            className={styles.primaryBtn}
+                            disabled={homeCmsSavingSection === "announcement"}
+                          >
+                            {homeCmsSavingSection === "announcement" ? "Saving..." : "💾 Save Announcement Bar"}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* --- 2. SHOP BY BRANDS --- */}
+                    <div className={styles.formCard} style={{ background: "#ffffff", borderRadius: "12px", border: "1px solid #e2e8f0", padding: "24px" }}>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid #e2e8f0", paddingBottom: "16px", marginBottom: "20px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                          <span style={{ fontSize: "20px" }}>🏷️</span>
+                          <div>
+                            <h3 style={{ margin: 0, fontSize: "16px", fontWeight: "800", color: "#0f172a" }}>2. Shop by Brands</h3>
+                            <span style={{ fontSize: "12px", color: "#64748b" }}>Manage official partner brands displayed on the homepage marquee.</span>
+                          </div>
+                        </div>
+
+                        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                          <label className={styles.switch}>
+                            <input
+                              type="checkbox"
+                              checked={homeSettings.brandsSection.enabled}
+                              onChange={(e) =>
+                                setHomeSettings((prev) => ({
+                                  ...prev,
+                                  brandsSection: { ...prev.brandsSection, enabled: e.target.checked },
+                                }))
+                              }
+                            />
+                            <span className={styles.slider}></span>
+                          </label>
+                          <span style={{ fontSize: "12px", fontWeight: "800", color: homeSettings.brandsSection.enabled ? "#10b981" : "#94a3b8" }}>
+                            {homeSettings.brandsSection.enabled ? "ENABLED" : "DISABLED"}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className={styles.inputGrid2} style={{ marginBottom: "20px" }}>
+                        <div className={styles.inputField}>
+                          <label>Section Subtitle</label>
+                          <input
+                            type="text"
+                            value={homeSettings.brandsSection.subtitle || ""}
+                            onChange={(e) =>
+                              setHomeSettings((prev) => ({
+                                ...prev,
+                                brandsSection: { ...prev.brandsSection, subtitle: e.target.value },
+                              }))
+                            }
+                            placeholder="e.g. OFFICIAL PARTNERS"
+                          />
+                        </div>
+                        <div className={styles.inputField}>
+                          <label>Section Title</label>
+                          <input
+                            type="text"
+                            value={homeSettings.brandsSection.title || ""}
+                            onChange={(e) =>
+                              setHomeSettings((prev) => ({
+                                ...prev,
+                                brandsSection: { ...prev.brandsSection, title: e.target.value },
+                              }))
+                            }
+                            placeholder="e.g. SHOP BY BRANDS"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Brands List */}
+                      <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: "24px" }}>
+                        <label style={{ fontSize: "13px", fontWeight: "750", color: "#334155" }}>
+                          Brands Catalogue ({homeSettings.brandsSection.brands.length})
+                        </label>
+
+                        {homeSettings.brandsSection.brands.map((brand, idx) => (
+                          <div
+                            key={brand.id || brand.slug || idx}
+                            style={{
+                              display: "grid",
+                              gridTemplateColumns: "80px 1fr 1fr 140px 100px 90px",
+                              alignItems: "center",
+                              gap: "12px",
+                              background: brand.enabled !== false ? "#f8fafc" : "#f1f5f9",
+                              border: "1px solid #e2e8f0",
+                              borderRadius: "8px",
+                              padding: "12px 16px",
+                              opacity: brand.enabled !== false ? 1 : 0.6,
+                            }}
+                          >
+                            {/* Brand Logo Thumbnail & Quick Upload */}
+                            <div style={{ position: "relative", width: "70px", height: "36px", background: "#ffffff", border: "1px solid #cbd5e1", borderRadius: "6px", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+                              {brand.logo ? (
+                                <Image
+                                  src={optimizeAdminPreview(brand.logo)}
+                                  alt={brand.name}
+                                  width={60}
+                                  height={30}
+                                  style={{ objectFit: "contain" }}
+                                />
+                              ) : (
+                                <span style={{ fontSize: "10px", color: "#94a3b8" }}>No Logo</span>
+                              )}
+                            </div>
+
+                            {/* Name & Slug */}
+                            <div>
+                              <input
+                                type="text"
+                                value={brand.name}
+                                onChange={(e) => {
+                                  const updated = [...homeSettings.brandsSection.brands];
+                                  updated[idx] = { ...updated[idx], name: e.target.value };
+                                  setHomeSettings((prev) => ({
+                                    ...prev,
+                                    brandsSection: { ...prev.brandsSection, brands: updated },
+                                  }));
+                                }}
+                                placeholder="Brand Name"
+                                style={{ fontWeight: "750", width: "100%", fontSize: "13px", padding: "6px 8px", borderRadius: "4px", border: "1px solid #cbd5e1" }}
+                              />
+                              <span style={{ fontSize: "11px", color: "#64748b" }}>Slug: /shop/{brand.slug}</span>
+                            </div>
+
+                            {/* Tagline */}
+                            <div>
+                              <input
+                                type="text"
+                                value={brand.tagline || ""}
+                                onChange={(e) => {
+                                  const updated = [...homeSettings.brandsSection.brands];
+                                  updated[idx] = { ...updated[idx], tagline: e.target.value };
+                                  setHomeSettings((prev) => ({
+                                    ...prev,
+                                    brandsSection: { ...prev.brandsSection, brands: updated },
+                                  }));
+                                }}
+                                placeholder="Brand Tagline / Description"
+                                style={{ width: "100%", fontSize: "12px", padding: "6px 8px", borderRadius: "4px", border: "1px solid #cbd5e1" }}
+                              />
+                            </div>
+
+                            {/* Logo File Upload / URL */}
+                            <div>
+                              <label className={styles.uploadBtn} style={{ fontSize: "11px", padding: "4px 8px", width: "100%", textAlign: "center", display: "block" }}>
+                                📁 Replace Logo
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  style={{ display: "none" }}
+                                  onChange={async (e) => {
+                                    const file = e.target.files?.[0];
+                                    if (!file) return;
+                                    const url = await uploadCustomMedia(file, "skill-store/brands");
+                                    if (url) {
+                                      const updated = [...homeSettings.brandsSection.brands];
+                                      updated[idx] = { ...updated[idx], logo: url };
+                                      setHomeSettings((prev) => ({
+                                        ...prev,
+                                        brandsSection: { ...prev.brandsSection, brands: updated },
+                                      }));
+                                    }
+                                  }}
+                                />
+                              </label>
+                            </div>
+
+                            {/* Show on Home Toggle */}
+                            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                              <input
+                                type="checkbox"
+                                id={`brand-toggle-${idx}`}
+                                checked={brand.enabled !== false}
+                                onChange={(e) => {
+                                  const updated = [...homeSettings.brandsSection.brands];
+                                  updated[idx] = { ...updated[idx], enabled: e.target.checked };
+                                  setHomeSettings((prev) => ({
+                                    ...prev,
+                                    brandsSection: { ...prev.brandsSection, brands: updated },
+                                  }));
+                                }}
+                                style={{ width: "16px", height: "16px", cursor: "pointer" }}
+                              />
+                              <label htmlFor={`brand-toggle-${idx}`} style={{ fontSize: "11px", fontWeight: "700", cursor: "pointer" }}>
+                                {brand.enabled !== false ? "Visible" : "Hidden"}
+                              </label>
+                            </div>
+
+                            {/* Actions (Reorder / Delete) */}
+                            <div style={{ display: "flex", alignItems: "center", gap: "4px", justifyContent: "flex-end" }}>
+                              <button
+                                type="button"
+                                title="Move Up"
+                                disabled={idx === 0}
+                                onClick={() => {
+                                  if (idx === 0) return;
+                                  const updated = [...homeSettings.brandsSection.brands];
+                                  const temp = updated[idx];
+                                  updated[idx] = updated[idx - 1];
+                                  updated[idx - 1] = temp;
+                                  setHomeSettings((prev) => ({
+                                    ...prev,
+                                    brandsSection: { ...prev.brandsSection, brands: updated },
+                                  }));
+                                }}
+                                style={{ padding: "4px 8px", cursor: idx === 0 ? "not-allowed" : "pointer", borderRadius: "4px", border: "1px solid #cbd5e1", background: "#ffffff" }}
+                              >
+                                ↑
+                              </button>
+                              <button
+                                type="button"
+                                title="Move Down"
+                                disabled={idx === homeSettings.brandsSection.brands.length - 1}
+                                onClick={() => {
+                                  if (idx === homeSettings.brandsSection.brands.length - 1) return;
+                                  const updated = [...homeSettings.brandsSection.brands];
+                                  const temp = updated[idx];
+                                  updated[idx] = updated[idx + 1];
+                                  updated[idx + 1] = temp;
+                                  setHomeSettings((prev) => ({
+                                    ...prev,
+                                    brandsSection: { ...prev.brandsSection, brands: updated },
+                                  }));
+                                }}
+                                style={{ padding: "4px 8px", cursor: idx === homeSettings.brandsSection.brands.length - 1 ? "not-allowed" : "pointer", borderRadius: "4px", border: "1px solid #cbd5e1", background: "#ffffff" }}
+                              >
+                                ↓
+                              </button>
+                              <button
+                                type="button"
+                                title="Delete Brand"
+                                onClick={() => {
+                                  if (!confirm(`Remove ${brand.name} from homepage?`)) return;
+                                  const updated = homeSettings.brandsSection.brands.filter((_, i) => i !== idx);
+                                  setHomeSettings((prev) => ({
+                                    ...prev,
+                                    brandsSection: { ...prev.brandsSection, brands: updated },
+                                  }));
+                                }}
+                                style={{ padding: "4px 8px", cursor: "pointer", borderRadius: "4px", border: "1px solid #fecaca", background: "#fee2e2", color: "#b91c1c" }}
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Add New Brand Inline Box */}
+                      <div style={{ background: "#f8fafc", border: "1px dashed #cbd5e1", borderRadius: "8px", padding: "16px", marginBottom: "16px" }}>
+                        <span style={{ fontSize: "13px", fontWeight: "750", color: "#1e293b", display: "block", marginBottom: "10px" }}>
+                          + Add Brand To Section
+                        </span>
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1.5fr 140px auto", gap: "10px", alignItems: "center" }}>
+                          <input
+                            type="text"
+                            placeholder="Brand Name (e.g. ULTRA TOUCH)"
+                            value={newBrandForm.name}
+                            onChange={(e) => {
+                              const name = e.target.value;
+                              const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+                              setNewBrandForm((prev) => ({ ...prev, name, slug: prev.slug || slug }));
+                            }}
+                            style={{ fontSize: "12px", padding: "6px 8px", borderRadius: "4px", border: "1px solid #cbd5e1" }}
+                          />
+                          <input
+                            type="text"
+                            placeholder="Slug (e.g. ultratouch)"
+                            value={newBrandForm.slug}
+                            onChange={(e) => setNewBrandForm((prev) => ({ ...prev, slug: e.target.value }))}
+                            style={{ fontSize: "12px", padding: "6px 8px", borderRadius: "4px", border: "1px solid #cbd5e1" }}
+                          />
+                          <input
+                            type="text"
+                            placeholder="Tagline (e.g. Microfiber & Car Care)"
+                            value={newBrandForm.tagline}
+                            onChange={(e) => setNewBrandForm((prev) => ({ ...prev, tagline: e.target.value }))}
+                            style={{ fontSize: "12px", padding: "6px 8px", borderRadius: "4px", border: "1px solid #cbd5e1" }}
+                          />
+                          <label className={styles.uploadBtn} style={{ fontSize: "11px", padding: "6px 8px", textAlign: "center", display: "block" }}>
+                            {isUploadingBrandLogo ? "Uploading..." : "📁 Logo File"}
+                            <input
+                              type="file"
+                              accept="image/*"
+                              style={{ display: "none" }}
+                              onChange={async (e) => {
+                                const file = e.target.files?.[0];
+                                if (!file) return;
+                                setIsUploadingBrandLogo(true);
+                                const url = await uploadCustomMedia(file, "skill-store/brands");
+                                setIsUploadingBrandLogo(false);
+                                if (url) setNewBrandForm((prev) => ({ ...prev, logo: url }));
+                              }}
+                            />
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (!newBrandForm.name.trim()) {
+                                alert("Please enter a brand name.");
+                                return;
+                              }
+                              const slug = newBrandForm.slug.trim() || newBrandForm.name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+                              const newBrand: IBrandItem = {
+                                id: `brand-${slug}`,
+                                slug,
+                                name: newBrandForm.name.trim(),
+                                logo: newBrandForm.logo.trim() || "/images/brands/tuqo.png",
+                                tagline: newBrandForm.tagline.trim(),
+                                enabled: true,
+                                order: homeSettings.brandsSection.brands.length + 1,
+                              };
+                              setHomeSettings((prev) => ({
+                                ...prev,
+                                brandsSection: {
+                                  ...prev.brandsSection,
+                                  brands: [...prev.brandsSection.brands, newBrand],
+                                },
+                              }));
+                              setNewBrandForm({ name: "", slug: "", logo: "", tagline: "" });
+                            }}
+                            className={styles.secondaryBtn}
+                            style={{ fontSize: "12px", padding: "6px 14px", height: "36px" }}
+                          >
+                            Add Brand
+                          </button>
+                        </div>
+                      </div>
+
+                      <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                        <button
+                          type="button"
+                          onClick={() => saveHomeSettingsSection("brandsSection", homeSettings.brandsSection)}
+                          className={styles.primaryBtn}
+                          disabled={homeCmsSavingSection === "brandsSection"}
+                        >
+                          {homeCmsSavingSection === "brandsSection" ? "Saving..." : "💾 Save Brands Section"}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* --- 3. TRUST / USP SCROLLING LINE --- */}
+                    <div className={styles.formCard} style={{ background: "#ffffff", borderRadius: "12px", border: "1px solid #e2e8f0", padding: "24px" }}>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid #e2e8f0", paddingBottom: "16px", marginBottom: "20px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                          <span style={{ fontSize: "20px" }}>🛡️</span>
+                          <div>
+                            <h3 style={{ margin: 0, fontSize: "16px", fontWeight: "800", color: "#0f172a" }}>3. Trust / USP Scrolling Line</h3>
+                            <span style={{ fontSize: "12px", color: "#64748b" }}>Blue marquee bar below Shop by Brands highlighting store commitments.</span>
+                          </div>
+                        </div>
+
+                        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                          <label className={styles.switch}>
+                            <input
+                              type="checkbox"
+                              checked={homeSettings.trustMarquee.enabled}
+                              onChange={(e) =>
+                                setHomeSettings((prev) => ({
+                                  ...prev,
+                                  trustMarquee: { ...prev.trustMarquee, enabled: e.target.checked },
+                                }))
+                              }
+                            />
+                            <span className={styles.slider}></span>
+                          </label>
+                          <span style={{ fontSize: "12px", fontWeight: "800", color: homeSettings.trustMarquee.enabled ? "#10b981" : "#94a3b8" }}>
+                            {homeSettings.trustMarquee.enabled ? "ENABLED" : "DISABLED"}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* USP Items List */}
+                      <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: "20px" }}>
+                        <label style={{ fontSize: "13px", fontWeight: "750", color: "#334155" }}>
+                          USP Items ({homeSettings.trustMarquee.items.length})
+                        </label>
+
+                        {homeSettings.trustMarquee.items.map((item, idx) => (
+                          <div
+                            key={item.id || idx}
+                            style={{
+                              display: "grid",
+                              gridTemplateColumns: "1fr 100px 90px",
+                              alignItems: "center",
+                              gap: "12px",
+                              background: item.enabled !== false ? "#f8fafc" : "#f1f5f9",
+                              border: "1px solid #e2e8f0",
+                              borderRadius: "8px",
+                              padding: "10px 16px",
+                              opacity: item.enabled !== false ? 1 : 0.6,
+                            }}
+                          >
+                            <input
+                              type="text"
+                              value={item.text}
+                              onChange={(e) => {
+                                const updated = [...homeSettings.trustMarquee.items];
+                                updated[idx] = { ...updated[idx], text: e.target.value };
+                                setHomeSettings((prev) => ({
+                                  ...prev,
+                                  trustMarquee: { ...prev.trustMarquee, items: updated },
+                                }));
+                              }}
+                              placeholder="e.g. AUTHORIZED BRAND DISTRIBUTOR"
+                              style={{ width: "100%", fontSize: "13px", fontWeight: "700", padding: "6px 10px", borderRadius: "4px", border: "1px solid #cbd5e1" }}
+                            />
+
+                            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                              <input
+                                type="checkbox"
+                                id={`usp-toggle-${idx}`}
+                                checked={item.enabled !== false}
+                                onChange={(e) => {
+                                  const updated = [...homeSettings.trustMarquee.items];
+                                  updated[idx] = { ...updated[idx], enabled: e.target.checked };
+                                  setHomeSettings((prev) => ({
+                                    ...prev,
+                                    trustMarquee: { ...prev.trustMarquee, items: updated },
+                                  }));
+                                }}
+                                style={{ width: "16px", height: "16px", cursor: "pointer" }}
+                              />
+                              <label htmlFor={`usp-toggle-${idx}`} style={{ fontSize: "11px", fontWeight: "700", cursor: "pointer" }}>
+                                {item.enabled !== false ? "Active" : "Off"}
+                              </label>
+                            </div>
+
+                            <div style={{ display: "flex", alignItems: "center", gap: "4px", justifyContent: "flex-end" }}>
+                              <button
+                                type="button"
+                                title="Move Up"
+                                disabled={idx === 0}
+                                onClick={() => {
+                                  if (idx === 0) return;
+                                  const updated = [...homeSettings.trustMarquee.items];
+                                  const temp = updated[idx];
+                                  updated[idx] = updated[idx - 1];
+                                  updated[idx - 1] = temp;
+                                  setHomeSettings((prev) => ({
+                                    ...prev,
+                                    trustMarquee: { ...prev.trustMarquee, items: updated },
+                                  }));
+                                }}
+                                style={{ padding: "4px 8px", cursor: idx === 0 ? "not-allowed" : "pointer", borderRadius: "4px", border: "1px solid #cbd5e1", background: "#ffffff" }}
+                              >
+                                ↑
+                              </button>
+                              <button
+                                type="button"
+                                title="Move Down"
+                                disabled={idx === homeSettings.trustMarquee.items.length - 1}
+                                onClick={() => {
+                                  if (idx === homeSettings.trustMarquee.items.length - 1) return;
+                                  const updated = [...homeSettings.trustMarquee.items];
+                                  const temp = updated[idx];
+                                  updated[idx] = updated[idx + 1];
+                                  updated[idx + 1] = temp;
+                                  setHomeSettings((prev) => ({
+                                    ...prev,
+                                    trustMarquee: { ...prev.trustMarquee, items: updated },
+                                  }));
+                                }}
+                                style={{ padding: "4px 8px", cursor: idx === homeSettings.trustMarquee.items.length - 1 ? "not-allowed" : "pointer", borderRadius: "4px", border: "1px solid #cbd5e1", background: "#ffffff" }}
+                              >
+                                ↓
+                              </button>
+                              <button
+                                type="button"
+                                title="Delete USP Item"
+                                onClick={() => {
+                                  const updated = homeSettings.trustMarquee.items.filter((_, i) => i !== idx);
+                                  setHomeSettings((prev) => ({
+                                    ...prev,
+                                    trustMarquee: { ...prev.trustMarquee, items: updated },
+                                  }));
+                                }}
+                                style={{ padding: "4px 8px", cursor: "pointer", borderRadius: "4px", border: "1px solid #fecaca", background: "#fee2e2", color: "#b91c1c" }}
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Add New USP Box */}
+                      <div style={{ display: "flex", gap: "10px", alignItems: "center", background: "#f8fafc", border: "1px dashed #cbd5e1", borderRadius: "8px", padding: "12px 16px", marginBottom: "16px" }}>
+                        <input
+                          type="text"
+                          placeholder="New USP Text (e.g. PAN-INDIA EXPRESS DELIVERY)"
+                          value={newUspInput}
+                          onChange={(e) => setNewUspInput(e.target.value)}
+                          style={{ flex: 1, fontSize: "13px", padding: "6px 10px", borderRadius: "4px", border: "1px solid #cbd5e1" }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (!newUspInput.trim()) return;
+                            const newItem: IUspItem = {
+                              id: `usp-${Date.now()}`,
+                              text: newUspInput.trim().toUpperCase(),
+                              enabled: true,
+                              order: homeSettings.trustMarquee.items.length + 1,
+                            };
+                            setHomeSettings((prev) => ({
+                              ...prev,
+                              trustMarquee: { ...prev.trustMarquee, items: [...prev.trustMarquee.items, newItem] },
+                            }));
+                            setNewUspInput("");
+                          }}
+                          className={styles.secondaryBtn}
+                          style={{ fontSize: "12px", padding: "6px 14px", height: "36px" }}
+                        >
+                          + Add USP
+                        </button>
+                      </div>
+
+                      {/* Live Blue Marquee Preview */}
+                      <div style={{ background: "#132c66", color: "#ffffff", padding: "12px 16px", borderRadius: "8px", fontSize: "12px", fontWeight: "800", display: "flex", alignItems: "center", gap: "16px", overflowX: "auto", whiteSpace: "nowrap" }}>
+                        {homeSettings.trustMarquee.items
+                          .filter((i) => i.enabled !== false)
+                          .map((item, i) => (
+                            <span key={i} style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}>
+                              {item.text} <span style={{ width: "4px", height: "4px", borderRadius: "50%", background: "#ffffff", display: "inline-block" }}></span>
+                            </span>
+                          ))}
+                      </div>
+
+                      <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "16px" }}>
+                        <button
+                          type="button"
+                          onClick={() => saveHomeSettingsSection("trustMarquee", homeSettings.trustMarquee)}
+                          className={styles.primaryBtn}
+                          disabled={homeCmsSavingSection === "trustMarquee"}
+                        >
+                          {homeCmsSavingSection === "trustMarquee" ? "Saving..." : "💾 Save Trust/USP Line"}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* --- 4. PREMIUM SUMMER OFFER --- */}
+                    <div className={styles.formCard} style={{ background: "#ffffff", borderRadius: "12px", border: "1px solid #e2e8f0", padding: "24px" }}>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid #e2e8f0", paddingBottom: "16px", marginBottom: "20px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                          <span style={{ fontSize: "20px" }}>☀️</span>
+                          <div>
+                            <h3 style={{ margin: 0, fontSize: "16px", fontWeight: "800", color: "#0f172a" }}>4. Premium Summer Offer</h3>
+                            <span style={{ fontSize: "12px", color: "#64748b" }}>Manage the high-impact summer offer promotional banners &amp; cards.</span>
+                          </div>
+                        </div>
+
+                        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                          <label className={styles.switch}>
+                            <input
+                              type="checkbox"
+                              checked={homeSettings.summerOffer.enabled}
+                              onChange={(e) =>
+                                setHomeSettings((prev) => ({
+                                  ...prev,
+                                  summerOffer: { ...prev.summerOffer, enabled: e.target.checked },
+                                }))
+                              }
+                            />
+                            <span className={styles.slider}></span>
+                          </label>
+                          <span style={{ fontSize: "12px", fontWeight: "800", color: homeSettings.summerOffer.enabled ? "#10b981" : "#94a3b8" }}>
+                            {homeSettings.summerOffer.enabled ? "ENABLED" : "DISABLED"}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className={styles.inputField} style={{ marginBottom: "20px" }}>
+                        <label>Section Header Tab Title</label>
+                        <input
+                          type="text"
+                          value={homeSettings.summerOffer.title || ""}
+                          onChange={(e) =>
+                            setHomeSettings((prev) => ({
+                              ...prev,
+                              summerOffer: { ...prev.summerOffer, title: e.target.value },
+                            }))
+                          }
+                          placeholder="e.g. PREMIUM SUMMER OFFER"
+                        />
+                      </div>
+
+                      {/* Offers List */}
+                      <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: "24px" }}>
+                        <label style={{ fontSize: "13px", fontWeight: "750", color: "#334155" }}>
+                          Offer Cards ({homeSettings.summerOffer.offers.length})
+                        </label>
+
+                        {homeSettings.summerOffer.offers.map((offer, idx) => (
+                          <div
+                            key={offer.id || idx}
+                            style={{
+                              display: "grid",
+                              gridTemplateColumns: "110px 1fr 1fr 140px 100px 90px",
+                              alignItems: "center",
+                              gap: "12px",
+                              background: offer.enabled !== false ? "#f8fafc" : "#f1f5f9",
+                              border: "1px solid #e2e8f0",
+                              borderRadius: "8px",
+                              padding: "12px 16px",
+                              opacity: offer.enabled !== false ? 1 : 0.6,
+                            }}
+                          >
+                            {/* Preview */}
+                            <div style={{ position: "relative", width: "100px", height: "60px", background: "#ffffff", border: "1px solid #cbd5e1", borderRadius: "6px", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+                              {offer.imageUrl ? (
+                                <Image
+                                  src={optimizeAdminPreview(offer.imageUrl)}
+                                  alt={offer.title || "Offer"}
+                                  width={100}
+                                  height={60}
+                                  style={{ objectFit: "contain" }}
+                                />
+                              ) : (
+                                <span style={{ fontSize: "10px", color: "#94a3b8" }}>No Image</span>
+                              )}
+                            </div>
+
+                            {/* Title */}
+                            <div>
+                              <input
+                                type="text"
+                                value={offer.title || ""}
+                                onChange={(e) => {
+                                  const updated = [...homeSettings.summerOffer.offers];
+                                  updated[idx] = { ...updated[idx], title: e.target.value };
+                                  setHomeSettings((prev) => ({
+                                    ...prev,
+                                    summerOffer: { ...prev.summerOffer, offers: updated },
+                                  }));
+                                }}
+                                placeholder="Offer Title (e.g. Summer Offer 1)"
+                                style={{ width: "100%", fontWeight: "700", fontSize: "13px", padding: "6px 8px", borderRadius: "4px", border: "1px solid #cbd5e1" }}
+                              />
+                            </div>
+
+                            {/* Link */}
+                            <div>
+                              <input
+                                type="text"
+                                value={offer.link || ""}
+                                onChange={(e) => {
+                                  const updated = [...homeSettings.summerOffer.offers];
+                                  updated[idx] = { ...updated[idx], link: e.target.value };
+                                  setHomeSettings((prev) => ({
+                                    ...prev,
+                                    summerOffer: { ...prev.summerOffer, offers: updated },
+                                  }));
+                                }}
+                                placeholder="Target Link (e.g. /shop?offer=1)"
+                                style={{ width: "100%", fontSize: "12px", padding: "6px 8px", borderRadius: "4px", border: "1px solid #cbd5e1" }}
+                              />
+                            </div>
+
+                            {/* File Upload Button */}
+                            <div>
+                              <label className={styles.uploadBtn} style={{ fontSize: "11px", padding: "6px 8px", width: "100%", textAlign: "center", display: "block" }}>
+                                📁 Replace Banner
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  style={{ display: "none" }}
+                                  onChange={async (e) => {
+                                    const file = e.target.files?.[0];
+                                    if (!file) return;
+                                    const url = await uploadCustomMedia(file, "skill-store/offers");
+                                    if (url) {
+                                      const updated = [...homeSettings.summerOffer.offers];
+                                      updated[idx] = { ...updated[idx], imageUrl: url };
+                                      setHomeSettings((prev) => ({
+                                        ...prev,
+                                        summerOffer: { ...prev.summerOffer, offers: updated },
+                                      }));
+                                    }
+                                  }}
+                                />
+                              </label>
+                            </div>
+
+                            {/* Toggle active */}
+                            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                              <input
+                                type="checkbox"
+                                id={`offer-toggle-${idx}`}
+                                checked={offer.enabled !== false}
+                                onChange={(e) => {
+                                  const updated = [...homeSettings.summerOffer.offers];
+                                  updated[idx] = { ...updated[idx], enabled: e.target.checked };
+                                  setHomeSettings((prev) => ({
+                                    ...prev,
+                                    summerOffer: { ...prev.summerOffer, offers: updated },
+                                  }));
+                                }}
+                                style={{ width: "16px", height: "16px", cursor: "pointer" }}
+                              />
+                              <label htmlFor={`offer-toggle-${idx}`} style={{ fontSize: "11px", fontWeight: "700", cursor: "pointer" }}>
+                                {offer.enabled !== false ? "Visible" : "Hidden"}
+                              </label>
+                            </div>
+
+                            {/* Actions */}
+                            <div style={{ display: "flex", alignItems: "center", gap: "4px", justifyContent: "flex-end" }}>
+                              <button
+                                type="button"
+                                title="Move Up"
+                                disabled={idx === 0}
+                                onClick={() => {
+                                  if (idx === 0) return;
+                                  const updated = [...homeSettings.summerOffer.offers];
+                                  const temp = updated[idx];
+                                  updated[idx] = updated[idx - 1];
+                                  updated[idx - 1] = temp;
+                                  setHomeSettings((prev) => ({
+                                    ...prev,
+                                    summerOffer: { ...prev.summerOffer, offers: updated },
+                                  }));
+                                }}
+                                style={{ padding: "4px 8px", cursor: idx === 0 ? "not-allowed" : "pointer", borderRadius: "4px", border: "1px solid #cbd5e1", background: "#ffffff" }}
+                              >
+                                ↑
+                              </button>
+                              <button
+                                type="button"
+                                title="Move Down"
+                                disabled={idx === homeSettings.summerOffer.offers.length - 1}
+                                onClick={() => {
+                                  if (idx === homeSettings.summerOffer.offers.length - 1) return;
+                                  const updated = [...homeSettings.summerOffer.offers];
+                                  const temp = updated[idx];
+                                  updated[idx] = updated[idx + 1];
+                                  updated[idx + 1] = temp;
+                                  setHomeSettings((prev) => ({
+                                    ...prev,
+                                    summerOffer: { ...prev.summerOffer, offers: updated },
+                                  }));
+                                }}
+                                style={{ padding: "4px 8px", cursor: idx === homeSettings.summerOffer.offers.length - 1 ? "not-allowed" : "pointer", borderRadius: "4px", border: "1px solid #cbd5e1", background: "#ffffff" }}
+                              >
+                                ↓
+                              </button>
+                              <button
+                                type="button"
+                                title="Delete Offer"
+                                onClick={() => {
+                                  if (!confirm(`Delete ${offer.title || "this offer"}?`)) return;
+                                  const updated = homeSettings.summerOffer.offers.filter((_, i) => i !== idx);
+                                  setHomeSettings((prev) => ({
+                                    ...prev,
+                                    summerOffer: { ...prev.summerOffer, offers: updated },
+                                  }));
+                                }}
+                                style={{ padding: "4px 8px", cursor: "pointer", borderRadius: "4px", border: "1px solid #fecaca", background: "#fee2e2", color: "#b91c1c" }}
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Add New Offer Card Inline Box */}
+                      <div style={{ background: "#f8fafc", border: "1px dashed #cbd5e1", borderRadius: "8px", padding: "16px", marginBottom: "16px" }}>
+                        <span style={{ fontSize: "13px", fontWeight: "750", color: "#1e293b", display: "block", marginBottom: "10px" }}>
+                          + Add New Offer Banner
+                        </span>
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 140px auto", gap: "10px", alignItems: "center" }}>
+                          <input
+                            type="text"
+                            placeholder="Offer Title (e.g. Monsoon Washer Deals)"
+                            value={newOfferForm.title}
+                            onChange={(e) => setNewOfferForm((prev) => ({ ...prev, title: e.target.value }))}
+                            style={{ fontSize: "12px", padding: "6px 8px", borderRadius: "4px", border: "1px solid #cbd5e1" }}
+                          />
+                          <input
+                            type="text"
+                            placeholder="Link URL (e.g. /shop?offer=special)"
+                            value={newOfferForm.link}
+                            onChange={(e) => setNewOfferForm((prev) => ({ ...prev, link: e.target.value }))}
+                            style={{ fontSize: "12px", padding: "6px 8px", borderRadius: "4px", border: "1px solid #cbd5e1" }}
+                          />
+                          <label className={styles.uploadBtn} style={{ fontSize: "11px", padding: "6px 8px", textAlign: "center", display: "block" }}>
+                            {isUploadingOfferImg ? "Uploading..." : "📁 Banner Image"}
+                            <input
+                              type="file"
+                              accept="image/*"
+                              style={{ display: "none" }}
+                              onChange={async (e) => {
+                                const file = e.target.files?.[0];
+                                if (!file) return;
+                                setIsUploadingOfferImg(true);
+                                const url = await uploadCustomMedia(file, "skill-store/offers");
+                                setIsUploadingOfferImg(false);
+                                if (url) setNewOfferForm((prev) => ({ ...prev, imageUrl: url }));
+                              }}
+                            />
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (!newOfferForm.imageUrl.trim()) {
+                                alert("Please upload or provide an image for the offer banner.");
+                                return;
+                              }
+                              const newOffer: ISummerOfferItem = {
+                                id: `offer-${Date.now()}`,
+                                title: newOfferForm.title.trim() || `Offer ${homeSettings.summerOffer.offers.length + 1}`,
+                                imageUrl: newOfferForm.imageUrl.trim(),
+                                link: newOfferForm.link.trim() || "/shop",
+                                enabled: true,
+                                order: homeSettings.summerOffer.offers.length + 1,
+                              };
+                              setHomeSettings((prev) => ({
+                                ...prev,
+                                summerOffer: {
+                                  ...prev.summerOffer,
+                                  offers: [...prev.summerOffer.offers, newOffer],
+                                },
+                              }));
+                              setNewOfferForm({ title: "", imageUrl: "", link: "/shop" });
+                            }}
+                            className={styles.secondaryBtn}
+                            style={{ fontSize: "12px", padding: "6px 14px", height: "36px" }}
+                          >
+                            Add Offer
+                          </button>
+                        </div>
+                      </div>
+
+                      <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                        <button
+                          type="button"
+                          onClick={() => saveHomeSettingsSection("summerOffer", homeSettings.summerOffer)}
+                          className={styles.primaryBtn}
+                          disabled={homeCmsSavingSection === "summerOffer"}
+                        >
+                          {homeCmsSavingSection === "summerOffer" ? "Saving..." : "💾 Save Summer Offers"}
+                        </button>
+                      </div>
+                    </div>
+
+                  </div>
+                </div>
+              )}
+
+              {/* ======================================================== */}
+              {/* TAB 7: CUSTOMER REVIEWS MODERATION                      */}
               {/* ======================================================== */}
               {activeTab === "reviews" && (
                 <div className={styles.tabContent}>

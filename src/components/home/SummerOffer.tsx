@@ -1,11 +1,53 @@
-import React from "react";
+"use client";
+
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import styles from "./SummerOffer.module.css";
-import { SUMMER_OFFERS } from "@/data/home";
 import { optimizeProductDetail } from "@/lib/imageOptimization";
+import { DEFAULT_HOME_SETTINGS, ISummerOfferItem } from "@/lib/homeDefaults";
 
 export default function SummerOffer() {
+  const [enabled, setEnabled] = useState(true);
+  const [title, setTitle] = useState("PREMIUM SUMMER OFFER");
+  const [offers, setOffers] = useState<ISummerOfferItem[]>(DEFAULT_HOME_SETTINGS.summerOffer.offers);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+    async function loadSummerOffers() {
+      try {
+        const res = await fetch("/api/home-settings");
+        if (res.ok) {
+          const json = await res.json();
+          if (json.success && json.data?.summerOffer) {
+            if (isMounted) {
+              setEnabled(Boolean(json.data.summerOffer.enabled));
+              setTitle(json.data.summerOffer.title || "PREMIUM SUMMER OFFER");
+              if (Array.isArray(json.data.summerOffer.offers)) {
+                setOffers(json.data.summerOffer.offers);
+              }
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load Summer Offer settings:", err);
+      } finally {
+        if (isMounted) setIsLoaded(true);
+      }
+    }
+    loadSummerOffers();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const activeOffers = offers.filter((o) => o.enabled !== false && o.imageUrl);
+
+  if (isLoaded && (!enabled || activeOffers.length === 0)) {
+    return null;
+  }
+
   return (
     <section className={styles.section}>
       <div className="container">
@@ -13,7 +55,7 @@ export default function SummerOffer() {
         <div className={styles.headerRow}>
           {/* Angled Section Tab */}
           <div className={styles.titleTab}>
-            <h2 className={styles.title}>PREMIUM SUMMER OFFER</h2>
+            <h2 className={styles.title}>{title}</h2>
           </div>
           {/* Bottom underline */}
           <div className={styles.headerLine}></div>
@@ -24,12 +66,12 @@ export default function SummerOffer() {
           <div className={styles.marqueeTrack}>
             {/* Copy 1 */}
             <div className={styles.bannersRow}>
-              {SUMMER_OFFERS.map((offer) => (
-                <Link href={offer.link} key={`${offer.id}-1`} className={styles.bannerCard}>
+              {activeOffers.map((offer) => (
+                <Link href={offer.link || "/shop"} key={`${offer.id}-1`} className={styles.bannerCard}>
                   <div className={styles.imageWrapper}>
                     <Image
                       src={optimizeProductDetail(offer.imageUrl)}
-                      alt={offer.title}
+                      alt={offer.title || title}
                       width={560}
                       height={340}
                       loading="lazy"
@@ -44,12 +86,12 @@ export default function SummerOffer() {
 
             {/* Copy 2 (for seamless infinite loop) */}
             <div className={styles.bannersRow} aria-hidden="true">
-              {SUMMER_OFFERS.map((offer) => (
-                <Link href={offer.link} key={`${offer.id}-2`} className={styles.bannerCard}>
+              {activeOffers.map((offer) => (
+                <Link href={offer.link || "/shop"} key={`${offer.id}-2`} className={styles.bannerCard}>
                   <div className={styles.imageWrapper}>
                     <Image
                       src={optimizeProductDetail(offer.imageUrl)}
-                      alt={offer.title}
+                      alt={offer.title || title}
                       width={560}
                       height={340}
                       loading="lazy"

@@ -152,6 +152,82 @@ const ReviewSchema: Schema = new Schema(
   { timestamps: true }
 );
 
+import {
+  IBrandItem,
+  IUspItem,
+  ISummerOfferItem,
+  IHomeSettingsConfig,
+  DEFAULT_HOME_SETTINGS,
+} from "./homeDefaults";
+
+export type { IBrandItem, IUspItem, ISummerOfferItem, IHomeSettingsConfig };
+export { DEFAULT_HOME_SETTINGS };
+
+export interface IHomeSettings extends Document, IHomeSettingsConfig {}
+
+const BrandItemSchema = new Schema(
+  {
+    id: { type: String, required: true },
+    slug: { type: String, required: true },
+    name: { type: String, required: true },
+    logo: { type: String, required: true },
+    tagline: { type: String, default: "" },
+    width: { type: Number, default: 110 },
+    height: { type: Number, default: 34 },
+    enabled: { type: Boolean, default: true },
+    order: { type: Number, default: 0 },
+  },
+  { _id: false }
+);
+
+const UspItemSchema = new Schema(
+  {
+    id: { type: String, required: true },
+    text: { type: String, required: true },
+    enabled: { type: Boolean, default: true },
+    order: { type: Number, default: 0 },
+  },
+  { _id: false }
+);
+
+const SummerOfferItemSchema = new Schema(
+  {
+    id: { type: String, required: true },
+    title: { type: String, default: "" },
+    imageUrl: { type: String, required: true },
+    link: { type: String, default: "/shop" },
+    enabled: { type: Boolean, default: true },
+    order: { type: Number, default: 0 },
+  },
+  { _id: false }
+);
+
+const HomeSettingsSchema = new Schema(
+  {
+    id: { type: String, required: true, unique: true, default: "default" },
+    announcement: {
+      enabled: { type: Boolean, default: true },
+      text: { type: String, default: "*2% Discount On Prepaid Orders / Free Shipment & COD Available*" },
+    },
+    brandsSection: {
+      enabled: { type: Boolean, default: true },
+      title: { type: String, default: "SHOP BY BRANDS" },
+      subtitle: { type: String, default: "OFFICIAL PARTNERS" },
+      brands: { type: [BrandItemSchema], default: [] },
+    },
+    trustMarquee: {
+      enabled: { type: Boolean, default: true },
+      items: { type: [UspItemSchema], default: [] },
+    },
+    summerOffer: {
+      enabled: { type: Boolean, default: true },
+      title: { type: String, default: "PREMIUM SUMMER OFFER" },
+      offers: { type: [SummerOfferItemSchema], default: [] },
+    },
+  },
+  { timestamps: true }
+);
+
 // Exports
 export const Product: Model<IProduct> =
   mongoose.models.Product || mongoose.model<IProduct>("Product", ProductSchema);
@@ -167,6 +243,9 @@ export const Enquiry: Model<IEnquiry> =
 
 export const Review: Model<IReview> =
   mongoose.models.Review || mongoose.model<IReview>("Review", ReviewSchema);
+
+export const HomeSettings: Model<IHomeSettings> =
+  mongoose.models.HomeSettings || mongoose.model<IHomeSettings>("HomeSettings", HomeSettingsSchema);
 
 export { default as Order } from "@/models/Order";
 export type { IOrder, IOrderItem, IShippingAddress } from "@/models/Order";

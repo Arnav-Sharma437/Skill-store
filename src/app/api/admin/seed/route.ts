@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/db";
-import { Product, Category, Banner, Enquiry } from "@/lib/schemas";
+import { Product, Category, Banner, Enquiry, HomeSettings, DEFAULT_HOME_SETTINGS } from "@/lib/schemas";
 import { HERO_SLIDES, BRAND_CATEGORIES, BEST_SELLERS } from "@/data/home";
 
 export async function GET() {
@@ -165,6 +165,12 @@ export async function GET() {
         email: "arnav@gmail.com",
         message: "This is a test mail. I wanted to verify the high pressure washer cd400.",
       });
+    }
+
+    // 5. Seed HomeSettings if empty
+    const homeSettingsCount = await HomeSettings.countDocuments({ id: "default" });
+    if (homeSettingsCount === 0) {
+      await HomeSettings.create(DEFAULT_HOME_SETTINGS);
     }
 
     return NextResponse.json({ success: true, message: "Database seeded successfully!" });
