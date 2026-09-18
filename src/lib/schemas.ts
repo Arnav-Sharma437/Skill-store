@@ -121,6 +121,30 @@ const CategorySchema: Schema = new Schema(
   { timestamps: true }
 );
 
+// Brand Interface
+export interface IBrand extends Document {
+  id: string; // slug e.g. "tuqo", "pumpkin"
+  name: string; // e.g. "TUQO"
+  logo: string;
+  tagline?: string;
+  description?: string;
+  enabled?: boolean;
+  order?: number;
+}
+
+const BrandSchema: Schema = new Schema(
+  {
+    id: { type: String, required: true, unique: true },
+    name: { type: String, required: true },
+    logo: { type: String, required: true },
+    tagline: { type: String, default: "" },
+    description: { type: String, default: "" },
+    enabled: { type: Boolean, default: true },
+    order: { type: Number, default: 0 },
+  },
+  { timestamps: true }
+);
+
 // Banner Interface
 export interface IBanner extends Document {
   id: string;
@@ -268,6 +292,9 @@ export const Product: Model<IProduct> =
 
 export const Category: Model<ICategory> =
   mongoose.models.Category || mongoose.model<ICategory>("Category", CategorySchema);
+
+export const Brand: Model<IBrand> =
+  mongoose.models.Brand || mongoose.model<IBrand>("Brand", BrandSchema);
 
 export const Banner: Model<IBanner> =
   mongoose.models.Banner || mongoose.model<IBanner>("Banner", BannerSchema);

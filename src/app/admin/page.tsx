@@ -34,6 +34,16 @@ interface ICategory {
   subcategories?: ISubCategory[];
 }
 
+interface IBrand {
+  id: string;
+  name: string;
+  logo: string;
+  tagline?: string;
+  description?: string;
+  enabled?: boolean;
+  order?: number;
+}
+
 interface IProduct {
   id: string;
   title: string;
@@ -140,7 +150,7 @@ const DEFAULT_SYSTEM_CATEGORIES: ICategory[] = Object.entries(BRAND_CATEGORIES).
 
 export default function AdminDashboard() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<"analytics" | "products" | "categories" | "orders" | "banners" | "homepage" | "reviews">("analytics");
+  const [activeTab, setActiveTab] = useState<"analytics" | "products" | "categories" | "brands" | "orders" | "banners" | "homepage" | "reviews">("analytics");
   const [authorized, setAuthorized] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -148,6 +158,7 @@ export default function AdminDashboard() {
   // Data States
   const [banners, setBanners] = useState<IBanner[]>([]);
   const [categories, setCategories] = useState<ICategory[]>(DEFAULT_SYSTEM_CATEGORIES);
+  const [brands, setBrands] = useState<IBrand[]>([]);
   const [products, setProducts] = useState<IProduct[]>([]);
   const [enquiries, setEnquiries] = useState<IEnquiry[]>([]);
   const [reviews, setReviews] = useState<IAdminReview[]>([]);
@@ -156,6 +167,30 @@ export default function AdminDashboard() {
   const [orders, setOrders] = useState<IAdminOrder[]>([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [orderActionLoading, setOrderActionLoading] = useState<string | null>(null);
+
+  // Brand Management State
+  const [brandSearch, setBrandSearch] = useState("");
+  const [isBrandModalOpen, setIsBrandModalOpen] = useState(false);
+  const [editingBrand, setEditingBrand] = useState<IBrand | null>(null);
+  const [brandActionLoading, setBrandActionLoading] = useState<string | null>(null);
+  const [isUploadingBrandLogoImg, setIsUploadingBrandLogoImg] = useState(false);
+  const [brandForm, setBrandForm] = useState<{
+    id: string;
+    name: string;
+    logo: string;
+    tagline: string;
+    description: string;
+    enabled: boolean;
+    order: number;
+  }>({
+    id: "",
+    name: "",
+    logo: "",
+    tagline: "",
+    description: "",
+    enabled: true,
+    order: 0,
+  });
 
   // Homepage CMS State
   const [homeSettings, setHomeSettings] = useState<{
@@ -287,6 +322,21 @@ export default function AdminDashboard() {
     }
   }, []);
 
+  const fetchBrands = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/admin/brands?_t=${Date.now()}`, { cache: "no-store" });
+      const json = await res.json();
+      if (json.success && Array.isArray(json.data)) {
+        setBrands(json.data);
+      } else {
+        setBrands([]);
+      }
+    } catch (e) {
+      console.error("Error fetching brands:", e);
+      setBrands([]);
+    }
+  }, []);
+
   const fetchProducts = useCallback(async () => {
     try {
       const res = await fetch(`/api/admin/products?_t=${Date.now()}`, { cache: "no-store" });
@@ -403,6 +453,7 @@ export default function AdminDashboard() {
       await Promise.all([
         fetchBanners(),
         fetchCategories(),
+        fetchBrands(),
         fetchProducts(),
         fetchEnquiries(),
         fetchReviews(),
@@ -414,7 +465,7 @@ export default function AdminDashboard() {
     } finally {
       setLoading(false);
     }
-  }, [fetchBanners, fetchCategories, fetchProducts, fetchEnquiries, fetchReviews, fetchOrders, fetchHomeSettings]);
+  }, [fetchBanners, fetchCategories, fetchBrands, fetchProducts, fetchEnquiries, fetchReviews, fetchOrders, fetchHomeSettings]);
 
 
   // Auth check
@@ -444,7 +495,7 @@ export default function AdminDashboard() {
   // --- Upload Handlers ---
   const handleFileUpload = async (
     file: File,
-    targetType: "main_image" | "video" | "gallery" | "banner" | "category"
+    targetType: "main_image" | "video" | "gallery" | "banner" | "category" | "brand"
   ) => {
     setUploadError(null);
     if (targetType === "main_image") setIsUploadingImage(true);
@@ -452,6 +503,7 @@ export default function AdminDashboard() {
     if (targetType === "gallery") setIsUploadingGallery(true);
     if (targetType === "banner") setIsUploadingBanner(true);
     if (targetType === "category") setIsUploadingCategoryImg(true);
+    if (targetType === "brand") setIsUploadingBrandLogoImg(true);
 
     try {
       // Automatically pre-compress and resize images (max width 1920px WebP) before upload
@@ -468,6 +520,7 @@ export default function AdminDashboard() {
       let uploadFolder = "skill-store/products";
       if (targetType === "banner") uploadFolder = "skill-store/banners";
       if (targetType === "category") uploadFolder = "skill-store/categories";
+      if (targetType === "brand") uploadFolder = "skill-store/brands";
 
       const formData = new FormData();
       formData.append("file", fileToUpload);
@@ -496,6 +549,8 @@ export default function AdminDashboard() {
         setBannerForm((prev) => ({ ...prev, imageUrl: data.url }));
       } else if (targetType === "category") {
         setCategoryForm((prev) => ({ ...prev, imageUrl: data.url }));
+      } else if (targetType === "brand") {
+        setBrandForm((prev) => ({ ...prev, logo: data.url }));
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Error uploading file";
@@ -507,6 +562,7 @@ export default function AdminDashboard() {
       if (targetType === "gallery") setIsUploadingGallery(false);
       if (targetType === "banner") setIsUploadingBanner(false);
       if (targetType === "category") setIsUploadingCategoryImg(false);
+      if (targetType === "brand") setIsUploadingBrandLogoImg(false);
     }
   };
 
@@ -866,6 +922,142 @@ export default function AdminDashboard() {
     }
   };
 
+  // --- Brand CRUD Handlers ---
+  const openAddBrandModal = () => {
+    setEditingBrand(null);
+    setBrandForm({
+      id: "",
+      name: "",
+      logo: "",
+      tagline: "",
+      description: "",
+      enabled: true,
+      order: brands.length,
+    });
+    setUploadError(null);
+    setIsBrandModalOpen(true);
+  };
+
+  const openEditBrandModal = (brand: IBrand) => {
+    setEditingBrand(brand);
+    setBrandForm({
+      id: brand.id,
+      name: brand.name,
+      logo: brand.logo,
+      tagline: brand.tagline || "",
+      description: brand.description || "",
+      enabled: brand.enabled !== false,
+      order: brand.order || 0,
+    });
+    setUploadError(null);
+    setIsBrandModalOpen(true);
+  };
+
+  const handleBrandSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!brandForm.name.trim()) {
+      alert("Please enter a brand name");
+      return;
+    }
+    if (!brandForm.logo.trim()) {
+      alert("Please upload or provide a brand logo");
+      return;
+    }
+
+    const slug = (editingBrand ? editingBrand.id : brandForm.id.trim() || brandForm.name.trim())
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "");
+
+    setBrandActionLoading("save");
+    try {
+      const isEdit = !!editingBrand;
+      const res = await fetch("/api/admin/brands", {
+        method: isEdit ? "PUT" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: slug,
+          name: brandForm.name.trim(),
+          logo: brandForm.logo.trim(),
+          tagline: brandForm.tagline.trim(),
+          description: brandForm.description.trim(),
+          enabled: brandForm.enabled,
+          order: Number(brandForm.order) || 0,
+        }),
+      });
+
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.error || "Failed to save brand");
+      }
+
+      await fetchBrands();
+      setIsBrandModalOpen(false);
+      setEditingBrand(null);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Error saving brand";
+      alert(`Error: ${msg}`);
+    } finally {
+      setBrandActionLoading(null);
+    }
+  };
+
+  const handleDeleteBrand = async (brandId: string) => {
+    const brandToDelete = brands.find((b) => b.id === brandId);
+    const brandName = brandToDelete ? brandToDelete.name : brandId;
+    if (!confirm(`Are you sure you want to permanently delete the brand "${brandName}" (${brandId})?\n\nThis will remove the brand from the store.`)) return;
+
+    const idToDelete = brandId.trim().toLowerCase();
+    setBrands((prev) => prev.filter((b) => b.id !== idToDelete));
+    setBrandActionLoading(idToDelete);
+    try {
+      const res = await fetch(`/api/admin/brands?id=${encodeURIComponent(idToDelete)}`, {
+        method: "DELETE",
+        cache: "no-store",
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.error || "Failed to delete brand");
+      }
+      await fetchBrands();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Error deleting brand";
+      alert(`Error: ${msg}`);
+      await fetchBrands();
+    } finally {
+      setBrandActionLoading(null);
+    }
+  };
+
+  const handleToggleBrand = async (brand: IBrand) => {
+    const newEnabled = brand.enabled === false ? true : false;
+    setBrands((prev) =>
+      prev.map((b) => (b.id === brand.id ? { ...b, enabled: newEnabled } : b))
+    );
+    setBrandActionLoading(`toggle-${brand.id}`);
+    try {
+      const res = await fetch("/api/admin/brands", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: brand.id,
+          enabled: newEnabled,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.error || "Failed to update brand visibility");
+      }
+      await fetchBrands();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Error toggling brand";
+      alert(`Error: ${msg}`);
+      await fetchBrands();
+    } finally {
+      setBrandActionLoading(null);
+    }
+  };
+
   // --- Shiprocket & Order Actions ---
   const handleRetryShiprocket = async (orderNumber: string) => {
     setOrderActionLoading(orderNumber);
@@ -1173,6 +1365,21 @@ export default function AdminDashboard() {
               </svg>
               <span>Categories</span>
               {categories.length > 0 && <span className={styles.tabBadge}>{categories.length}</span>}
+            </button>
+
+            <button
+              onClick={() => {
+                setActiveTab("brands");
+                setIsMobileMenuOpen(false);
+              }}
+              className={`${styles.sidebarTab} ${activeTab === "brands" ? styles.activeTab : ""}`}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className={styles.tabIcon}>
+                <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+                <line x1="7" y1="7" x2="7.01" y2="7"></line>
+              </svg>
+              <span>Brands</span>
+              {brands.length > 0 && <span className={styles.tabBadge}>{brands.length}</span>}
             </button>
 
             <button
@@ -1596,11 +1803,9 @@ export default function AdminDashboard() {
                       className={styles.filterSelect}
                     >
                       <option value="all">All Brands</option>
-                      <option value="tuqo">TUQO</option>
-                      <option value="pumpkin">PUMPKIN</option>
-                      <option value="mitsuki">MITSUKI</option>
-                      <option value="metso">METSO</option>
-                      <option value="costec">COSTEC</option>
+                      {brands.map((b) => (
+                        <option key={b.id} value={b.id}>{b.name}</option>
+                      ))}
                     </select>
 
                     <select
@@ -1811,12 +2016,9 @@ export default function AdminDashboard() {
                       className={styles.filterSelect}
                     >
                       <option value="all">All Brands</option>
-                      <option value="tuqo">TUQO</option>
-                      <option value="pumpkin">PUMPKIN</option>
-                      <option value="mitsuki">MITSUKI</option>
-                      <option value="metso">METSO</option>
-                      <option value="costec">COSTEC</option>
-                      <option value="ultratouch">Ultra TOUCH</option>
+                      {brands.map((b) => (
+                        <option key={b.id} value={b.id}>{b.name}</option>
+                      ))}
                     </select>
                   </div>
 
@@ -1895,6 +2097,173 @@ export default function AdminDashboard() {
                                   title="Delete Category"
                                 >
                                   {categoryActionLoading === cat.id ? "..." : "🗑️"}
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                  </div>
+                </div>
+              )}
+
+              {/* ======================================================== */}
+              {/* TAB: BRANDS MANAGEMENT                                  */}
+              {/* ======================================================== */}
+              {activeTab === "brands" && (
+                <div className={styles.tabContent}>
+                  <div className={styles.flexHeader}>
+                    <div>
+                      <h2>Brand Management</h2>
+                      <p style={{ color: "#64748b", fontSize: "13px", marginTop: "2px" }}>
+                        Manage official brand partners, brand logos, taglines, and store visibility
+                      </p>
+                    </div>
+                    <button onClick={openAddBrandModal} className={styles.addProductBtn}>
+                      <span>+ Add New Brand</span>
+                    </button>
+                  </div>
+
+                  {/* Search Bar */}
+                  <div className={styles.searchFilterGrid} style={{ marginTop: "16px", gridTemplateColumns: "1fr" }}>
+                    <div className={styles.searchBox}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2.5" className={styles.searchIcon}>
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                      </svg>
+                      <input
+                        type="text"
+                        placeholder="Search brands by name, slug or tagline..."
+                        value={brandSearch}
+                        onChange={(e) => setBrandSearch(e.target.value)}
+                        className={styles.searchInput}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Brands Grid */}
+                  <div className={styles.categoryGrid}>
+                    {brands
+                      .filter((b) => {
+                        if (!brandSearch.trim()) return true;
+                        const query = brandSearch.toLowerCase();
+                        return (
+                          b.name.toLowerCase().includes(query) ||
+                          b.id.toLowerCase().includes(query) ||
+                          (b.tagline && b.tagline.toLowerCase().includes(query))
+                        );
+                      })
+                      .map((brand) => {
+                        const linkedProds = products.filter(
+                          (p) => p.brand?.toLowerCase() === brand.id.toLowerCase() || p.brand?.toLowerCase() === brand.name.toLowerCase()
+                        );
+                        const linkedCats = categories.filter(
+                          (c) => c.brand?.toLowerCase() === brand.id.toLowerCase() || c.brand?.toLowerCase() === brand.name.toLowerCase()
+                        );
+                        const isEnabled = brand.enabled !== false;
+
+                        return (
+                          <div key={brand.id} className={styles.categoryCard} style={{ opacity: isEnabled ? 1 : 0.65 }}>
+                            <div className={styles.categoryCardTop}>
+                              <div className={styles.categoryThumbBox} style={{ background: "#ffffff", padding: "4px" }}>
+                                <Image
+                                  src={optimizeAdminPreview(brand.logo || "/images/brands/tuqo.svg")}
+                                  alt={brand.name}
+                                  width={70}
+                                  height={36}
+                                  loading="lazy"
+                                  style={{ objectFit: "contain" }}
+                                />
+                              </div>
+                              <div className={styles.categoryCardInfo}>
+                                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px" }}>
+                                  <h3 className={styles.categoryCardTitle} title={brand.name}>
+                                    {brand.name}
+                                  </h3>
+                                  <span
+                                    style={{
+                                      fontSize: "11px",
+                                      fontWeight: 700,
+                                      padding: "2px 8px",
+                                      borderRadius: "12px",
+                                      background: isEnabled ? "#dcfce7" : "#fee2e2",
+                                      color: isEnabled ? "#166534" : "#991b1b",
+                                    }}
+                                  >
+                                    {isEnabled ? "Active" : "Disabled"}
+                                  </span>
+                                </div>
+                                <div className={styles.categoryCardMeta}>
+                                  <span className={styles.categorySlugBadge}>/shop/{brand.id}</span>
+                                </div>
+                              </div>
+                            </div>
+
+                            {brand.tagline && (
+                              <p style={{ fontSize: "12px", color: "#64748b", margin: "6px 0 2px", fontStyle: "italic", lineHeight: 1.4 }}>
+                                &quot;{brand.tagline}&quot;
+                              </p>
+                            )}
+
+                            {brand.description && (
+                              <p style={{ fontSize: "12px", color: "#475569", margin: "4px 0", lineHeight: 1.4 }}>
+                                {brand.description}
+                              </p>
+                            )}
+
+                            <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", margin: "8px 0" }}>
+                              <span className={styles.categoryProdCount} style={{ fontSize: "11px" }}>
+                                📦 {linkedProds.length} Products
+                              </span>
+                              <span className={styles.categoryProdCount} style={{ fontSize: "11px", background: "#f0fdf4", borderColor: "#bbf7d0", color: "#166534" }}>
+                                🗂️ {linkedCats.length} Categories
+                              </span>
+                            </div>
+
+                            <div className={styles.categoryCardBottom}>
+                              <button
+                                type="button"
+                                onClick={() => handleToggleBrand(brand)}
+                                style={{
+                                  fontSize: "11.5px",
+                                  fontWeight: 600,
+                                  background: isEnabled ? "#fef2f2" : "#f0fdf4",
+                                  color: isEnabled ? "#b91c1c" : "#15803d",
+                                  border: `1px solid ${isEnabled ? "#fecaca" : "#bbf7d0"}`,
+                                  padding: "4px 10px",
+                                  borderRadius: "6px",
+                                  cursor: "pointer",
+                                }}
+                                disabled={brandActionLoading === `toggle-${brand.id}`}
+                              >
+                                {brandActionLoading === `toggle-${brand.id}` ? "Updating..." : isEnabled ? "Disable" : "Enable"}
+                              </button>
+
+                              <div className={styles.categoryCardActions}>
+                                <Link
+                                  href={`/shop/${brand.id}`}
+                                  target="_blank"
+                                  className={styles.iconActionBtn}
+                                  title="View Brand Store Page"
+                                  style={{ textDecoration: "none" }}
+                                >
+                                  🔗
+                                </Link>
+                                <button
+                                  onClick={() => openEditBrandModal(brand)}
+                                  className={styles.iconActionBtn}
+                                  title="Edit Brand"
+                                >
+                                  ✏️
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteBrand(brand.id)}
+                                  className={styles.iconActionBtn}
+                                  style={{ color: "#ef4444" }}
+                                  disabled={brandActionLoading === brand.id}
+                                  title="Delete Brand"
+                                >
+                                  {brandActionLoading === brand.id ? "..." : "🗑️"}
                                 </button>
                               </div>
                             </div>
@@ -3207,18 +3576,15 @@ export default function AdminDashboard() {
                       onChange={(e) => {
                         const newBrand = e.target.value;
                         setProductForm((prev) => {
-                          const brandCats = BRAND_CATEGORIES[newBrand]?.categories || [];
+                          const brandCats = categories.filter((c) => c.brand?.toLowerCase() === newBrand.toLowerCase());
                           const nextCat = brandCats.length > 0 ? brandCats[0].id : prev.category;
                           return { ...prev, brand: newBrand, category: nextCat };
                         });
                       }}
                     >
-                      <option value="tuqo">TUQO</option>
-                      <option value="pumpkin">PUMPKIN</option>
-                      <option value="mitsuki">MITSUKI</option>
-                      <option value="metso">METSO</option>
-                      <option value="costec">COSTEC</option>
-                      <option value="ultratouch">Ultra TOUCH</option>
+                      {brands.map((b) => (
+                        <option key={b.id} value={b.id}>{b.name}</option>
+                      ))}
                     </select>
                   </div>
 
@@ -3937,12 +4303,9 @@ export default function AdminDashboard() {
                   value={categoryForm.brand}
                   onChange={(e) => setCategoryForm({ ...categoryForm, brand: e.target.value })}
                 >
-                  <option value="tuqo">TUQO</option>
-                  <option value="pumpkin">PUMPKIN</option>
-                  <option value="mitsuki">MITSUKI</option>
-                  <option value="metso">METSO</option>
-                  <option value="costec">COSTEC</option>
-                  <option value="ultratouch">Ultra TOUCH</option>
+                  {brands.map((b) => (
+                    <option key={b.id} value={b.id}>{b.name}</option>
+                  ))}
                   <option value="custom">Other / Custom Brand</option>
                 </select>
               </div>
@@ -4114,6 +4477,195 @@ export default function AdminDashboard() {
                   style={{ marginTop: 0 }}
                 >
                   {categoryActionLoading === "save" ? "Saving..." : editingCategory ? "Update Category" : "Save Category"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ============================================================ */}
+      {/* MODAL: ADD / EDIT BRAND MODAL                                */}
+      {/* ============================================================ */}
+      {isBrandModalOpen && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalCard} style={{ maxWidth: "560px" }}>
+            <div className={styles.modalHeader}>
+              <div>
+                <h3 style={{ margin: 0 }}>
+                  {editingBrand ? "Edit Brand" : "Add New Brand"}
+                </h3>
+                <span style={{ fontSize: "12px", color: "#64748b" }}>
+                  Define brand name, logo, tagline, description, and store slug
+                </span>
+              </div>
+              <button
+                onClick={() => {
+                  setIsBrandModalOpen(false);
+                  setEditingBrand(null);
+                }}
+                className={styles.closeBtn}
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleBrandSubmit} className={styles.form} style={{ marginTop: "16px" }}>
+              {uploadError && (
+                <div style={{ padding: "10px", background: "#fee2e2", color: "#b91c1c", borderRadius: "8px", fontSize: "13px" }}>
+                  {uploadError}
+                </div>
+              )}
+
+              {/* Brand Name */}
+              <div className={styles.inputField}>
+                <label htmlFor="brand-form-name">Brand Name *</label>
+                <input
+                  id="brand-form-name"
+                  type="text"
+                  placeholder="e.g. TUQO, MAKITA, DEWALT"
+                  value={brandForm.name}
+                  onChange={(e) => {
+                    const name = e.target.value;
+                    const autoSlug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+                    setBrandForm((prev) => ({
+                      ...prev,
+                      name,
+                      id: editingBrand ? prev.id : autoSlug,
+                    }));
+                  }}
+                  required
+                />
+              </div>
+
+              {/* Brand Slug / ID */}
+              <div className={styles.inputField}>
+                <label htmlFor="brand-form-id">Brand Slug / ID *</label>
+                <input
+                  id="brand-form-id"
+                  type="text"
+                  placeholder="e.g. tuqo, makita"
+                  value={brandForm.id}
+                  onChange={(e) => setBrandForm({ ...brandForm, id: e.target.value })}
+                  required
+                  disabled={!!editingBrand}
+                />
+                <span style={{ fontSize: "11px", color: "#64748b", marginTop: "2px" }}>
+                  Used in URL paths (e.g. /shop/{brandForm.id || "brand-slug"})
+                </span>
+              </div>
+
+              {/* Brand Logo Upload */}
+              <div className={styles.mediaUploadBox}>
+                <label><strong>Brand Logo * (Upload or paste URL)</strong></label>
+                <div className={styles.uploadRow}>
+                  <input
+                    id="brand-form-logo"
+                    type="text"
+                    placeholder="https://res.cloudinary.com/... or upload"
+                    value={brandForm.logo}
+                    onChange={(e) => setBrandForm({ ...brandForm, logo: e.target.value })}
+                    required
+                    style={{ flex: 1, minWidth: "140px" }}
+                  />
+                  <label className={styles.uploadBtn}>
+                    {isUploadingBrandLogoImg ? "Uploading..." : "📁 Upload Logo"}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      style={{ display: "none" }}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleFileUpload(file, "brand");
+                      }}
+                    />
+                  </label>
+                </div>
+                {brandForm.logo && (
+                  <div className={styles.mediaPreview} style={{ marginTop: "8px", background: "#f8fafc", padding: "8px", borderRadius: "6px", display: "inline-block" }}>
+                    <Image
+                      src={optimizeAdminPreview(brandForm.logo)}
+                      alt="Brand Logo Preview"
+                      width={100}
+                      height={40}
+                      loading="lazy"
+                      style={{ objectFit: "contain" }}
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Tagline */}
+              <div className={styles.inputField}>
+                <label htmlFor="brand-form-tagline">Tagline / Slogan (Optional)</label>
+                <input
+                  id="brand-form-tagline"
+                  type="text"
+                  placeholder="e.g. German Engineering Power Tools"
+                  value={brandForm.tagline}
+                  onChange={(e) => setBrandForm({ ...brandForm, tagline: e.target.value })}
+                />
+              </div>
+
+              {/* Description */}
+              <div className={styles.inputField}>
+                <label htmlFor="brand-form-desc">Description (Optional)</label>
+                <textarea
+                  id="brand-form-desc"
+                  rows={2}
+                  placeholder="Short overview of the brand and heritage..."
+                  value={brandForm.description}
+                  onChange={(e) => setBrandForm({ ...brandForm, description: e.target.value })}
+                  style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1.5px solid #cbd5e1" }}
+                />
+              </div>
+
+              {/* Order & Visibility Grid */}
+              <div className={styles.inputGrid2}>
+                <div className={styles.inputField}>
+                  <label htmlFor="brand-form-order">Display Order</label>
+                  <input
+                    id="brand-form-order"
+                    type="number"
+                    value={brandForm.order}
+                    onChange={(e) => setBrandForm({ ...brandForm, order: Number(e.target.value) || 0 })}
+                  />
+                </div>
+
+                <div className={styles.inputField} style={{ justifyContent: "center" }}>
+                  <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", marginTop: "24px" }}>
+                    <input
+                      type="checkbox"
+                      checked={brandForm.enabled}
+                      onChange={(e) => setBrandForm({ ...brandForm, enabled: e.target.checked })}
+                      style={{ width: "18px", height: "18px", cursor: "pointer" }}
+                    />
+                    <span style={{ fontSize: "13.5px", fontWeight: "600", color: "#0f172a" }}>
+                      Active / Enabled in Store
+                    </span>
+                  </label>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className={styles.modalActions} style={{ marginTop: "20px" }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsBrandModalOpen(false);
+                    setEditingBrand(null);
+                  }}
+                  className={styles.cancelBtn}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={brandActionLoading === "save" || isUploadingBrandLogoImg}
+                  className={styles.submitBtn}
+                  style={{ marginTop: 0 }}
+                >
+                  {brandActionLoading === "save" ? "Saving..." : editingBrand ? "Update Brand" : "Save Brand"}
                 </button>
               </div>
             </form>

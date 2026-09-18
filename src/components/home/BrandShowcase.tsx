@@ -20,27 +20,41 @@ export default function BrandShowcase() {
     let isMounted = true;
     async function loadBrandAndTrustSettings() {
       try {
-        const res = await fetch("/api/home-settings");
-        if (res.ok) {
-          const json = await res.json();
-          if (json.success && json.data) {
-            if (isMounted) {
-              if (json.data.brandsSection) {
-                setBrandsEnabled(Boolean(json.data.brandsSection.enabled));
-                setSectionTitle(json.data.brandsSection.title || "SHOP BY BRANDS");
-                setSectionSubtitle(json.data.brandsSection.subtitle || "OFFICIAL PARTNERS");
-                if (Array.isArray(json.data.brandsSection.brands)) {
-                  setBrands(json.data.brandsSection.brands);
-                }
-              }
+        const [settingsRes, brandsRes] = await Promise.allSettled([
+          fetch("/api/home-settings", { cache: "no-store" }),
+          fetch("/api/brands", { cache: "no-store" }),
+        ]);
 
-              if (json.data.trustMarquee) {
-                setTrustEnabled(Boolean(json.data.trustMarquee.enabled));
-                if (Array.isArray(json.data.trustMarquee.items)) {
-                  setUspItems(json.data.trustMarquee.items);
-                }
+        if (settingsRes.status === "fulfilled" && settingsRes.value.ok) {
+          const json = await settingsRes.value.json();
+          if (json.success && json.data && isMounted) {
+            if (json.data.brandsSection) {
+              setBrandsEnabled(Boolean(json.data.brandsSection.enabled));
+              setSectionTitle(json.data.brandsSection.title || "SHOP BY BRANDS");
+              setSectionSubtitle(json.data.brandsSection.subtitle || "OFFICIAL PARTNERS");
+            }
+            if (json.data.trustMarquee) {
+              setTrustEnabled(Boolean(json.data.trustMarquee.enabled));
+              if (Array.isArray(json.data.trustMarquee.items)) {
+                setUspItems(json.data.trustMarquee.items);
               }
             }
+          }
+        }
+
+        if (brandsRes.status === "fulfilled" && brandsRes.value.ok) {
+          const json = await brandsRes.value.json();
+          if (json.success && Array.isArray(json.data) && json.data.length > 0 && isMounted) {
+            const mappedBrands: IBrandItem[] = json.data.map((b: { id: string; name: string; logo: string; tagline?: string; enabled?: boolean; order?: number }) => ({
+              id: b.id,
+              slug: b.id,
+              name: b.name,
+              logo: b.logo,
+              tagline: b.tagline || "",
+              enabled: b.enabled !== false,
+              order: b.order || 0,
+            }));
+            setBrands(mappedBrands);
           }
         }
       } catch (err) {
