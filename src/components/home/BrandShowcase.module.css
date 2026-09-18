@@ -36,6 +36,15 @@
   letter-spacing: -0.5px;
 }
 
+/* Brands Grid for <= 4 brands without duplication */
+.brandsGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: flex-start;
+  padding: 6px 0 32px;
+}
+
 /* Brands Scrolling Marquee Container */
 .brandsMarqueeContainer {
   width: 100%;
@@ -50,7 +59,7 @@
 .brandsMarqueeTrack {
   display: flex;
   width: max-content;
-  animation: scrollBrandsLeft 26s linear infinite;
+  animation: scrollBrandsLeft 14s linear infinite;
 }
 
 /* Pause on hover */
@@ -156,7 +165,7 @@
 .marqueeTrack {
   display: flex;
   width: max-content;
-  animation: scrollMarquee 25s linear infinite;
+  animation: scrollMarquee 12s linear infinite;
 }
 
 .marqueeList {

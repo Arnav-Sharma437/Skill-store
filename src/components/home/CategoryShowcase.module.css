@@ -67,7 +67,7 @@
 .marqueeTrack {
   display: flex;
   width: max-content;
-  animation: scrollCategoriesLeft 35s linear infinite;
+  animation: scrollCategoriesLeft 16s linear infinite;
 }
 
 /* Pause animation on hover */

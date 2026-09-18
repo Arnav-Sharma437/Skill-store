@@ -54,6 +54,7 @@ export default function BrandShowcase() {
               enabled: b.enabled !== false,
               order: b.order || 0,
             }));
+            mappedBrands.sort((a, b) => (a.order || 0) - (b.order || 0));
             setBrands(mappedBrands);
           }
         }
@@ -89,64 +90,92 @@ export default function BrandShowcase() {
               </div>
             </div>
 
-            {/* Brand Showcase Cards Continuous Scrolling Marquee */}
-            <div className={styles.brandsMarqueeContainer}>
-              <div className={styles.brandsMarqueeTrack}>
-                {/* Copy 1 */}
-                <div className={styles.brandsRow}>
-                  {activeBrands.map((brand) => (
-                    <Link href={`/shop/${brand.slug}`} key={`${brand.slug}-${brand.id || "1"}-1`} className={styles.brandCard}>
-                      <div className={styles.logoContainer}>
-                        <Image
-                          src={brand.logo}
-                          alt={`${brand.name} Logo`}
-                          width={brand.width || 110}
-                          height={brand.height || 34}
-                          loading="lazy"
-                          className={styles.brandLogo}
-                          style={{ objectFit: "contain" }}
-                        />
-                      </div>
-                      <p className={styles.tagline}>{brand.tagline}</p>
-                      <div className={styles.shopBrandBtn}>
-                        <span>Shop {brand.name}</span>
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                          <line x1="5" y1="12" x2="19" y2="12"></line>
-                          <polyline points="12 5 19 12 12 19"></polyline>
-                        </svg>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
+            {/* Display static grid without cloning if few brands, else continuous marquee */}
+            {activeBrands.length <= 4 ? (
+              <div className={styles.brandsGrid}>
+                {activeBrands.map((brand) => (
+                  <Link href={`/shop/${brand.slug}`} key={brand.slug} className={styles.brandCard}>
+                    <div className={styles.logoContainer}>
+                      <Image
+                        src={brand.logo}
+                        alt={`${brand.name} Logo`}
+                        width={brand.width || 110}
+                        height={brand.height || 34}
+                        loading="lazy"
+                        className={styles.brandLogo}
+                        style={{ objectFit: "contain" }}
+                      />
+                    </div>
+                    <p className={styles.tagline}>{brand.tagline}</p>
+                    <div className={styles.shopBrandBtn}>
+                      <span>Shop {brand.name}</span>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                        <polyline points="12 5 19 12 12 19"></polyline>
+                      </svg>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <div className={styles.brandsMarqueeContainer}>
+                <div className={styles.brandsMarqueeTrack}>
+                  {/* Copy 1 */}
+                  <div className={styles.brandsRow}>
+                    {activeBrands.map((brand) => (
+                      <Link href={`/shop/${brand.slug}`} key={`${brand.slug}-1`} className={styles.brandCard}>
+                        <div className={styles.logoContainer}>
+                          <Image
+                            src={brand.logo}
+                            alt={`${brand.name} Logo`}
+                            width={brand.width || 110}
+                            height={brand.height || 34}
+                            loading="lazy"
+                            className={styles.brandLogo}
+                            style={{ objectFit: "contain" }}
+                          />
+                        </div>
+                        <p className={styles.tagline}>{brand.tagline}</p>
+                        <div className={styles.shopBrandBtn}>
+                          <span>Shop {brand.name}</span>
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                            <polyline points="12 5 19 12 12 19"></polyline>
+                          </svg>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
 
-                {/* Copy 2 (for infinite loop) */}
-                <div className={styles.brandsRow} aria-hidden="true">
-                  {activeBrands.map((brand) => (
-                    <Link href={`/shop/${brand.slug}`} key={`${brand.slug}-${brand.id || "1"}-2`} className={styles.brandCard}>
-                      <div className={styles.logoContainer}>
-                        <Image
-                          src={brand.logo}
-                          alt={`${brand.name} Logo`}
-                          width={brand.width || 110}
-                          height={brand.height || 34}
-                          loading="lazy"
-                          className={styles.brandLogo}
-                          style={{ objectFit: "contain" }}
-                        />
-                      </div>
-                      <p className={styles.tagline}>{brand.tagline}</p>
-                      <div className={styles.shopBrandBtn}>
-                        <span>Shop {brand.name}</span>
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                          <line x1="5" y1="12" x2="19" y2="12"></line>
-                          <polyline points="12 5 19 12 12 19"></polyline>
-                        </svg>
-                      </div>
-                    </Link>
-                  ))}
+                  {/* Copy 2 (for infinite loop) */}
+                  <div className={styles.brandsRow} aria-hidden="true">
+                    {activeBrands.map((brand) => (
+                      <Link href={`/shop/${brand.slug}`} key={`${brand.slug}-2`} className={styles.brandCard}>
+                        <div className={styles.logoContainer}>
+                          <Image
+                            src={brand.logo}
+                            alt={`${brand.name} Logo`}
+                            width={brand.width || 110}
+                            height={brand.height || 34}
+                            loading="lazy"
+                            className={styles.brandLogo}
+                            style={{ objectFit: "contain" }}
+                          />
+                        </div>
+                        <p className={styles.tagline}>{brand.tagline}</p>
+                        <div className={styles.shopBrandBtn}>
+                          <span>Shop {brand.name}</span>
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                            <polyline points="12 5 19 12 12 19"></polyline>
+                          </svg>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </>
         )}
 
