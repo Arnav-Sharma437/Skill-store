@@ -123,10 +123,10 @@ export async function calculateVerifiedOrder(
   }
 
   // Consistent tax & grand total calculation
-  // Matching Skill Store Cart: GST 18%, Shipping Free
-  const gst = Math.round(subtotal * 0.18);
+  // All product prices are already inclusive of GST/taxes and shipping is Free
+  const gst = 0;
   const shipping = 0;
-  const grandTotal = subtotal + gst + shipping;
+  const grandTotal = subtotal + shipping;
   const amountInPaise = Math.round(grandTotal * 100);
 
   return {

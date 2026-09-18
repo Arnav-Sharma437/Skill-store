@@ -32,6 +32,7 @@ interface ICategory {
   link: string;
   description?: string;
   subcategories?: ISubCategory[];
+  order?: number;
 }
 
 interface IBrand {
@@ -278,6 +279,7 @@ export default function AdminDashboard() {
     link: string;
     description: string;
     subcategories: ISubCategory[];
+    order: number;
   }>({
     id: "",
     name: "",
@@ -287,6 +289,7 @@ export default function AdminDashboard() {
     link: "",
     description: "",
     subcategories: [],
+    order: 0,
   });
 
   const [newSubCatName, setNewSubCatName] = useState("");
@@ -794,6 +797,7 @@ export default function AdminDashboard() {
       link: "",
       description: "",
       subcategories: [],
+      order: categories.length + 1,
     });
     setNewSubCatName("");
     setNewSubCatSlug("");
@@ -814,6 +818,7 @@ export default function AdminDashboard() {
       link: cat.link,
       description: cat.description || "",
       subcategories: Array.isArray(cat.subcategories) ? [...cat.subcategories] : [],
+      order: cat.order !== undefined ? cat.order : 0,
     });
     setNewSubCatName("");
     setNewSubCatSlug("");
@@ -878,6 +883,7 @@ export default function AdminDashboard() {
           link: finalLink,
           description: categoryForm.description.trim(),
           subcategories: categoryForm.subcategories,
+          order: Number(categoryForm.order) || 0,
         }),
       });
 
@@ -2057,6 +2063,11 @@ export default function AdminDashboard() {
                                 <div className={styles.categoryCardMeta}>
                                   <span className={styles.categoryBrandTag}>{cat.brand}</span>
                                   <span className={styles.categorySlugBadge}>{cat.id}</span>
+                                  {cat.order !== undefined && (
+                                    <span className={styles.categorySlugBadge} style={{ background: "#e0f2fe", color: "#0369a1", borderColor: "#bae6fd" }}>
+                                      Order: #{cat.order}
+                                    </span>
+                                  )}
                                 </div>
                               </div>
                             </div>
@@ -4364,16 +4375,33 @@ export default function AdminDashboard() {
                 )}
               </div>
 
-              {/* Target Link */}
-              <div className={styles.inputField}>
-                <label htmlFor="cat-form-link">Target Store Link</label>
-                <input
-                  id="cat-form-link"
-                  type="text"
-                  placeholder="/category/slug or /shop/brand/category"
-                  value={categoryForm.link}
-                  onChange={(e) => setCategoryForm({ ...categoryForm, link: e.target.value })}
-                />
+              {/* Target Link & Display Order */}
+              <div className={styles.inputGrid2}>
+                <div className={styles.inputField}>
+                  <label htmlFor="cat-form-link">Target Store Link</label>
+                  <input
+                    id="cat-form-link"
+                    type="text"
+                    placeholder="/category/slug or /shop/brand/category"
+                    value={categoryForm.link}
+                    onChange={(e) => setCategoryForm({ ...categoryForm, link: e.target.value })}
+                  />
+                </div>
+
+                <div className={styles.inputField}>
+                  <label htmlFor="cat-form-order">Display Order / Position</label>
+                  <input
+                    id="cat-form-order"
+                    type="number"
+                    min="0"
+                    placeholder="e.g. 1 (1st), 2 (2nd)..."
+                    value={categoryForm.order}
+                    onChange={(e) => setCategoryForm({ ...categoryForm, order: Number(e.target.value) || 0 })}
+                  />
+                  <span style={{ fontSize: "11px", color: "#64748b", marginTop: "2px" }}>
+                    Lower number appears first (1st, 2nd, 3rd)
+                  </span>
+                </div>
               </div>
 
               {/* Description */}

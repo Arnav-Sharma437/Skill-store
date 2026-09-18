@@ -91,8 +91,8 @@ export default function CartPage() {
   }, [session]);
 
   const subtotal = cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
-  const gst = Math.round(subtotal * 0.18);
-  const grandTotal = subtotal + gst;
+  const gst = 0; // Tax is already included in all product prices
+  const grandTotal = subtotal;
 
   // Load Razorpay Standard Checkout SDK
   const loadRazorpayScript = () => {
@@ -120,6 +120,35 @@ export default function CartPage() {
   const handleCheckout = async () => {
     if (cart.length === 0) return;
     setCheckoutError(null);
+
+    // Mandatory Delivery Details Validation
+    if (!shippingAddress.name.trim()) {
+      setCheckoutError("Please enter recipient's Full Name.");
+      return;
+    }
+    const cleanPhone = shippingAddress.phone.replace(/\D/g, "");
+    if (!cleanPhone || cleanPhone.length < 10) {
+      setCheckoutError("Please enter a valid 10-digit mobile Phone Number.");
+      return;
+    }
+    if (!shippingAddress.street.trim()) {
+      setCheckoutError("Please enter Delivery Street Address (House / Flat / Area).");
+      return;
+    }
+    if (!shippingAddress.city.trim()) {
+      setCheckoutError("Please enter City / Town.");
+      return;
+    }
+    if (!shippingAddress.state.trim()) {
+      setCheckoutError("Please enter State.");
+      return;
+    }
+    const cleanPincode = shippingAddress.pincode.replace(/\D/g, "");
+    if (!cleanPincode || cleanPincode.length < 6) {
+      setCheckoutError("Please enter a valid 6-digit Pincode.");
+      return;
+    }
+
     setIsProcessing(true);
 
     try {
@@ -141,11 +170,18 @@ export default function CartPage() {
           selectedVariant: item.selectedVariant,
         })),
         customerDetails: {
-          name: shippingAddress.name || session?.user?.name || "",
+          name: shippingAddress.name.trim() || session?.user?.name || "",
           email: session?.user?.email || "",
-          phone: shippingAddress.phone || "",
+          phone: shippingAddress.phone.trim() || "",
         },
-        shippingAddress,
+        shippingAddress: {
+          name: shippingAddress.name.trim(),
+          phone: shippingAddress.phone.trim(),
+          street: shippingAddress.street.trim(),
+          city: shippingAddress.city.trim(),
+          state: shippingAddress.state.trim(),
+          pincode: shippingAddress.pincode.trim(),
+        },
       };
 
       const res = await fetch("/api/razorpay/create-order", {
@@ -472,63 +508,74 @@ export default function CartPage() {
                       <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
                       <circle cx="12" cy="10" r="3"></circle>
                     </svg>
-                    <h3>Delivery &amp; Shipping Details</h3>
+                    <div>
+                      <h3 style={{ margin: 0 }}>Delivery &amp; Shipping Details</h3>
+                      <span style={{ fontSize: "11.5px", color: "#e11d48", fontWeight: "600" }}>
+                        * All fields below are mandatory for order delivery
+                      </span>
+                    </div>
                   </div>
 
                   <div className={styles.addressGrid}>
                     <div className={styles.formGroup}>
-                      <label>Recipient Name</label>
+                      <label>Recipient Name <span style={{ color: "#e11d48" }}>*</span></label>
                       <input
                         type="text"
                         placeholder="Full Name"
                         value={shippingAddress.name}
                         onChange={(e) => setShippingAddress({ ...shippingAddress, name: e.target.value })}
+                        required
                       />
                     </div>
                     <div className={styles.formGroup}>
-                      <label>Phone Number</label>
+                      <label>Phone Number <span style={{ color: "#e11d48" }}>*</span></label>
                       <input
                         type="tel"
                         placeholder="10-digit Mobile Number"
                         value={shippingAddress.phone}
                         onChange={(e) => setShippingAddress({ ...shippingAddress, phone: e.target.value })}
+                        required
                       />
                     </div>
                     <div className={`${styles.formGroup} ${styles.fullWidthGroup}`}>
-                      <label>Delivery Street Address</label>
+                      <label>Delivery Street Address <span style={{ color: "#e11d48" }}>*</span></label>
                       <input
                         type="text"
                         placeholder="House / Flat / Shop / Street / Area"
                         value={shippingAddress.street}
                         onChange={(e) => setShippingAddress({ ...shippingAddress, street: e.target.value })}
+                        required
                       />
                     </div>
                     <div className={styles.formGroup}>
-                      <label>City / Town</label>
+                      <label>City / Town <span style={{ color: "#e11d48" }}>*</span></label>
                       <input
                         type="text"
                         placeholder="e.g. New Delhi"
                         value={shippingAddress.city}
                         onChange={(e) => setShippingAddress({ ...shippingAddress, city: e.target.value })}
+                        required
                       />
                     </div>
                     <div className={styles.formGroup}>
-                      <label>State</label>
+                      <label>State <span style={{ color: "#e11d48" }}>*</span></label>
                       <input
                         type="text"
                         placeholder="e.g. Delhi"
                         value={shippingAddress.state}
                         onChange={(e) => setShippingAddress({ ...shippingAddress, state: e.target.value })}
+                        required
                       />
                     </div>
                     <div className={styles.formGroup}>
-                      <label>Pincode</label>
+                      <label>Pincode <span style={{ color: "#e11d48" }}>*</span></label>
                       <input
                         type="text"
                         placeholder="6-digit Pincode"
                         maxLength={6}
                         value={shippingAddress.pincode}
                         onChange={(e) => setShippingAddress({ ...shippingAddress, pincode: e.target.value })}
+                        required
                       />
                     </div>
                   </div>
@@ -541,13 +588,13 @@ export default function CartPage() {
                   <h2 className={styles.summaryHeading}>ORDER SUMMARY</h2>
                   
                   <div className={styles.summaryRow}>
-                    <span>Subtotal</span>
+                    <span>Items Subtotal</span>
                     <span>Rs. {subtotal.toLocaleString("en-IN")}.00</span>
                   </div>
 
                   <div className={styles.summaryRow}>
-                    <span>GST (18%)</span>
-                    <span>Rs. {gst.toLocaleString("en-IN")}.00</span>
+                    <span>Taxes &amp; GST</span>
+                    <span style={{ color: "#16a34a", fontWeight: "700" }}>Included (₹0.00 extra)</span>
                   </div>
 
                   <div className={styles.summaryRow}>
@@ -561,6 +608,16 @@ export default function CartPage() {
                     <span>Grand Total</span>
                     <span>Rs. {grandTotal.toLocaleString("en-IN")}.00</span>
                   </div>
+
+                  <div style={{ fontSize: "11px", color: "#166534", background: "#f0fdf4", padding: "6px 10px", borderRadius: "6px", border: "1px solid #bbf7d0", margin: "10px 0", textAlign: "center", fontWeight: "600", lineHeight: 1.4 }}>
+                    ✓ All taxes (GST) and shipping charges are included in product price
+                  </div>
+
+                  {checkoutError && (
+                    <div style={{ padding: "10px", background: "#fee2e2", color: "#b91c1c", borderRadius: "6px", fontSize: "12px", margin: "10px 0", fontWeight: "600" }}>
+                      ⚠️ {checkoutError}
+                    </div>
+                  )}
 
                   <button 
                     onClick={handleCheckout}

@@ -19,33 +19,43 @@ export default function Header() {
   const [activeSubmenu, setActiveSubmenu] = useState<string | null>(null);
   
   const [dbSearchProducts, setDbSearchProducts] = useState<CategoryProduct[]>([]);
+  const [dbBrands, setDbBrands] = useState<Array<{ id: string; name: string; logo: string }>>([]);
   const [dbCategories, setDbCategories] = useState<Array<{
     id: string;
     name: string;
-    subcategories?: Array<{ id: string; name: string }>;
+    imageUrl?: string;
+    subcategories?: Array<{ id: string; name: string; imageUrl?: string }>;
   }>>([]);
   const searchContainerRef = useRef<HTMLDivElement | null>(null);
 
-  // Fetch categories from DB
+  // Fetch active categories and brands from DB
   useEffect(() => {
+    let isMounted = true;
+
+    // Fetch categories
     fetch("/api/categories")
       .then((res) => res.json())
       .then((data) => {
+        if (!isMounted) return;
         if (data.success && Array.isArray(data.categories) && data.categories.length > 0) {
           const mapped = data.categories.map((c: {
             id?: string;
             slug?: string;
             name?: string;
-            subcategories?: Array<{ id: string; name: string }>;
-            subCategories?: Array<{ slug: string; name: string }>;
+            imageUrl?: string;
+            image?: string;
+            subcategories?: Array<{ id: string; name: string; imageUrl?: string }>;
+            subCategories?: Array<{ slug: string; name: string; imageUrl?: string }>;
           }) => {
             const rawSub = c.subcategories || c.subCategories || [];
             return {
               id: c.slug || c.id || "",
               name: c.name || "",
+              imageUrl: c.imageUrl || c.image || "",
               subcategories: rawSub.map((s) => ({
                 id: (s as { id?: string; slug?: string }).id || (s as { slug?: string }).slug || "",
                 name: s.name || "",
+                imageUrl: s.imageUrl || "",
               })),
             };
           });
@@ -53,6 +63,27 @@ export default function Header() {
         }
       })
       .catch(() => {});
+
+    // Fetch brands
+    fetch("/api/brands")
+      .then((res) => res.json())
+      .then((data) => {
+        if (!isMounted) return;
+        if (data.success && Array.isArray(data.data) && data.data.length > 0) {
+          setDbBrands(
+            data.data.map((b: { id: string; name: string; logo: string }) => ({
+              id: b.id,
+              name: b.name,
+              logo: b.logo,
+            }))
+          );
+        }
+      })
+      .catch(() => {});
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   // Fetch live search products from DB
@@ -386,6 +417,27 @@ export default function Header() {
                     const hasSubcats = cat.subcategories && cat.subcategories.length > 0;
                     const isActive = activeSubmenu === cat.id;
 
+                    const catIcon = cat.imageUrl ? (
+                      <span className={styles.categoryThumb}>
+                        <Image
+                          src={optimizeGalleryThumbnail(cat.imageUrl)}
+                          alt={cat.name}
+                          width={20}
+                          height={20}
+                          loading="lazy"
+                          style={{ objectFit: 'contain' }}
+                        />
+                      </span>
+                    ) : (
+                      <span className={styles.menuIcon}>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                          <line x1="3" y1="9" x2="21" y2="9"></line>
+                          <line x1="9" y1="21" x2="9" y2="9"></line>
+                        </svg>
+                      </span>
+                    );
+
                     if (hasSubcats) {
                       return (
                         <div
@@ -394,13 +446,7 @@ export default function Header() {
                           onMouseEnter={() => setActiveSubmenu(cat.id)}
                         >
                           <Link href={`/category/${cat.id}`} className={styles.dropdownLeft}>
-                            <span className={styles.menuIcon}>
-                              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                                <line x1="3" y1="9" x2="21" y2="9"></line>
-                                <line x1="9" y1="21" x2="9" y2="9"></line>
-                              </svg>
-                            </span>
+                            {catIcon}
                             <span>{cat.name.toUpperCase()}</span>
                           </Link>
                           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={styles.submenuCaret}>
@@ -435,12 +481,7 @@ export default function Header() {
                         onMouseEnter={() => setActiveSubmenu(null)}
                       >
                         <div className={styles.dropdownLeft}>
-                          <span className={styles.menuIcon}>
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <circle cx="12" cy="12" r="9"></circle>
-                              <polyline points="12 6 12 12 14 14"></polyline>
-                            </svg>
-                          </span>
+                          {catIcon}
                           <span>{cat.name.toUpperCase()}</span>
                         </div>
                       </Link>
@@ -609,42 +650,27 @@ export default function Header() {
             {/* Brands Dropdown Menu */}
             {isBrandsOpen && (
               <div className={styles.brandsDropdown}>
-                <Link href="/shop/tuqo" className={styles.brandDropdownItem}>
-                  <div className={styles.brandLogoBox}>
-                    <Image src="/images/brands/tuqo.png" alt="TUQO" width={75} height={24} style={{ objectFit: 'contain' }} />
+                {dbBrands.length > 0 ? (
+                  dbBrands.map((brand) => (
+                    <Link href={`/shop/${brand.id}`} key={brand.id} className={styles.brandDropdownItem}>
+                      <div className={styles.brandLogoBox}>
+                        <Image
+                          src={brand.logo || "/images/brands/tuqo.svg"}
+                          alt={brand.name}
+                          width={75}
+                          height={24}
+                          loading="lazy"
+                          style={{ objectFit: 'contain' }}
+                        />
+                      </div>
+                      <span className={styles.brandName}>{brand.name}</span>
+                    </Link>
+                  ))
+                ) : (
+                  <div style={{ padding: "12px 18px", color: "#94a3b8", fontSize: "12px", textAlign: "center" }}>
+                    No active brands found
                   </div>
-                  <span className={styles.brandName}>TUQO</span>
-                </Link>
-                <Link href="/shop/pumpkin" className={styles.brandDropdownItem}>
-                  <div className={styles.brandLogoBox}>
-                    <Image src="/images/brands/pumpkin.png" alt="PUMPKIN" width={75} height={24} style={{ objectFit: 'contain' }} />
-                  </div>
-                  <span className={styles.brandName}>PUMPKIN</span>
-                </Link>
-                <Link href="/shop/mitsuki" className={styles.brandDropdownItem}>
-                  <div className={styles.brandLogoBox}>
-                    <Image src="/images/brands/mitsuki.png" alt="MITSUKI" width={75} height={24} style={{ objectFit: 'contain' }} />
-                  </div>
-                  <span className={styles.brandName}>MITSUKI</span>
-                </Link>
-                <Link href="/shop/metso" className={styles.brandDropdownItem}>
-                  <div className={styles.brandLogoBox}>
-                    <Image src="/images/brands/metso.png" alt="METSO" width={75} height={24} style={{ objectFit: 'contain' }} />
-                  </div>
-                  <span className={styles.brandName}>METSO</span>
-                </Link>
-                <Link href="/shop/costec" className={styles.brandDropdownItem}>
-                  <div className={styles.brandLogoBox}>
-                    <Image src="/images/brands/costec.png" alt="COSTEC" width={75} height={24} style={{ objectFit: 'contain' }} />
-                  </div>
-                  <span className={styles.brandName}>COSTEC</span>
-                </Link>
-                <Link href="/shop/ultratouch" className={styles.brandDropdownItem}>
-                  <div className={styles.brandLogoBox}>
-                    <Image src="/images/brands/ultratouch.svg" alt="Ultra TOUCH" width={75} height={24} style={{ objectFit: 'contain' }} />
-                  </div>
-                  <span className={styles.brandName}>Ultra TOUCH</span>
-                </Link>
+                )}
               </div>
             )}
           </div>

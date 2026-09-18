@@ -28,16 +28,29 @@ export default async function BrandPage({ params }: PageProps) {
   try {
     await connectToDatabase();
     
-    // Check Brand document
+    // Check Brand document in database
     const brandDoc = await Brand.findOne({ id: normalizedBrand }).lean();
-    if (brandDoc && (brandDoc as { name?: string }).name) {
-      brandName = (brandDoc as { name: string }).name;
-    } else if (BRAND_CATEGORIES[normalizedBrand]) {
-      brandName = BRAND_CATEGORIES[normalizedBrand].name;
+    
+    if (brandDoc) {
+      if ((brandDoc as { enabled?: boolean }).enabled === false) {
+        notFound();
+      }
+      brandName = (brandDoc as { name?: string }).name || normalizedBrand.toUpperCase();
+    } else {
+      // If brand doesn't exist in MongoDB, check if database has any brands
+      const totalBrandsCount = await Brand.countDocuments();
+      if (totalBrandsCount > 0) {
+        // Brands collection is actively managed and this brand is not present (deleted)
+        notFound();
+      } else if (BRAND_CATEGORIES[normalizedBrand]) {
+        brandName = BRAND_CATEGORIES[normalizedBrand].name;
+      } else {
+        notFound();
+      }
     }
 
     // Fetch DB categories for this brand
-    const dbCategories = await Category.find({ brand: normalizedBrand }).lean();
+    const dbCategories = await Category.find({ brand: normalizedBrand }).sort({ order: 1, createdAt: -1 }).lean();
 
     if (dbCategories && dbCategories.length > 0) {
       categoriesList = dbCategories.map((c) => ({
@@ -48,17 +61,10 @@ export default async function BrandPage({ params }: PageProps) {
       }));
     } else if (BRAND_CATEGORIES[normalizedBrand]) {
       categoriesList = BRAND_CATEGORIES[normalizedBrand].categories;
-    } else if (!brandDoc) {
-      notFound();
     }
   } catch (error) {
     console.error("Error loading brand page data:", error);
-    if (BRAND_CATEGORIES[normalizedBrand]) {
-      brandName = BRAND_CATEGORIES[normalizedBrand].name;
-      categoriesList = BRAND_CATEGORIES[normalizedBrand].categories;
-    } else {
-      notFound();
-    }
+    notFound();
   }
 
   return (

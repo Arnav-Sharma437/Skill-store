@@ -106,6 +106,7 @@ export interface ICategory extends Document {
   link: string;
   description?: string;
   subcategories?: ISubCategory[];
+  order?: number;
 }
 
 const CategorySchema: Schema = new Schema(
@@ -117,6 +118,7 @@ const CategorySchema: Schema = new Schema(
     link: { type: String, required: true }, // e.g. "/shop/tuqo/high-pressure-washer"
     description: { type: String, default: "" },
     subcategories: { type: [SubCategorySchema], default: [] },
+    order: { type: Number, default: 0 },
   },
   { timestamps: true }
 );

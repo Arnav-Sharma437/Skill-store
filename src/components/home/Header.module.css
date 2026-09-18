@@ -510,6 +510,21 @@
   transition: color var(--transition-fast) ease;
 }
 
+.categoryThumb {
+  width: 26px;
+  height: 26px;
+  background: #ffffff;
+  border-radius: 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  flex-shrink: 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  overflow: hidden;
+}
+
 .dropdownItem:hover .menuIcon {
   color: #ffd300;
 }
