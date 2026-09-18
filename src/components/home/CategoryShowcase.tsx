@@ -83,7 +83,8 @@ interface ApiCategory {
 }
 
 export default function CategoryShowcase() {
-  const [categories, setCategories] = useState<CategoryItem[]>(defaultCategories);
+  const [categories, setCategories] = useState<CategoryItem[]>([]);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
     fetch("/api/categories?_t=" + Date.now(), { cache: "no-store" })
@@ -100,8 +101,13 @@ export default function CategoryShowcase() {
           setCategories(mapped);
         }
       })
-      .catch((err) => console.error("Error loading categories:", err));
+      .catch((err) => console.error("Error loading categories:", err))
+      .finally(() => setIsLoaded(true));
   }, []);
+
+  if (!isLoaded || categories.length === 0) {
+    return null;
+  }
 
   const topCategories = categories;
 

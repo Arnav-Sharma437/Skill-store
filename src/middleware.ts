@@ -11,12 +11,12 @@ import { NextRequest, NextResponse } from "next/server";
  * - When MAINTENANCE_MODE=false or unset: Normal website works exactly as before.
  */
 export function middleware(req: NextRequest) {
-  // Maintenance Mode is actively ENABLED (can be disabled by setting MAINTENANCE_MODE=false)
+  // Website is LIVE by default (can be turned into maintenance mode by setting MAINTENANCE_MODE=true)
   const isMaintenanceMode =
-    process.env.MAINTENANCE_MODE !== "false" &&
-    process.env.NEXT_PUBLIC_MAINTENANCE_MODE !== "false";
+    process.env.MAINTENANCE_MODE === "true" ||
+    process.env.NEXT_PUBLIC_MAINTENANCE_MODE === "true";
 
-  // If maintenance mode is explicitly disabled, allow all normal traffic
+  // If maintenance mode is not active, allow all normal traffic
   if (!isMaintenanceMode) {
     return NextResponse.next();
   }

@@ -10,10 +10,10 @@ export default function BrandShowcase() {
   const [brandsEnabled, setBrandsEnabled] = useState(true);
   const [sectionTitle, setSectionTitle] = useState("SHOP BY BRANDS");
   const [sectionSubtitle, setSectionSubtitle] = useState("OFFICIAL PARTNERS");
-  const [brands, setBrands] = useState<IBrandItem[]>(DEFAULT_HOME_SETTINGS.brandsSection.brands);
+  const [brands, setBrands] = useState<IBrandItem[]>([]);
 
   const [trustEnabled, setTrustEnabled] = useState(true);
-  const [uspItems, setUspItems] = useState<IUspItem[]>(DEFAULT_HOME_SETTINGS.trustMarquee.items);
+  const [uspItems, setUspItems] = useState<IUspItem[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
@@ -44,7 +44,7 @@ export default function BrandShowcase() {
 
         if (brandsRes.status === "fulfilled" && brandsRes.value.ok) {
           const json = await brandsRes.value.json();
-          if (json.success && Array.isArray(json.data) && json.data.length > 0 && isMounted) {
+          if (json.success && Array.isArray(json.data) && isMounted) {
             const mappedBrands: IBrandItem[] = json.data.map((b: { id: string; name: string; logo: string; tagline?: string; enabled?: boolean; order?: number }) => ({
               id: b.id,
               slug: b.id,
@@ -73,7 +73,11 @@ export default function BrandShowcase() {
   const activeBrands = brands.filter((b) => b.enabled !== false);
   const activeUspItems = uspItems.filter((item) => item.enabled !== false && item.text?.trim());
 
-  if (isLoaded && !brandsEnabled && !trustEnabled) {
+  if (!isLoaded) {
+    return null;
+  }
+
+  if (!brandsEnabled && !trustEnabled) {
     return null;
   }
 
