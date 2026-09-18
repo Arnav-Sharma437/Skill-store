@@ -147,13 +147,13 @@ export default function CategoryPage({ params }: PageProps) {
     return initialDetail;
   }, [dbCategory, initialDetail]);
 
-  // Strictly use live DB products once loaded so deleted products never resurrect
+  // Strictly use live DB products from MongoDB
   const allProducts = useMemo(() => {
     if (isProductsLoaded) {
       return dbProducts;
     }
-    return initialDetail.products;
-  }, [isProductsLoaded, dbProducts, initialDetail.products]);
+    return [];
+  }, [isProductsLoaded, dbProducts]);
 
 
   // Star Rating Helper

@@ -3,9 +3,11 @@ import { connectToDatabase } from "@/lib/db";
 import { Product, Category, Banner, Enquiry, HomeSettings, DEFAULT_HOME_SETTINGS } from "@/lib/schemas";
 import { HERO_SLIDES, BRAND_CATEGORIES, BEST_SELLERS } from "@/data/home";
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
     await connectToDatabase();
+    const { searchParams } = new URL(req.url);
+    const shouldSeedProducts = searchParams.get("seedProducts") === "true";
 
     // 1. Seed Banners if empty
     const bannerCount = await Banner.countDocuments();
@@ -36,9 +38,9 @@ export async function GET() {
       await Category.insertMany(categorySeeds);
     }
 
-    // 3. Seed Products if empty
+    // 3. Seed Products ONLY if explicitly requested
     const productCount = await Product.countDocuments();
-    if (productCount === 0) {
+    if (shouldSeedProducts && productCount === 0) {
       const productSeeds: Array<Record<string, unknown>> = [];
 
       // Add best sellers

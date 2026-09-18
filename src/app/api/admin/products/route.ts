@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
+import mongoose from "mongoose";
 import { connectToDatabase } from "@/lib/db";
 import { Product } from "@/lib/schemas";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export async function GET(req: NextRequest) {
   try {
@@ -27,7 +31,10 @@ export async function GET(req: NextRequest) {
     }
 
     const products = await Product.find(query).sort({ createdAt: -1 });
-    return NextResponse.json({ success: true, data: products });
+    return NextResponse.json(
+      { success: true, data: products },
+      { headers: { "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate" } }
+    );
   } catch (error: unknown) {
     const errMessage = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json({ success: false, error: errMessage }, { status: 500 });
@@ -196,17 +203,32 @@ export async function DELETE(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
 
-    if (!id) {
+    if (!id || !id.trim()) {
       return NextResponse.json({ success: false, error: "Missing product ID" }, { status: 400 });
     }
 
-    const deleted = await Product.findOneAndDelete({ id });
+    const cleanId = id.trim();
+    const isObjId = mongoose.Types.ObjectId.isValid(cleanId);
+
+    const deleteFilter: Record<string, unknown>[] = [
+      { id: cleanId },
+      { id: { $regex: new RegExp(`^${cleanId.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i") } }
+    ];
+
+    if (isObjId) {
+      deleteFilter.push({ _id: new mongoose.Types.ObjectId(cleanId) });
+    }
+
+    const deleted = await Product.findOneAndDelete({ $or: deleteFilter });
 
     if (!deleted) {
       return NextResponse.json({ success: false, error: "Product not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ success: true, data: deleted, message: "Product deleted successfully." });
+    return NextResponse.json(
+      { success: true, data: deleted, message: "Product deleted successfully." },
+      { headers: { "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate" } }
+    );
   } catch (error: unknown) {
     const errMessage = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json({ success: false, error: errMessage }, { status: 500 });

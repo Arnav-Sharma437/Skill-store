@@ -289,7 +289,7 @@ export default function AdminDashboard() {
 
   const fetchProducts = useCallback(async () => {
     try {
-      const res = await fetch("/api/admin/products");
+      const res = await fetch(`/api/admin/products?_t=${Date.now()}`, { cache: "no-store" });
       const json = await res.json();
       if (json.success) setProducts(json.data);
     } catch (e) {
@@ -400,7 +400,6 @@ export default function AdminDashboard() {
   const initializeData = useCallback(async () => {
     setLoading(true);
     try {
-      await fetch("/api/admin/seed");
       await Promise.all([
         fetchBanners(),
         fetchCategories(),
@@ -658,17 +657,26 @@ export default function AdminDashboard() {
 
 
   const handleDeleteProduct = async (id: string) => {
+    const idToDelete = id.trim();
+    // Optimistically remove from state so it disappears instantly
+    setProducts((prev) => prev.filter((p) => p.id !== idToDelete));
+    setDeletingProductId(null);
+
     try {
-      const res = await fetch(`/api/admin/products?id=${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/admin/products?id=${encodeURIComponent(idToDelete)}`, {
+        method: "DELETE",
+        cache: "no-store",
+      });
       const json = await res.json();
-      if (json.success) {
-        setDeletingProductId(null);
+      if (!json.success) {
+        alert(`Error deleting product: ${json.error}`);
         fetchProducts();
       } else {
-        alert(`Error deleting product: ${json.error}`);
+        fetchProducts();
       }
     } catch {
       alert("Network error deleting product");
+      fetchProducts();
     }
   };
 
