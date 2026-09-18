@@ -7,11 +7,13 @@ export async function GET(req: Request) {
   try {
     await connectToDatabase();
     const { searchParams } = new URL(req.url);
-    const shouldSeedProducts = searchParams.get("seedProducts") === "true";
+    const shouldSeedBanners = searchParams.get("seedBanners") === "true" || searchParams.get("seedAll") === "true";
+    const shouldSeedCategories = searchParams.get("seedCategories") === "true" || searchParams.get("seedAll") === "true";
+    const shouldSeedProducts = searchParams.get("seedProducts") === "true" || searchParams.get("seedAll") === "true";
 
-    // 1. Seed Banners if empty
+    // 1. Seed Banners ONLY if explicitly requested
     const bannerCount = await Banner.countDocuments();
-    if (bannerCount === 0) {
+    if (shouldSeedBanners && bannerCount === 0) {
       const bannerSeeds = HERO_SLIDES.map((slide) => ({
         id: slide.id,
         imageUrl: slide.imageUrl,
@@ -20,9 +22,9 @@ export async function GET(req: Request) {
       await Banner.insertMany(bannerSeeds);
     }
 
-    // 2. Seed Categories if empty
+    // 2. Seed Categories ONLY if explicitly requested
     const categoryCount = await Category.countDocuments();
-    if (categoryCount === 0) {
+    if (shouldSeedCategories && categoryCount === 0) {
       const categorySeeds: Array<{ id: string; name: string; brand: string; imageUrl: string; link: string }> = [];
       Object.entries(BRAND_CATEGORIES).forEach(([brandKey, brandObj]) => {
         brandObj.categories.forEach((cat) => {

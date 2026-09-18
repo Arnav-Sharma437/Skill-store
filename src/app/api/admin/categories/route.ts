@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
+import mongoose from "mongoose";
 import { connectToDatabase } from "@/lib/db";
 import { Category } from "@/lib/schemas";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export async function GET(req: NextRequest) {
   try {
@@ -11,7 +15,10 @@ export async function GET(req: NextRequest) {
     const query = brand ? { brand: brand.toLowerCase() } : {};
     const categories = await Category.find(query).sort({ createdAt: -1 });
 
-    return NextResponse.json({ success: true, data: categories });
+    return NextResponse.json(
+      { success: true, data: categories },
+      { headers: { "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate" } }
+    );
   } catch (error: unknown) {
     const errMessage = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json({ success: false, error: errMessage }, { status: 500 });
@@ -56,7 +63,10 @@ export async function POST(req: NextRequest) {
       subcategories: cleanSubcategories,
     });
 
-    return NextResponse.json({ success: true, data: newCategory });
+    return NextResponse.json(
+      { success: true, data: newCategory },
+      { headers: { "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate" } }
+    );
   } catch (error: unknown) {
     const errMessage = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json({ success: false, error: errMessage }, { status: 500 });
@@ -100,7 +110,10 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ success: false, error: "Category not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ success: true, data: updatedCategory });
+    return NextResponse.json(
+      { success: true, data: updatedCategory },
+      { headers: { "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate" } }
+    );
   } catch (error: unknown) {
     const errMessage = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json({ success: false, error: errMessage }, { status: 500 });
@@ -113,17 +126,32 @@ export async function DELETE(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
 
-    if (!id) {
+    if (!id || !id.trim()) {
       return NextResponse.json({ success: false, error: "Missing category ID" }, { status: 400 });
     }
 
-    const deleted = await Category.findOneAndDelete({ id });
+    const cleanId = id.trim();
+    const isObjId = mongoose.Types.ObjectId.isValid(cleanId);
+
+    const deleteFilter: Record<string, unknown>[] = [
+      { id: cleanId },
+      { id: { $regex: new RegExp(`^${cleanId.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i") } }
+    ];
+
+    if (isObjId) {
+      deleteFilter.push({ _id: new mongoose.Types.ObjectId(cleanId) });
+    }
+
+    const deleted = await Category.findOneAndDelete({ $or: deleteFilter });
 
     if (!deleted) {
       return NextResponse.json({ success: false, error: "Category not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ success: true, data: deleted });
+    return NextResponse.json(
+      { success: true, data: deleted, message: "Category deleted successfully" },
+      { headers: { "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate" } }
+    );
   } catch (error: unknown) {
     const errMessage = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json({ success: false, error: errMessage }, { status: 500 });

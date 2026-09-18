@@ -264,9 +264,9 @@ export default function AdminDashboard() {
   // --- Data Fetching Callbacks ---
   const fetchBanners = useCallback(async () => {
     try {
-      const res = await fetch("/api/admin/banners");
+      const res = await fetch(`/api/admin/banners?_t=${Date.now()}`, { cache: "no-store" });
       const json = await res.json();
-      if (json.success) setBanners(json.data);
+      if (json.success && Array.isArray(json.data)) setBanners(json.data);
     } catch (e) {
       console.error("Error fetching banners:", e);
     }
@@ -274,16 +274,16 @@ export default function AdminDashboard() {
 
   const fetchCategories = useCallback(async () => {
     try {
-      const res = await fetch("/api/admin/categories");
+      const res = await fetch(`/api/admin/categories?_t=${Date.now()}`, { cache: "no-store" });
       const json = await res.json();
-      if (json.success && Array.isArray(json.data) && json.data.length > 0) {
+      if (json.success && Array.isArray(json.data)) {
         setCategories(json.data);
       } else {
-        setCategories(DEFAULT_SYSTEM_CATEGORIES);
+        setCategories([]);
       }
     } catch (e) {
       console.error("Error fetching categories:", e);
-      setCategories(DEFAULT_SYSTEM_CATEGORIES);
+      setCategories([]);
     }
   }, []);
 
@@ -706,16 +706,23 @@ export default function AdminDashboard() {
 
   const deleteBanner = async (id: string) => {
     if (!confirm("Are you sure you want to delete this banner?")) return;
+    const idToDelete = id.trim();
+    setBanners((prev) => prev.filter((b) => b.id !== idToDelete));
     try {
-      const res = await fetch(`/api/admin/banners?id=${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/admin/banners?id=${encodeURIComponent(idToDelete)}`, {
+        method: "DELETE",
+        cache: "no-store",
+      });
       const json = await res.json();
       if (json.success) {
         fetchBanners();
       } else {
         alert(`Error: ${json.error}`);
+        fetchBanners();
       }
     } catch {
       alert("Network error deleting banner");
+      fetchBanners();
     }
   };
 
@@ -837,10 +844,13 @@ export default function AdminDashboard() {
   const handleDeleteCategory = async (catId: string) => {
     if (!confirm(`Are you sure you want to delete category "${catId}"?`)) return;
 
-    setCategoryActionLoading(catId);
+    const idToDelete = catId.trim();
+    setCategories((prev) => prev.filter((c) => c.id !== idToDelete));
+    setCategoryActionLoading(idToDelete);
     try {
-      const res = await fetch(`/api/admin/categories?id=${encodeURIComponent(catId)}`, {
+      const res = await fetch(`/api/admin/categories?id=${encodeURIComponent(idToDelete)}`, {
         method: "DELETE",
+        cache: "no-store",
       });
       const json = await res.json();
       if (!res.ok || !json.success) {
@@ -850,6 +860,7 @@ export default function AdminDashboard() {
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Error deleting category";
       alert(`Error: ${msg}`);
+      await fetchCategories();
     } finally {
       setCategoryActionLoading(null);
     }

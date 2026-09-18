@@ -6,7 +6,6 @@ import Image from "next/image";
 import AnnouncementBar from "@/components/home/AnnouncementBar";
 import Header from "@/components/home/Header";
 import Footer from "@/components/home/Footer";
-import { CATEGORIES_DATA } from "@/data/categories";
 import { optimizeGalleryThumbnail } from "@/lib/imageOptimization";
 import styles from "./CategoriesPage.module.css";
 
@@ -25,31 +24,8 @@ interface DisplayCategory {
 }
 
 export default function CategoriesPage() {
-  const primaryCategorySlugs = [
-    "high-pressure-washer",
-    "vaccum-cleaner",
-    "autocare-detailing",
-    "accessories-spares",
-    "air-compressor",
-    "cordless-tools"
-  ];
-
-  const defaultList: DisplayCategory[] = primaryCategorySlugs
-    .map((slug) => {
-      const staticCat = CATEGORIES_DATA[slug];
-      if (!staticCat) return null;
-      return {
-        slug: staticCat.slug,
-        name: staticCat.name,
-        description: staticCat.description,
-        imageUrl: getCategoryImage(staticCat.slug),
-        productCount: staticCat.products.length,
-        subCategories: staticCat.subCategories || []
-      };
-    })
-    .filter(Boolean) as DisplayCategory[];
-
-  const [categoriesList, setCategoriesList] = useState<DisplayCategory[]>(defaultList);
+  const [categoriesList, setCategoriesList] = useState<DisplayCategory[]>([]);
+  const [loading, setLoading] = useState(true);
 
   // Helper images for top categories
   function getCategoryImage(slug: string, fallbackImg?: string) {
@@ -79,10 +55,10 @@ export default function CategoriesPage() {
   }
 
   useEffect(() => {
-    fetch("/api/categories")
+    fetch("/api/categories?_t=" + Date.now(), { cache: "no-store" })
       .then((res) => res.json())
       .then((data) => {
-        if (data.success && Array.isArray(data.categories) && data.categories.length > 0) {
+        if (data.success && Array.isArray(data.categories)) {
           const mapped: DisplayCategory[] = data.categories.map((c: {
             id?: string;
             slug?: string;
@@ -111,12 +87,18 @@ export default function CategoriesPage() {
             };
           });
 
-          if (mapped.length > 0) {
-            setCategoriesList(mapped);
-          }
+          setCategoriesList(mapped);
+        } else {
+          setCategoriesList([]);
         }
       })
-      .catch((err) => console.error("Error loading categories:", err));
+      .catch((err) => {
+        console.error("Error loading categories:", err);
+        setCategoriesList([]);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   }, []);
 
   return (
@@ -144,49 +126,62 @@ export default function CategoriesPage() {
             <div className={styles.titleUnderline}></div>
           </div>
 
-          {/* Categories Grid */}
-          <div className={styles.categoriesGrid}>
-            {categoriesList.map((cat) => (
-              <Link href={`/category/${cat.slug}`} key={cat.slug} className={styles.categoryCard}>
-                <div className={styles.cardTop}>
-                  <div className={styles.imageWrapper}>
-                    <Image
-                      src={optimizeGalleryThumbnail(cat.imageUrl)}
-                      alt={cat.name}
-                      width={70}
-                      height={70}
-                      loading="lazy"
-                      style={{ objectFit: "contain" }}
-                    />
+          {loading ? (
+            <div style={{ textAlign: "center", padding: "60px 20px" }}>
+              <div style={{ display: "inline-block", width: "36px", height: "36px", border: "4px solid #e2e8f0", borderTopColor: "#132c66", borderRadius: "50%", animation: "spin 1s linear infinite" }}></div>
+              <p style={{ marginTop: "12px", color: "#64748b", fontWeight: 600, fontSize: "14px" }}>Loading categories...</p>
+            </div>
+          ) : categoriesList.length > 0 ? (
+            <div className={styles.categoriesGrid}>
+              {categoriesList.map((cat) => (
+                <Link href={`/category/${cat.slug}`} key={cat.slug} className={styles.categoryCard}>
+                  <div className={styles.cardTop}>
+                    <div className={styles.imageWrapper}>
+                      <Image
+                        src={optimizeGalleryThumbnail(cat.imageUrl)}
+                        alt={cat.name}
+                        width={70}
+                        height={70}
+                        loading="lazy"
+                        style={{ objectFit: "contain" }}
+                      />
+                    </div>
+                    <div className={styles.cardMeta}>
+                      <h2 className={styles.categoryName}>{cat.name}</h2>
+                      <span className={styles.productCount}>{cat.productCount} Products</span>
+                    </div>
                   </div>
-                  <div className={styles.cardMeta}>
-                    <h2 className={styles.categoryName}>{cat.name}</h2>
-                    <span className={styles.productCount}>{cat.productCount} Products</span>
+
+                  <p className={styles.categoryDesc}>{cat.description}</p>
+
+                  {cat.subCategories && cat.subCategories.length > 0 && (
+                    <div className={styles.subCatLinks}>
+                      {cat.subCategories.map((sub) => (
+                        <span key={sub.slug || sub.name} className={styles.subCatTag}>
+                          {sub.name}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className={styles.exploreBtn}>
+                    <span>Explore Range</span>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                      <line x1="5" y1="12" x2="19" y2="12"></line>
+                      <polyline points="12 5 19 12 12 19"></polyline>
+                    </svg>
                   </div>
-                </div>
-
-                <p className={styles.categoryDesc}>{cat.description}</p>
-
-                {cat.subCategories && cat.subCategories.length > 0 && (
-                  <div className={styles.subCatLinks}>
-                    {cat.subCategories.map((sub) => (
-                      <span key={sub.slug || sub.name} className={styles.subCatTag}>
-                        {sub.name}
-                      </span>
-                    ))}
-                  </div>
-                )}
-
-                <div className={styles.exploreBtn}>
-                  <span>Explore Range</span>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                    <polyline points="12 5 19 12 12 19"></polyline>
-                  </svg>
-                </div>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div style={{ textAlign: "center", padding: "60px 20px", background: "#ffffff", borderRadius: "12px", border: "1px dashed #cbd5e1" }}>
+              <p style={{ color: "#64748b", fontWeight: 600, fontSize: "15px", margin: 0 }}>No categories available yet.</p>
+              <Link href="/" style={{ display: "inline-block", marginTop: "16px", background: "#132c66", color: "#ffffff", padding: "10px 20px", borderRadius: "8px", fontWeight: 700, textDecoration: "none", fontSize: "13px" }}>
+                Return to Home
               </Link>
-            ))}
-          </div>
+            </div>
+          )}
         </div>
       </main>
 

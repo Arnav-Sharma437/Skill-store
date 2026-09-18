@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/db";
 import { Category, Product } from "@/lib/schemas";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export async function GET(req: NextRequest) {
   try {
     await connectToDatabase();
@@ -39,12 +42,19 @@ export async function GET(req: NextRequest) {
       })
     );
 
-    return NextResponse.json({
-      success: true,
-      count: categoriesWithCount.length,
-      categories: categoriesWithCount,
-      data: categoriesWithCount,
-    });
+    return NextResponse.json(
+      {
+        success: true,
+        count: categoriesWithCount.length,
+        categories: categoriesWithCount,
+        data: categoriesWithCount,
+      },
+      {
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate"
+        }
+      }
+    );
   } catch (error: unknown) {
     const errMessage = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json({ success: false, error: errMessage }, { status: 500 });

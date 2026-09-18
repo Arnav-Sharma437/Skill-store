@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/db";
 import { Review } from "@/lib/schemas";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 // GET /api/admin/reviews - get all reviews with optional status filter
 export async function GET(request: Request) {
   try {
@@ -16,7 +19,10 @@ export async function GET(request: Request) {
     }
 
     const reviews = await Review.find(query).sort({ createdAt: -1 }).lean();
-    return NextResponse.json({ reviews });
+    return NextResponse.json(
+      { reviews },
+      { headers: { "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate" } }
+    );
   } catch (error) {
     console.error("Error in admin GET /api/admin/reviews:", error);
     return NextResponse.json({ error: "Failed to fetch reviews" }, { status: 500 });
