@@ -213,9 +213,26 @@
   .brandCard {
     width: 200px;
     padding: 18px 14px 14px;
+    scroll-snap-align: start;
   }
   .brandsRow {
     gap: 14px;
     padding-right: 14px;
+  }
+  .brandsGrid {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    padding: 6px 4px 20px;
+    gap: 14px;
+    scrollbar-width: thin;
+  }
+  .brandsGrid::-webkit-scrollbar {
+    height: 4px;
+  }
+  .brandsGrid::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
   }
 }

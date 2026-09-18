@@ -90,8 +90,8 @@ export default function BrandShowcase() {
               </div>
             </div>
 
-            {/* Display static grid without cloning if few brands, else continuous marquee */}
-            {activeBrands.length <= 4 ? (
+            {/* Display static grid on desktop / slider on mobile if < 5 brands, else continuous marquee */}
+            {activeBrands.length < 5 ? (
               <div className={styles.brandsGrid}>
                 {activeBrands.map((brand) => (
                   <Link href={`/shop/${brand.slug}`} key={brand.slug} className={styles.brandCard}>
