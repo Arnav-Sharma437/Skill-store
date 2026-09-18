@@ -788,6 +788,9 @@ export default function AdminDashboard() {
   // --- Category CRUD Handlers ---
   const openAddCategoryModal = () => {
     setEditingCategory(null);
+    const maxOrder = categories.length > 0 
+      ? Math.max(...categories.map((c) => (typeof c.order === "number" && !isNaN(c.order) ? c.order : 0)))
+      : 0;
     setCategoryForm({
       id: "",
       name: "",
@@ -797,7 +800,7 @@ export default function AdminDashboard() {
       link: "",
       description: "",
       subcategories: [],
-      order: categories.length + 1,
+      order: maxOrder + 1,
     });
     setNewSubCatName("");
     setNewSubCatSlug("");
@@ -809,6 +812,7 @@ export default function AdminDashboard() {
     setEditingCategory(cat);
     const standardBrands = ["tuqo", "pumpkin", "mitsuki", "metso", "costec", "ultratouch"];
     const isStandard = standardBrands.includes((cat.brand || "").toLowerCase());
+    const initialOrder = typeof cat.order === "number" && !isNaN(cat.order) && cat.order > 0 ? cat.order : 1;
     setCategoryForm({
       id: cat.id,
       name: cat.name,
@@ -818,7 +822,7 @@ export default function AdminDashboard() {
       link: cat.link,
       description: cat.description || "",
       subcategories: Array.isArray(cat.subcategories) ? [...cat.subcategories] : [],
-      order: cat.order !== undefined ? cat.order : 0,
+      order: initialOrder,
     });
     setNewSubCatName("");
     setNewSubCatSlug("");
@@ -869,6 +873,9 @@ export default function AdminDashboard() {
     const slug = categoryForm.id.trim() || categoryForm.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
     const finalLink = categoryForm.link.trim() || `/category/${slug}`;
 
+    const parsedOrder = Number(categoryForm.order);
+    const finalOrder = !isNaN(parsedOrder) && parsedOrder > 0 ? parsedOrder : (editingCategory?.order || 1);
+
     setCategoryActionLoading("save");
     try {
       const isEdit = !!editingCategory;
@@ -876,14 +883,14 @@ export default function AdminDashboard() {
         method: isEdit ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          id: slug,
+          id: isEdit ? editingCategory.id : slug,
           name: categoryForm.name.trim(),
           brand: finalBrand,
           imageUrl: categoryForm.imageUrl.trim(),
           link: finalLink,
           description: categoryForm.description.trim(),
           subcategories: categoryForm.subcategories,
-          order: Number(categoryForm.order) || 0,
+          order: finalOrder,
         }),
       });
 
@@ -4389,17 +4396,23 @@ export default function AdminDashboard() {
                 </div>
 
                 <div className={styles.inputField}>
-                  <label htmlFor="cat-form-order">Display Order / Position</label>
+                  <label htmlFor="cat-form-order">Display Order / Position (1, 2, 3...)</label>
                   <input
                     id="cat-form-order"
                     type="number"
-                    min="0"
-                    placeholder="e.g. 1 (1st), 2 (2nd)..."
-                    value={categoryForm.order}
-                    onChange={(e) => setCategoryForm({ ...categoryForm, order: Number(e.target.value) || 0 })}
+                    min="1"
+                    placeholder="1"
+                    value={categoryForm.order === 0 ? "" : categoryForm.order}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setCategoryForm((prev) => ({
+                        ...prev,
+                        order: val === "" ? 0 : Math.max(1, parseInt(val, 10) || 1),
+                      }));
+                    }}
                   />
                   <span style={{ fontSize: "11px", color: "#64748b", marginTop: "2px" }}>
-                    Lower number appears first (1st, 2nd, 3rd)
+                    Lower number appears first (1st, 2nd, 3rd...).
                   </span>
                 </div>
               </div>

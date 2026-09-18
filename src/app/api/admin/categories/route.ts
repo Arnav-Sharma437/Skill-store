@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
     const brand = searchParams.get("brand");
 
     const query = brand ? { brand: brand.toLowerCase() } : {};
-    const categories = await Category.find(query).sort({ order: 1, createdAt: -1 });
+    const categories = await Category.find(query).sort({ order: 1, createdAt: 1 });
 
     return NextResponse.json(
       { success: true, data: categories },
@@ -41,6 +41,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: `Category with ID/slug "${cleanId}" already exists.` }, { status: 400 });
     }
 
+    // Auto-calculate order if not provided or 0
+    let finalOrder = typeof order === "number" && !isNaN(order) && order > 0 ? order : 0;
+    if (finalOrder === 0) {
+      const highestOrderCat = await Category.findOne().sort({ order: -1 }).lean();
+      finalOrder = ((highestOrderCat as { order?: number } | null)?.order || 0) + 1;
+    }
+
     // Sanitize subcategories
     const cleanSubcategories = Array.isArray(subcategories)
       ? subcategories
@@ -61,7 +68,7 @@ export async function POST(req: NextRequest) {
       link: link ? link.trim() : `/category/${cleanId}`,
       description: description ? description.trim() : "",
       subcategories: cleanSubcategories,
-      order: typeof order === "number" ? order : 0,
+      order: finalOrder,
     });
 
     return NextResponse.json(
@@ -84,13 +91,19 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ success: false, error: "Missing category ID" }, { status: 400 });
     }
 
+    const cleanId = id.trim();
+    const isObjId = mongoose.Types.ObjectId.isValid(cleanId);
+
     const updateFields: Record<string, unknown> = {};
     if (name !== undefined) updateFields.name = name.trim();
     if (brand !== undefined) updateFields.brand = brand.trim().toLowerCase();
     if (imageUrl !== undefined) updateFields.imageUrl = imageUrl.trim();
     if (link !== undefined) updateFields.link = link.trim();
     if (description !== undefined) updateFields.description = description.trim();
-    if (order !== undefined) updateFields.order = Number(order);
+    if (order !== undefined) {
+      const parsed = Number(order);
+      updateFields.order = !isNaN(parsed) && parsed > 0 ? parsed : 1;
+    }
     if (subcategories !== undefined && Array.isArray(subcategories)) {
       updateFields.subcategories = subcategories
         .filter((s: { name?: string; id?: string }) => s && (s.name || s.id))
@@ -102,8 +115,17 @@ export async function PUT(req: NextRequest) {
         }));
     }
 
+    const findFilter: Record<string, unknown>[] = [
+      { id: cleanId },
+      { id: { $regex: new RegExp(`^${cleanId.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i") } }
+    ];
+
+    if (isObjId) {
+      findFilter.push({ _id: new mongoose.Types.ObjectId(cleanId) });
+    }
+
     const updatedCategory = await Category.findOneAndUpdate(
-      { id: id.trim() },
+      { $or: findFilter },
       { $set: updateFields },
       { new: true }
     );

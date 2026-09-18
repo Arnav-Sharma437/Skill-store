@@ -33,7 +33,7 @@ export default function Header() {
     let isMounted = true;
 
     // Fetch categories
-    fetch("/api/categories")
+    fetch(`/api/categories?_t=${Date.now()}`, { cache: "no-store" })
       .then((res) => res.json())
       .then((data) => {
         if (!isMounted) return;
@@ -65,7 +65,7 @@ export default function Header() {
       .catch(() => {});
 
     // Fetch brands
-    fetch("/api/brands")
+    fetch(`/api/brands?_t=${Date.now()}`, { cache: "no-store" })
       .then((res) => res.json())
       .then((data) => {
         if (!isMounted) return;

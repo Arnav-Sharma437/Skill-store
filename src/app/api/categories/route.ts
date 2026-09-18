@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
       query.id = { $regex: new RegExp(`^${slug.trim()}$`, "i") };
     }
 
-    const categories = await Category.find(query).sort({ order: 1, createdAt: -1 }).lean();
+    const categories = await Category.find(query).sort({ order: 1, createdAt: 1 }).lean();
 
     // Attach real live product count for each category
     const categoriesWithCount = await Promise.all(

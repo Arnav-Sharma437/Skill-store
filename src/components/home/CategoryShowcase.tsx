@@ -79,13 +79,14 @@ interface ApiCategory {
   name?: string;
   productCount?: number;
   image?: string;
+  imageUrl?: string;
 }
 
 export default function CategoryShowcase() {
   const [categories, setCategories] = useState<CategoryItem[]>(defaultCategories);
 
   useEffect(() => {
-    fetch("/api/categories")
+    fetch("/api/categories?_t=" + Date.now(), { cache: "no-store" })
       .then((res) => res.json())
       .then((data: { success?: boolean; categories?: ApiCategory[] }) => {
         if (data.success && Array.isArray(data.categories) && data.categories.length > 0) {
@@ -93,7 +94,7 @@ export default function CategoryShowcase() {
             slug: c.slug || c.id || "",
             name: c.name || "",
             count: c.productCount !== undefined ? `${c.productCount} Products` : "Featured",
-            imageUrl: c.image || "/images/products/hw2000.jpg",
+            imageUrl: c.imageUrl || c.image || "/images/products/hw2000.jpg",
             badge: "Genuine"
           }));
           setCategories(mapped);
