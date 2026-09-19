@@ -147,23 +147,52 @@ export default function Header() {
     };
   }, [searchQuery, dbSearchProducts]);
 
+  // Desktop hover helpers (only active when device supports hover)
+  const handleCategoryMouseEnter = () => {
+    if (typeof window !== "undefined" && window.matchMedia("(hover: hover)").matches) {
+      setIsCategoryOpen(true);
+    }
+  };
+
+  const handleCategoryMouseLeave = () => {
+    if (typeof window !== "undefined" && window.matchMedia("(hover: hover)").matches) {
+      setIsCategoryOpen(false);
+      setActiveSubmenu(null);
+    }
+  };
+
+  const handleBrandsMouseEnter = () => {
+    if (typeof window !== "undefined" && window.matchMedia("(hover: hover)").matches) {
+      setIsBrandsOpen(true);
+    }
+  };
+
+  const handleBrandsMouseLeave = () => {
+    if (typeof window !== "undefined" && window.matchMedia("(hover: hover)").matches) {
+      setIsBrandsOpen(false);
+    }
+  };
+
   // Close search preview and sub-header dropdowns on outside click
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent | TouchEvent) => {
-      if (searchContainerRef.current && !searchContainerRef.current.contains(e.target as Node)) {
+      const target = e.target as HTMLElement | null;
+      if (!target) return;
+
+      if (searchContainerRef.current && !searchContainerRef.current.contains(target)) {
         setIsSearchFocused(false);
       }
-      if (subHeaderRef.current && !subHeaderRef.current.contains(e.target as Node)) {
+      if (subHeaderRef.current && !subHeaderRef.current.contains(target)) {
         setIsCategoryOpen(false);
         setIsBrandsOpen(false);
         setActiveSubmenu(null);
       }
     };
-    document.addEventListener("mousedown", handleClickOutside);
-    document.addEventListener("touchstart", handleClickOutside, { passive: true });
+    document.addEventListener("click", handleClickOutside);
+    document.addEventListener("touchend", handleClickOutside, { passive: true });
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      document.removeEventListener("touchstart", handleClickOutside);
+      document.removeEventListener("click", handleClickOutside);
+      document.removeEventListener("touchend", handleClickOutside);
     };
   }, []);
 
@@ -401,18 +430,20 @@ export default function Header() {
           {/* Shop By Category Trigger */}
           <div 
             className={styles.subTabWrapper}
-            onMouseEnter={() => setIsCategoryOpen(true)}
-            onMouseLeave={() => {
-              setIsCategoryOpen(false);
-              setActiveSubmenu(null);
-            }}
+            onMouseEnter={handleCategoryMouseEnter}
+            onMouseLeave={handleCategoryMouseLeave}
           >
             <button
               type="button"
               className={`${styles.subTab} ${isCategoryOpen ? styles.activeTab : ""}`}
               onClick={(e) => {
                 e.preventDefault();
-                setIsCategoryOpen((prev) => !prev);
+                e.stopPropagation();
+                setIsCategoryOpen((prev) => {
+                  const next = !prev;
+                  if (!next) setActiveSubmenu(null);
+                  return next;
+                });
                 setIsBrandsOpen(false);
               }}
               aria-expanded={isCategoryOpen}
@@ -775,16 +806,18 @@ export default function Header() {
           {/* Shop By Brands Trigger */}
           <div 
             className={styles.subTabWrapper}
-            onMouseEnter={() => setIsBrandsOpen(true)}
-            onMouseLeave={() => setIsBrandsOpen(false)}
+            onMouseEnter={handleBrandsMouseEnter}
+            onMouseLeave={handleBrandsMouseLeave}
           >
             <button
               type="button"
               className={`${styles.subTab} ${isBrandsOpen ? styles.activeTab : ""}`}
               onClick={(e) => {
                 e.preventDefault();
+                e.stopPropagation();
                 setIsBrandsOpen((prev) => !prev);
                 setIsCategoryOpen(false);
+                setActiveSubmenu(null);
               }}
               aria-expanded={isBrandsOpen}
             >

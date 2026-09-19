@@ -393,7 +393,7 @@
   border-bottom: 2px solid #ffd300;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   position: relative;
-  z-index: 20;
+  z-index: 90;
 }
 
 .subContainer {
@@ -718,7 +718,7 @@
     border-bottom: 2px solid #ffd300;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
     position: relative;
-    z-index: 40;
+    z-index: 120;
     padding: 0 4px;
   }
   .subContainer {
@@ -726,9 +726,12 @@
     gap: 4px;
     justify-content: space-around;
     width: 100%;
+    position: relative;
   }
   .subTabWrapper {
+    position: static;
     flex: 1;
+    display: flex;
     justify-content: center;
   }
   .subTab {
@@ -746,17 +749,18 @@
   .categoryDropdown {
     position: absolute;
     top: 100%;
-    left: 4px;
-    right: 4px;
-    width: calc(100vw - 8px);
-    max-width: 380px;
-    max-height: 70vh;
+    left: 8px;
+    right: 8px;
+    width: auto;
+    max-width: none;
+    max-height: 72vh;
     overflow-y: auto;
     border-radius: 0 0 10px 10px;
     border: 1.5px solid rgba(56, 182, 255, 0.3);
     border-top: 2px solid #ffd300;
-    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
-    z-index: 150;
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.5);
+    z-index: 250;
+    background: #0f2352;
   }
   .submenuBox {
     position: static;
@@ -775,17 +779,19 @@
   .brandsDropdown {
     position: absolute;
     top: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    width: calc(100vw - 16px);
-    max-width: 340px;
-    max-height: 70vh;
+    left: 8px;
+    right: 8px;
+    transform: none;
+    width: auto;
+    max-width: none;
+    max-height: 72vh;
     overflow-y: auto;
     border-radius: 0 0 10px 10px;
     border: 1.5px solid rgba(56, 182, 255, 0.3);
     border-top: 2px solid #ffd300;
-    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
-    z-index: 150;
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.5);
+    z-index: 250;
+    background: #0f2352;
   }
   .actions {
     display: none !important;
