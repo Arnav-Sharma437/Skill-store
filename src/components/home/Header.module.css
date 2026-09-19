@@ -658,34 +658,36 @@
 @media (max-width: 768px) {
   .logoBg {
     display: block;
-    width: 175px;
-    clip-path: polygon(0 0, 100% 0, calc(100% - 28px) 100%, 0 100%);
+    width: 142px;
+    clip-path: polygon(0 0, 100% 0, calc(100% - 22px) 100%, 0 100%);
     background: #ffffff;
     z-index: 1;
   }
   .mainHeader {
-    height: 58px;
-    padding: 0 10px;
+    height: 54px;
+    padding: 0 10px 0 6px;
   }
   .container {
-    gap: 10px;
+    gap: 12px;
+    padding: 0 4px;
   }
   .logoLink {
     background: transparent;
     padding: 0;
     box-shadow: none;
     z-index: 3;
-    padding-left: 2px;
+    padding-left: 0;
     flex-shrink: 0;
+    margin-left: 0;
   }
   .logo {
     display: flex;
     align-items: center;
   }
   .logo img {
-    width: 125px !important;
+    width: 110px !important;
     height: auto !important;
-    max-height: 38px;
+    max-height: 34px;
     object-fit: contain;
   }
   .desktopNav {
@@ -703,7 +705,7 @@
     flex-shrink: 1;
     min-width: 0;
     z-index: 10;
-    margin-left: 2px;
+    margin-left: 14px;
   }
   .searchForm {
     max-width: none;
