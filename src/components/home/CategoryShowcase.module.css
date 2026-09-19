@@ -37,6 +37,12 @@
   letter-spacing: -0.5px;
 }
 
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
 .viewAllLink {
   display: flex;
   align-items: center;
@@ -51,6 +57,37 @@
 .viewAllLink:hover {
   color: #38b6ff;
   transform: translateX(3px);
+}
+
+.navButtons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.arrowBtn {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 1.5px solid #132c66;
+  color: #132c66;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition-fast) ease;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+}
+
+.arrowBtn:hover {
+  background: #132c66;
+  color: #ffd300;
+  transform: scale(1.05);
+}
+
+.arrowBtn:active {
+  transform: scale(0.95);
 }
 
 /* Category Grid for < 5 items without duplication */

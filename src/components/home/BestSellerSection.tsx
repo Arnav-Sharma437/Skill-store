@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import styles from "./BestSellerSection.module.css";
 import ProductCard from "./ProductCard";
 import { Product } from "@/data/home";
@@ -8,6 +8,14 @@ import { Product } from "@/data/home";
 export default function BestSellerSection() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const sliderRef = useRef<HTMLDivElement>(null);
+
+  const scrollSlider = (direction: "left" | "right") => {
+    if (sliderRef.current) {
+      const scrollAmount = direction === "left" ? -260 : 260;
+      sliderRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
+    }
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -69,26 +77,60 @@ export default function BestSellerSection() {
           </div>
           {/* Bottom underline of the tab row */}
           <div className={styles.headerLine}></div>
+
+          {/* Navigation Arrows for Mobile Slider (< 5 products) */}
+          {products.length > 0 && products.length < 5 && (
+            <div className={styles.navButtons}>
+              <button
+                className={styles.arrowBtn}
+                onClick={() => scrollSlider("left")}
+                aria-label="Scroll left"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
+              </button>
+              <button
+                className={styles.arrowBtn}
+                onClick={() => scrollSlider("right")}
+                aria-label="Scroll right"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+              </button>
+            </div>
+          )}
         </div>
 
-        {/* Product Cards Row with Continuous Scrolling Marquee */}
+        {/* Display static grid on desktop / slider with arrows on mobile if < 5 products, else continuous marquee */}
         {products.length > 0 && (
-          <div className={styles.marqueeContainer}>
-            <div className={styles.marqueeTrack}>
-              {/* First list copy */}
-              <div className={styles.productRow}>
+          products.length < 5 ? (
+            <div className={styles.productSliderContainer}>
+              <div className={styles.productGrid} ref={sliderRef}>
                 {products.map((product) => (
-                  <ProductCard key={`${product.id}-1`} product={product} />
-                ))}
-              </div>
-              {/* Duplicated list copy for seamless infinite loop */}
-              <div className={styles.productRow} aria-hidden="true">
-                {products.map((product) => (
-                  <ProductCard key={`${product.id}-2`} product={product} />
+                  <ProductCard key={product.id} product={product} />
                 ))}
               </div>
             </div>
-          </div>
+          ) : (
+            <div className={styles.marqueeContainer}>
+              <div className={styles.marqueeTrack}>
+                {/* First list copy */}
+                <div className={styles.productRow}>
+                  {products.map((product) => (
+                    <ProductCard key={`${product.id}-1`} product={product} />
+                  ))}
+                </div>
+                {/* Duplicated list copy for seamless infinite loop */}
+                <div className={styles.productRow} aria-hidden="true">
+                  {products.map((product) => (
+                    <ProductCard key={`${product.id}-2`} product={product} />
+                  ))}
+                </div>
+              </div>
+            </div>
+          )
         )}
       </div>
     </section>

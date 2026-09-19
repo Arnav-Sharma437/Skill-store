@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import styles from "./BrandShowcase.module.css";
@@ -15,6 +15,14 @@ export default function BrandShowcase() {
   const [trustEnabled, setTrustEnabled] = useState(true);
   const [uspItems, setUspItems] = useState<IUspItem[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
+  const sliderRef = useRef<HTMLDivElement>(null);
+
+  const scrollSlider = (direction: "left" | "right") => {
+    if (sliderRef.current) {
+      const scrollAmount = direction === "left" ? -240 : 240;
+      sliderRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
+    }
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -92,11 +100,34 @@ export default function BrandShowcase() {
                 <span className={styles.subtitle}>{sectionSubtitle}</span>
                 <h2 className={styles.title}>{sectionTitle}</h2>
               </div>
+              {/* Navigation Arrows for Mobile Slider (< 5 brands) */}
+              {activeBrands.length < 5 && (
+                <div className={styles.navButtons}>
+                  <button
+                    className={styles.arrowBtn}
+                    onClick={() => scrollSlider("left")}
+                    aria-label="Scroll left"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                  </button>
+                  <button
+                    className={styles.arrowBtn}
+                    onClick={() => scrollSlider("right")}
+                    aria-label="Scroll right"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Display static grid on desktop / slider on mobile if < 5 brands, else continuous marquee */}
             {activeBrands.length < 5 ? (
-              <div className={styles.brandsGrid}>
+              <div className={styles.brandsGrid} ref={sliderRef}>
                 {activeBrands.map((brand) => (
                   <Link href={`/shop/${brand.slug}`} key={brand.slug} className={styles.brandCard}>
                     <div className={styles.logoContainer}>

@@ -35,6 +35,51 @@
   flex-grow: 1;
 }
 
+.navButtons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.arrowBtn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 1.5px solid #132c66;
+  color: #132c66;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition-fast) ease;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+}
+
+.arrowBtn:hover {
+  background: #132c66;
+  color: #ffd300;
+  transform: scale(1.05);
+}
+
+.arrowBtn:active {
+  transform: scale(0.95);
+}
+
+/* Static grid for < 5 products on desktop / scrollable on mobile */
+.productSliderContainer {
+  width: 100%;
+  padding: 10px 0 20px;
+}
+
+.productGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: flex-start;
+}
+
 /* Continuous Marquee Ticker Container (Scrolling Rightwards) inside Container */
 .marqueeContainer {
   width: 100%;
@@ -84,5 +129,21 @@
   .productRow {
     gap: 14px;
     padding-right: 14px;
+  }
+  .productGrid {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    gap: 14px;
+    padding: 6px 4px 16px;
+    scrollbar-width: thin;
+  }
+  .productGrid::-webkit-scrollbar {
+    height: 4px;
+  }
+  .productGrid::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
   }
 }

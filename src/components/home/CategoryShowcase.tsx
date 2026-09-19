@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { optimizeProductCard } from "@/lib/imageOptimization";
@@ -85,6 +85,14 @@ interface ApiCategory {
 export default function CategoryShowcase() {
   const [categories, setCategories] = useState<CategoryItem[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
+  const sliderRef = useRef<HTMLDivElement>(null);
+
+  const scrollSlider = (direction: "left" | "right") => {
+    if (sliderRef.current) {
+      const scrollAmount = direction === "left" ? -220 : 220;
+      sliderRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
+    }
+  };
 
   useEffect(() => {
     fetch("/api/categories?_t=" + Date.now(), { cache: "no-store" })
@@ -120,18 +128,43 @@ export default function CategoryShowcase() {
             <span className={styles.subtitle}>EXPLORE THE CATALOG</span>
             <h2 className={styles.title}>SHOP BY CATEGORIES</h2>
           </div>
-          <Link href="/categories" className={styles.viewAllLink}>
-            <span>View All Categories</span>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <line x1="5" y1="12" x2="19" y2="12"></line>
-              <polyline points="12 5 19 12 12 19"></polyline>
-            </svg>
-          </Link>
+          <div className={styles.headerActions}>
+            <Link href="/categories" className={styles.viewAllLink}>
+              <span>View All Categories</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+                <polyline points="12 5 19 12 12 19"></polyline>
+              </svg>
+            </Link>
+            {/* Navigation Arrows for Mobile Slider (< 5 categories) */}
+            {topCategories.length < 5 && (
+              <div className={styles.navButtons}>
+                <button
+                  className={styles.arrowBtn}
+                  onClick={() => scrollSlider("left")}
+                  aria-label="Scroll left"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <polyline points="15 18 9 12 15 6"></polyline>
+                  </svg>
+                </button>
+                <button
+                  className={styles.arrowBtn}
+                  onClick={() => scrollSlider("right")}
+                  aria-label="Scroll right"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                  </svg>
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Display static grid on desktop / slider on mobile if < 5 categories, else continuous marquee */}
         {topCategories.length < 5 ? (
-          <div className={styles.categoryGrid}>
+          <div className={styles.categoryGrid} ref={sliderRef}>
             {topCategories.map((cat) => (
               <Link href={`/category/${cat.slug}`} key={cat.slug} className={styles.card}>
                 <div className={styles.imageBox}>
