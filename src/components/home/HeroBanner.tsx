@@ -84,25 +84,25 @@ export default function HeroBanner() {
             aria-hidden={idx !== currentSlide}
           >
             <div className={styles.imageContainer}>
-              {/* Desktop Banner Image */}
+              {/* Base Banner Image (Always active) */}
               <Image
                 src={optimizeHeroBanner(slide.imageUrl)}
                 alt={`Machinery Banner ${idx + 1}`}
                 fill
                 priority={idx === 0}
                 loading={idx === 0 ? "eager" : "lazy"}
-                className={slide.mobileImageUrl ? styles.desktopImage : styles.image}
+                className={styles.image}
                 sizes="100vw"
               />
-              {/* Dedicated Mobile Banner Image (if available) */}
-              {slide.mobileImageUrl && (
+              {/* Dedicated Mobile Banner (if uploaded, overlays on mobile screens) */}
+              {slide.mobileImageUrl && slide.mobileImageUrl.trim() !== "" && (
                 <Image
                   src={optimizeHeroBanner(slide.mobileImageUrl)}
                   alt={`Machinery Banner Mobile ${idx + 1}`}
                   fill
                   priority={idx === 0}
                   loading={idx === 0 ? "eager" : "lazy"}
-                  className={styles.mobileImage}
+                  className={styles.mobileOnlyImage}
                   sizes="100vw"
                 />
               )}

@@ -5,7 +5,7 @@
   min-height: 300px;
   max-height: 560px; /* Increased height */
   overflow: hidden;
-  background: #000000;
+  background: #f1f5f9;
   z-index: 1;
 }
 
@@ -36,16 +36,10 @@
   object-position: center;
 }
 
-.desktopImage {
-  object-fit: cover;
-  object-position: center;
-  display: block;
-}
-
-.mobileImage {
-  object-fit: cover;
-  object-position: center;
+.mobileOnlyImage {
   display: none;
+  object-fit: cover;
+  object-position: center;
 }
 
 /* --- Navigation Buttons (White circles with black arrow icon) --- */
@@ -114,11 +108,9 @@
     aspect-ratio: 16 / 7.5;
     min-height: 180px;
   }
-  .desktopImage {
-    display: none;
-  }
-  .mobileImage {
+  .mobileOnlyImage {
     display: block;
+    z-index: 2;
   }
   .navButton {
     width: 28px;
