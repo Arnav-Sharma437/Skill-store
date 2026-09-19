@@ -289,23 +289,52 @@ export default function ProductPage({ params }: PageProps) {
   };
 
   const isFavourite = product ? isInWishlist(product.id) : false;
-  const savings = product ? Math.max(0, product.originalPrice - product.price) : 0;
-  const savingsPercent = product && product.originalPrice > 0 ? Math.round((savings / product.originalPrice) * 100) : 0;
+
+  // Active Matched Variant based on selections
+  const activeMatchedVariant = useMemo(() => {
+    if (!product?.variants || !Array.isArray(product.variants) || product.variants.length === 0) {
+      return null;
+    }
+    return product.variants.find((v) => {
+      const vName = (v.name || "").trim().toLowerCase();
+      if (selectedDegree && (vName === selectedDegree.toLowerCase() || (v.degree && v.degree.toLowerCase() === selectedDegree.toLowerCase()))) {
+        return true;
+      }
+      if (selectedSize && (vName === selectedSize.toLowerCase() || (v.size && v.size.toLowerCase() === selectedSize.toLowerCase()))) {
+        return true;
+      }
+      if (selectedStyle && (vName === selectedStyle.toLowerCase() || (v.style && v.style.toLowerCase() === selectedStyle.toLowerCase()))) {
+        return true;
+      }
+      if (selectedCustomVariant && vName === selectedCustomVariant.toLowerCase()) {
+        return true;
+      }
+      return false;
+    }) || null;
+  }, [product, selectedDegree, selectedSize, selectedStyle, selectedCustomVariant]);
+
+  const activePrice = activeMatchedVariant?.price && activeMatchedVariant.price > 0 ? activeMatchedVariant.price : (product?.price || 0);
+  const activeOriginalPrice = product ? Math.max(product.originalPrice || 0, activePrice) : activePrice;
+  const savings = product ? Math.max(0, activeOriginalPrice - activePrice) : 0;
+  const savingsPercent = activeOriginalPrice > 0 && savings > 0 ? Math.round((savings / activeOriginalPrice) * 100) : 0;
 
   // Selected variant configuration
   const currentVariant = useMemo(() => {
     if (!product) return undefined;
+    const variantLabel = activeMatchedVariant?.name || selectedDegree || selectedSize || selectedStyle || selectedCustomVariant || "";
     const hasVar =
+      Boolean(variantLabel) ||
       (product.degrees && product.degrees.length > 0) ||
       (product.sizes && product.sizes.length > 0) ||
       (product.styles && product.styles.length > 0);
     if (!hasVar) return undefined;
     return {
+      name: variantLabel || undefined,
       degree: selectedDegree || undefined,
       size: selectedSize || undefined,
       style: selectedStyle || undefined,
     };
-  }, [product, selectedDegree, selectedSize, selectedStyle]);
+  }, [product, activeMatchedVariant, selectedDegree, selectedSize, selectedStyle, selectedCustomVariant]);
 
   // Gallery thumbnails
   const gallery = useMemo(() => {
@@ -581,10 +610,10 @@ export default function ProductPage({ params }: PageProps) {
 
               {/* Price block */}
               <div className={styles.priceContainer}>
-                {product.originalPrice > product.price && (
-                  <span className={styles.originalPrice}>Rs. {product.originalPrice.toLocaleString("en-IN")}.00</span>
+                {activeOriginalPrice > activePrice && (
+                  <span className={styles.originalPrice}>Rs. {activeOriginalPrice.toLocaleString("en-IN")}.00</span>
                 )}
-                <span className={styles.currentPrice}>Rs. {product.price.toLocaleString("en-IN")}.00</span>
+                <span className={styles.currentPrice}>Rs. {activePrice.toLocaleString("en-IN")}.00</span>
                 {savings > 0 && (
                   <span className={styles.savingsTag}>You Save : Rs. {savings.toLocaleString("en-IN")} ({savingsPercent}%)</span>
                 )}
@@ -617,6 +646,7 @@ export default function ProductPage({ params }: PageProps) {
                       <div className={styles.variantPills}>
                         {product.degrees.map((deg) => {
                           const vImg = findVariantImage("degree", deg);
+                          const vObj = product.variants?.find((v) => (v.name && v.name.toLowerCase() === deg.toLowerCase()) || (v.degree && v.degree.toLowerCase() === deg.toLowerCase()));
                           return (
                             <button
                               key={deg}
@@ -630,6 +660,9 @@ export default function ProductPage({ params }: PageProps) {
                                 </span>
                               )}
                               <span>{deg}</span>
+                              {vObj?.price && vObj.price > 0 && vObj.price !== product.price && (
+                                <span style={{ fontSize: "11px", opacity: 0.85, fontWeight: 700 }}>(₹{vObj.price})</span>
+                              )}
                             </button>
                           );
                         })}
@@ -646,6 +679,7 @@ export default function ProductPage({ params }: PageProps) {
                       <div className={styles.variantPills}>
                         {product.sizes.map((sz) => {
                           const vImg = findVariantImage("size", sz);
+                          const vObj = product.variants?.find((v) => (v.name && v.name.toLowerCase() === sz.toLowerCase()) || (v.size && v.size.toLowerCase() === sz.toLowerCase()));
                           return (
                             <button
                               key={sz}
@@ -659,6 +693,9 @@ export default function ProductPage({ params }: PageProps) {
                                 </span>
                               )}
                               <span>{sz}</span>
+                              {vObj?.price && vObj.price > 0 && vObj.price !== product.price && (
+                                <span style={{ fontSize: "11px", opacity: 0.85, fontWeight: 700 }}>(₹{vObj.price})</span>
+                              )}
                             </button>
                           );
                         })}
@@ -675,6 +712,7 @@ export default function ProductPage({ params }: PageProps) {
                       <div className={styles.variantPills}>
                         {product.styles.map((st) => {
                           const vImg = findVariantImage("style", st);
+                          const vObj = product.variants?.find((v) => (v.name && v.name.toLowerCase() === st.toLowerCase()) || (v.style && v.style.toLowerCase() === st.toLowerCase()));
                           return (
                             <button
                               key={st}
@@ -688,6 +726,9 @@ export default function ProductPage({ params }: PageProps) {
                                 </span>
                               )}
                               <span>{st}</span>
+                              {vObj?.price && vObj.price > 0 && vObj.price !== product.price && (
+                                <span style={{ fontSize: "11px", opacity: 0.85, fontWeight: 700 }}>(₹{vObj.price})</span>
+                              )}
                             </button>
                           );
                         })}
@@ -718,7 +759,7 @@ export default function ProductPage({ params }: PageProps) {
                                   </span>
                                 )}
                                 <span>{v.name}</span>
-                                {v.price && <span style={{ fontSize: "11px", opacity: 0.85 }}>(₹{v.price})</span>}
+                                {v.price && <span style={{ fontSize: "11px", opacity: 0.85, fontWeight: 700 }}>(₹{v.price})</span>}
                               </button>
                             ))}
                         </div>
@@ -763,12 +804,14 @@ export default function ProductPage({ params }: PageProps) {
                   <>
                     <button 
                       onClick={() => {
+                        const variantImg = activeMatchedVariant?.imageUrl || selectedImage || product.imageUrl;
                         addToCart(
                           {
                             id: product.id,
+                            productId: product.id,
                             title: product.title,
-                            price: product.price,
-                            imageUrl: product.imageUrl,
+                            price: activePrice,
+                            imageUrl: variantImg,
                             selectedVariant: currentVariant,
                           },
                           quantity
@@ -781,12 +824,14 @@ export default function ProductPage({ params }: PageProps) {
                     </button>
                     <button 
                       onClick={() => {
+                        const variantImg = activeMatchedVariant?.imageUrl || selectedImage || product.imageUrl;
                         addToCart(
                           {
                             id: product.id,
+                            productId: product.id,
                             title: product.title,
-                            price: product.price,
-                            imageUrl: product.imageUrl,
+                            price: activePrice,
+                            imageUrl: variantImg,
                             selectedVariant: currentVariant,
                           },
                           quantity

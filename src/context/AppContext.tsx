@@ -11,6 +11,7 @@ export interface CartItem {
   imageUrl: string;
   quantity: number;
   selectedVariant?: {
+    name?: string;
     degree?: string;
     size?: string;
     style?: string;
@@ -45,7 +46,7 @@ interface AppContextType {
       title: string;
       price: number;
       imageUrl: string;
-      selectedVariant?: { degree?: string; size?: string; style?: string };
+      selectedVariant?: { name?: string; degree?: string; size?: string; style?: string };
     },
     quantity?: number
   ) => void;
@@ -93,13 +94,22 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       title: string;
       price: number;
       imageUrl: string;
-      selectedVariant?: { degree?: string; size?: string; style?: string };
+      selectedVariant?: { name?: string; degree?: string; size?: string; style?: string };
     },
     quantity = 1
   ) => {
     const pId = product.productId || product.id;
     const varKey = product.selectedVariant
-      ? [product.selectedVariant.degree, product.selectedVariant.size, product.selectedVariant.style].filter(Boolean).join("-")
+      ? [
+          product.selectedVariant.name,
+          product.selectedVariant.degree,
+          product.selectedVariant.size,
+          product.selectedVariant.style,
+        ]
+          .filter(Boolean)
+          .join("-")
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
       : "";
     const uniqueCartId = varKey ? `${pId}-${varKey}` : pId;
 
@@ -107,7 +117,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const existing = prev.find((item) => item.id === uniqueCartId);
       if (existing) {
         return prev.map((item) =>
-          item.id === uniqueCartId ? { ...item, quantity: item.quantity + quantity } : item
+          item.id === uniqueCartId
+            ? {
+                ...item,
+                quantity: item.quantity + quantity,
+                price: product.price || item.price,
+                imageUrl: product.imageUrl || item.imageUrl,
+              }
+            : item
         );
       }
       return [

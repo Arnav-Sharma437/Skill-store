@@ -552,19 +552,32 @@
   transition: transform var(--transition-fast) ease, color var(--transition-fast) ease;
 }
 
-.dropdownItem:hover .submenuCaret {
-  color: #ffd300;
-  transform: translateX(2px);
+.categoryGroup {
+  position: relative;
+  width: 100%;
 }
 
-/* --- Submenu (Opens to the right) --- */
+.submenuHeaderMobile {
+  display: none;
+}
+
+.submenuBullet {
+  color: #ffd300;
+  font-size: 14px;
+  font-weight: 800;
+  margin-right: 6px;
+  display: inline-block;
+  transition: transform var(--transition-fast) ease;
+}
+
+/* --- Submenu (Opens to the right on Desktop) --- */
 .submenuBox {
   position: absolute;
   top: 0;
   left: 100%;
-  width: 280px;
-  background: #1e3a8a;
-  box-shadow: 10px 20px 25px -5px rgba(0, 0, 0, 0.3);
+  width: 290px;
+  background: #0d1e47;
+  box-shadow: 12px 20px 30px rgba(0, 0, 0, 0.4);
   padding: 6px 0;
   z-index: 110;
   display: flex;
@@ -575,7 +588,7 @@
 }
 
 .submenuItem {
-  padding: 10px 20px;
+  padding: 10px 18px;
   color: #ffffff;
   font-size: 12px;
   font-weight: 700;
@@ -583,9 +596,18 @@
   transition: all var(--transition-fast) ease;
   display: flex;
   align-items: center;
-  justify-content: space-between;
   font-family: var(--font-sans);
   letter-spacing: 0.3px;
+}
+
+.submenuItem:hover {
+  background: #2563eb;
+  color: #ffd300;
+  padding-left: 22px;
+}
+
+.submenuItem:hover .submenuBullet {
+  transform: translateX(2px);
 }
 
 .submenuItem:hover {
@@ -760,21 +782,48 @@
     border-top: 2px solid #ffd300;
     box-shadow: 0 16px 36px rgba(0, 0, 0, 0.5);
     z-index: 250;
-    background: #0f2352;
+  .categoryGroup {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+  .submenuHeaderMobile {
+    display: flex;
+    align-items: center;
+    padding: 6px 16px 4px 16px;
+    font-size: 9.5px;
+    font-weight: 850;
+    letter-spacing: 0.8px;
+    color: #ffd300;
+    text-transform: uppercase;
+    background: rgba(0, 0, 0, 0.25);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   }
   .submenuBox {
     position: static;
     width: 100%;
-    border-left: none;
-    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    border-left: 3px solid #ffd300;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 0;
-    box-shadow: none;
-    background: #142a66;
-    padding: 4px 0;
+    box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.35);
+    background: #091738;
+    padding: 2px 0 6px 0;
   }
   .submenuItem {
-    padding: 8px 16px 8px 36px;
-    font-size: 11px;
+    padding: 10px 16px 10px 24px;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #e2e8f0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  }
+  .submenuItem:hover, .submenuItem:active {
+    background: #1e3a8a;
+    color: #ffd300;
+    padding-left: 28px;
   }
   .brandsDropdown {
     position: absolute;

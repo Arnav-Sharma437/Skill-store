@@ -432,19 +432,24 @@ export default function CartPage() {
                         <h3 className={styles.itemTitle}>{item.title}</h3>
                       </Link>
 
-                      {item.selectedVariant && (item.selectedVariant.degree || item.selectedVariant.size || item.selectedVariant.style) && (
+                      {item.selectedVariant && (item.selectedVariant.name || item.selectedVariant.degree || item.selectedVariant.size || item.selectedVariant.style) && (
                         <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", margin: "4px 0 6px 0" }}>
-                          {item.selectedVariant.degree && (
+                          {item.selectedVariant.name && (
+                            <span style={{ fontSize: "11px", fontWeight: "750", background: "#e0f2fe", color: "#0369a1", padding: "2px 8px", borderRadius: "4px", border: "1px solid #bae6fd" }}>
+                              Variant: {item.selectedVariant.name}
+                            </span>
+                          )}
+                          {item.selectedVariant.degree && (!item.selectedVariant.name || !item.selectedVariant.name.toLowerCase().includes(item.selectedVariant.degree.toLowerCase())) && (
                             <span style={{ fontSize: "11px", fontWeight: "700", background: "#f1f5f9", color: "#334155", padding: "2px 8px", borderRadius: "4px" }}>
                               Degree: {item.selectedVariant.degree}
                             </span>
                           )}
-                          {item.selectedVariant.size && (
+                          {item.selectedVariant.size && (!item.selectedVariant.name || !item.selectedVariant.name.toLowerCase().includes(item.selectedVariant.size.toLowerCase())) && (
                             <span style={{ fontSize: "11px", fontWeight: "700", background: "#f1f5f9", color: "#334155", padding: "2px 8px", borderRadius: "4px" }}>
                               Size: {item.selectedVariant.size}
                             </span>
                           )}
-                          {item.selectedVariant.style && (
+                          {item.selectedVariant.style && (!item.selectedVariant.name || !item.selectedVariant.name.toLowerCase().includes(item.selectedVariant.style.toLowerCase())) && (
                             <span style={{ fontSize: "11px", fontWeight: "700", background: "#f1f5f9", color: "#334155", padding: "2px 8px", borderRadius: "4px" }}>
                               Style: {item.selectedVariant.style}
                             </span>
