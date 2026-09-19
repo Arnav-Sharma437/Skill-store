@@ -782,6 +782,7 @@
     border-top: 2px solid #ffd300;
     box-shadow: 0 16px 36px rgba(0, 0, 0, 0.5);
     z-index: 250;
+  }
   .categoryGroup {
     width: 100%;
     display: flex;
@@ -843,7 +844,24 @@
     background: #0f2352;
   }
   .actions {
-    display: none !important;
+    display: flex;
+    gap: 8px;
+  }
+  .actionIcon {
+    width: 34px;
+    height: 34px;
+  }
+  .actionIcon svg {
+    width: 17px;
+    height: 17px;
+  }
+  .badge {
+    top: -3px;
+    right: -3px;
+    min-width: 15px;
+    height: 15px;
+    font-size: 8px;
+    padding: 0 2px;
   }
   .searchWrapper {
     max-width: none;
@@ -851,7 +869,7 @@
     flex-shrink: 1;
     min-width: 0;
     z-index: 10;
-    margin-left: 14px;
+    margin-left: 6px;
   }
   .searchForm {
     max-width: none;
@@ -881,3 +899,4 @@
     height: 14px;
   }
 }
+
