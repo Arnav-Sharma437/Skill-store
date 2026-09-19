@@ -28,6 +28,19 @@ type PageProps = {
   params: Promise<{ id: string }>;
 };
 
+interface ProductVariant {
+  id?: string;
+  name?: string;
+  type?: string;
+  degree?: string;
+  size?: string;
+  style?: string;
+  price?: number;
+  originalPrice?: number;
+  inStock?: boolean;
+  imageUrl?: string;
+}
+
 interface ProductData {
   id: string;
   title: string;
@@ -51,6 +64,7 @@ interface ProductData {
   degrees?: string[];
   sizes?: string[];
   styles?: string[];
+  variants?: ProductVariant[];
 }
 
 export default function ProductPage({ params }: PageProps) {
@@ -81,6 +95,34 @@ export default function ProductPage({ params }: PageProps) {
   const [selectedDegree, setSelectedDegree] = useState<string>("");
   const [selectedSize, setSelectedSize] = useState<string>("");
   const [selectedStyle, setSelectedStyle] = useState<string>("");
+  const [selectedCustomVariant, setSelectedCustomVariant] = useState<string>("");
+
+  // Helper to find image associated with a variant
+  const findVariantImage = (type: "degree" | "size" | "style" | "general", value: string): string | null => {
+    if (!product?.variants || !value) return null;
+    const valLower = value.toLowerCase().trim();
+    const matched = product.variants.find((v) => {
+      const nameMatch = v.name && v.name.toLowerCase().trim() === valLower;
+      const degMatch = v.degree && v.degree.toLowerCase().trim() === valLower;
+      const sizeMatch = v.size && v.size.toLowerCase().trim() === valLower;
+      const styleMatch = v.style && v.style.toLowerCase().trim() === valLower;
+      return nameMatch || degMatch || sizeMatch || styleMatch;
+    });
+    return matched?.imageUrl && matched.imageUrl.trim() ? matched.imageUrl.trim() : null;
+  };
+
+  // When user clicks a variant pill, select it and update product display image if variant has an image
+  const handleSelectVariant = (type: "degree" | "size" | "style" | "general", value: string) => {
+    if (type === "degree") setSelectedDegree(value);
+    if (type === "size") setSelectedSize(value);
+    if (type === "style") setSelectedStyle(value);
+    if (type === "general") setSelectedCustomVariant(value);
+
+    const variantImg = findVariantImage(type, value);
+    if (variantImg) {
+      setSelectedImage(variantImg);
+    }
+  };
 
   // Live reviews state
   const [reviews, setReviews] = useState<ReviewItem[]>([]);
@@ -131,20 +173,40 @@ export default function ProductPage({ params }: PageProps) {
               degrees: Array.isArray(d.degrees) ? d.degrees : [],
               sizes: Array.isArray(d.sizes) ? d.sizes : [],
               styles: Array.isArray(d.styles) ? d.styles : [],
+              variants: Array.isArray(d.variants) ? d.variants : [],
             };
 
             if (isMounted) {
               setProduct(normalized);
-              setSelectedImage(normalized.imageUrl);
+              let initialImage = normalized.imageUrl;
+
               if (normalized.degrees && normalized.degrees.length > 0) {
-                setSelectedDegree(normalized.degrees[0]);
+                const d0 = normalized.degrees[0];
+                setSelectedDegree(d0);
+                const matchedV = normalized.variants?.find((v) => (v.name && v.name.toLowerCase() === d0.toLowerCase()) || (v.degree && v.degree.toLowerCase() === d0.toLowerCase()));
+                if (matchedV?.imageUrl) initialImage = matchedV.imageUrl;
               }
               if (normalized.sizes && normalized.sizes.length > 0) {
-                setSelectedSize(normalized.sizes[0]);
+                const s0 = normalized.sizes[0];
+                setSelectedSize(s0);
+                const matchedV = normalized.variants?.find((v) => (v.name && v.name.toLowerCase() === s0.toLowerCase()) || (v.size && v.size.toLowerCase() === s0.toLowerCase()));
+                if (matchedV?.imageUrl) initialImage = matchedV.imageUrl;
               }
               if (normalized.styles && normalized.styles.length > 0) {
-                setSelectedStyle(normalized.styles[0]);
+                const st0 = normalized.styles[0];
+                setSelectedStyle(st0);
+                const matchedV = normalized.variants?.find((v) => (v.name && v.name.toLowerCase() === st0.toLowerCase()) || (v.style && v.style.toLowerCase() === st0.toLowerCase()));
+                if (matchedV?.imageUrl) initialImage = matchedV.imageUrl;
               }
+              if (normalized.variants && normalized.variants.length > 0) {
+                const generalV = normalized.variants.find((v) => v.type === "general" || (!v.degree && !v.size && !v.style));
+                if (generalV && generalV.name) {
+                  setSelectedCustomVariant(generalV.name);
+                  if (generalV.imageUrl) initialImage = generalV.imageUrl;
+                }
+              }
+
+              setSelectedImage(initialImage);
               setNotFound(false);
               addRecentlyViewed({
                 id: normalized.id,
@@ -253,6 +315,15 @@ export default function ProductPage({ params }: PageProps) {
     if (product.gallery && Array.isArray(product.gallery)) {
       product.gallery.forEach((img) => {
         if (img && !list.includes(img)) list.push(img);
+      });
+    }
+
+    // Include variant images in gallery if not already present
+    if (product.variants && Array.isArray(product.variants)) {
+      product.variants.forEach((v) => {
+        if (v.imageUrl && !list.includes(v.imageUrl)) {
+          list.push(v.imageUrl);
+        }
       });
     }
 
@@ -531,10 +602,11 @@ export default function ProductPage({ params }: PageProps) {
                 <span className={styles.reviewsCount}>({totalReviewsCount} Verified Customer {totalReviewsCount === 1 ? "Review" : "Reviews"})</span>
               </div>
 
-              {/* Variant Selectors: Degree, Size, Style */}
+              {/* Variant Selectors: Degree, Size, Style & Custom Variants */}
               {((product.degrees && product.degrees.length > 0) ||
                 (product.sizes && product.sizes.length > 0) ||
-                (product.styles && product.styles.length > 0)) && (
+                (product.styles && product.styles.length > 0) ||
+                (product.variants && product.variants.length > 0)) && (
                 <div className={styles.variantsContainer}>
                   {/* Degree Selector */}
                   {product.degrees && product.degrees.length > 0 && (
@@ -543,16 +615,24 @@ export default function ProductPage({ params }: PageProps) {
                         Spray Angle (Degree): <strong className={styles.variantActiveVal}>{selectedDegree}</strong>
                       </span>
                       <div className={styles.variantPills}>
-                        {product.degrees.map((deg) => (
-                          <button
-                            key={deg}
-                            type="button"
-                            onClick={() => setSelectedDegree(deg)}
-                            className={`${styles.variantPill} ${selectedDegree === deg ? styles.variantPillActive : ""}`}
-                          >
-                            {deg}
-                          </button>
-                        ))}
+                        {product.degrees.map((deg) => {
+                          const vImg = findVariantImage("degree", deg);
+                          return (
+                            <button
+                              key={deg}
+                              type="button"
+                              onClick={() => handleSelectVariant("degree", deg)}
+                              className={`${styles.variantPill} ${selectedDegree === deg ? styles.variantPillActive : ""}`}
+                            >
+                              {vImg && (
+                                <span className={styles.variantThumbBox}>
+                                  <Image src={vImg} alt={deg} fill sizes="24px" style={{ objectFit: "contain" }} />
+                                </span>
+                              )}
+                              <span>{deg}</span>
+                            </button>
+                          );
+                        })}
                       </div>
                     </div>
                   )}
@@ -564,16 +644,24 @@ export default function ProductPage({ params }: PageProps) {
                         Size / Length: <strong className={styles.variantActiveVal}>{selectedSize}</strong>
                       </span>
                       <div className={styles.variantPills}>
-                        {product.sizes.map((sz) => (
-                          <button
-                            key={sz}
-                            type="button"
-                            onClick={() => setSelectedSize(sz)}
-                            className={`${styles.variantPill} ${selectedSize === sz ? styles.variantPillActive : ""}`}
-                          >
-                            {sz}
-                          </button>
-                        ))}
+                        {product.sizes.map((sz) => {
+                          const vImg = findVariantImage("size", sz);
+                          return (
+                            <button
+                              key={sz}
+                              type="button"
+                              onClick={() => handleSelectVariant("size", sz)}
+                              className={`${styles.variantPill} ${selectedSize === sz ? styles.variantPillActive : ""}`}
+                            >
+                              {vImg && (
+                                <span className={styles.variantThumbBox}>
+                                  <Image src={vImg} alt={sz} fill sizes="24px" style={{ objectFit: "contain" }} />
+                                </span>
+                              )}
+                              <span>{sz}</span>
+                            </button>
+                          );
+                        })}
                       </div>
                     </div>
                   )}
@@ -585,19 +673,57 @@ export default function ProductPage({ params }: PageProps) {
                         Style / Type: <strong className={styles.variantActiveVal}>{selectedStyle}</strong>
                       </span>
                       <div className={styles.variantPills}>
-                        {product.styles.map((st) => (
-                          <button
-                            key={st}
-                            type="button"
-                            onClick={() => setSelectedStyle(st)}
-                            className={`${styles.variantPill} ${selectedStyle === st ? styles.variantPillActive : ""}`}
-                          >
-                            {st}
-                          </button>
-                        ))}
+                        {product.styles.map((st) => {
+                          const vImg = findVariantImage("style", st);
+                          return (
+                            <button
+                              key={st}
+                              type="button"
+                              onClick={() => handleSelectVariant("style", st)}
+                              className={`${styles.variantPill} ${selectedStyle === st ? styles.variantPillActive : ""}`}
+                            >
+                              {vImg && (
+                                <span className={styles.variantThumbBox}>
+                                  <Image src={vImg} alt={st} fill sizes="24px" style={{ objectFit: "contain" }} />
+                                </span>
+                              )}
+                              <span>{st}</span>
+                            </button>
+                          );
+                        })}
                       </div>
                     </div>
                   )}
+
+                  {/* General / Custom Variants (if configured without explicit degree/size/style lists) */}
+                  {product.variants &&
+                    product.variants.filter((v) => v.type === "general" || (!product.degrees?.includes(v.name || "") && !product.sizes?.includes(v.name || "") && !product.styles?.includes(v.name || ""))).length > 0 && (
+                      <div className={styles.variantGroup}>
+                        <span className={styles.variantLabel}>
+                          Choose Variation: <strong className={styles.variantActiveVal}>{selectedCustomVariant || product.variants[0]?.name}</strong>
+                        </span>
+                        <div className={styles.variantPills}>
+                          {product.variants
+                            .filter((v) => v.type === "general" || (!product.degrees?.includes(v.name || "") && !product.sizes?.includes(v.name || "") && !product.styles?.includes(v.name || "")))
+                            .map((v, i) => (
+                              <button
+                                key={v.id || v.name || i}
+                                type="button"
+                                onClick={() => handleSelectVariant("general", v.name || "")}
+                                className={`${styles.variantPill} ${selectedCustomVariant === v.name ? styles.variantPillActive : ""}`}
+                              >
+                                {v.imageUrl && (
+                                  <span className={styles.variantThumbBox}>
+                                    <Image src={v.imageUrl} alt={v.name || "Variant"} fill sizes="24px" style={{ objectFit: "contain" }} />
+                                  </span>
+                                )}
+                                <span>{v.name}</span>
+                                {v.price && <span style={{ fontSize: "11px", opacity: 0.85 }}>(₹{v.price})</span>}
+                              </button>
+                            ))}
+                        </div>
+                      </div>
+                    )}
                 </div>
               )}
 
@@ -961,119 +1087,64 @@ export default function ProductPage({ params }: PageProps) {
               ) : (
                 <div className={styles.recentMarqueeContainer} ref={recentSliderRef}>
                   <div className={styles.recentMarqueeTrack}>
-                    {/* First Copy */}
-                    <div className={styles.recentRow}>
-                      {filteredRecent.map((prod) => (
-                        <div key={`${prod.id}-1`} className={styles.recentCard}>
-                          <Link href={`/product/${prod.id}`} style={{ textDecoration: "none", color: "inherit", display: "flex", flexDirection: "column", flexGrow: 1 }}>
-                            <div className={styles.recentImgBox}>
-                              <Image
-                                src={optimizeProductCard(prod.imageUrl)}
-                                alt={prod.title}
-                                width={160}
-                                height={120}
-                                loading="lazy"
-                                className={styles.recentImg}
-                                style={{ objectFit: "contain" }}
-                              />
-                            </div>
-                            <div className={styles.recentInfo}>
-                              <h4 className={styles.recentTitle} title={prod.title}>{prod.title}</h4>
-                              <div className={styles.starsRow}>
-                                {[1, 2, 3, 4, 5].map((s) => (
-                                  <svg key={s} width="11" height="11" viewBox="0 0 24 24" fill="#ffd300" stroke="#ffd300" strokeWidth="1">
-                                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-                                  </svg>
-                                ))}
-                                <span>{prod.ratingCount || 0} Reviews</span>
+                    {/* 4 Duplicated list copies for 100% gapless infinite loop */}
+                    {[1, 2, 3, 4].map((copyIndex) => (
+                      <div key={copyIndex} className={styles.recentRow} aria-hidden={copyIndex > 1 ? "true" : undefined}>
+                        {filteredRecent.map((prod) => (
+                          <div key={`${prod.id}-copy-${copyIndex}`} className={styles.recentCard}>
+                            <Link href={`/product/${prod.id}`} style={{ textDecoration: "none", color: "inherit", display: "flex", flexDirection: "column", flexGrow: 1 }}>
+                              <div className={styles.recentImgBox}>
+                                <Image
+                                  src={optimizeProductCard(prod.imageUrl)}
+                                  alt={prod.title}
+                                  width={160}
+                                  height={120}
+                                  loading="lazy"
+                                  className={styles.recentImg}
+                                  style={{ objectFit: "contain" }}
+                                />
                               </div>
-                              <div style={{ marginTop: "4px", fontSize: "14px", fontWeight: 800, color: "#132c66" }}>
-                                ₹{prod.price.toLocaleString("en-IN")}
+                              <div className={styles.recentInfo}>
+                                <h4 className={styles.recentTitle} title={prod.title}>{prod.title}</h4>
+                                <div className={styles.starsRow}>
+                                  {[1, 2, 3, 4, 5].map((s) => (
+                                    <svg key={s} width="11" height="11" viewBox="0 0 24 24" fill="#ffd300" stroke="#ffd300" strokeWidth="1">
+                                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                    </svg>
+                                  ))}
+                                  <span>{prod.ratingCount || 0} Reviews</span>
+                                </div>
+                                <div style={{ marginTop: "4px", fontSize: "14px", fontWeight: 800, color: "#132c66" }}>
+                                  ₹{prod.price.toLocaleString("en-IN")}
+                                </div>
                               </div>
+                            </Link>
+                            <div className={styles.cardActions}>
+                              <button
+                                onClick={() => addToCart({ id: prod.id, title: prod.title, price: prod.price, imageUrl: prod.imageUrl })}
+                                className={styles.cardCartBtn}
+                              >
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                  <circle cx="9" cy="21" r="1"></circle>
+                                  <circle cx="20" cy="21" r="1"></circle>
+                                  <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                                </svg>
+                                <span>Add To Cart</span>
+                              </button>
+                              <button
+                                onClick={() => toggleWishlist({ id: prod.id, title: prod.title, price: prod.price, imageUrl: prod.imageUrl })}
+                                className={`${styles.cardHeartBtn} ${isInWishlist(prod.id) ? styles.cardHeartActive : ""}`}
+                                aria-label="Toggle Wishlist"
+                              >
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill={isInWishlist(prod.id) ? "#ef4444" : "none"} stroke={isInWishlist(prod.id) ? "#ef4444" : "#132c66"} strokeWidth="2.5">
+                                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                                </svg>
+                              </button>
                             </div>
-                          </Link>
-                          <div className={styles.cardActions}>
-                            <button
-                              onClick={() => addToCart({ id: prod.id, title: prod.title, price: prod.price, imageUrl: prod.imageUrl })}
-                              className={styles.cardCartBtn}
-                            >
-                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                                <circle cx="9" cy="21" r="1"></circle>
-                                <circle cx="20" cy="21" r="1"></circle>
-                                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
-                              </svg>
-                              <span>Add To Cart</span>
-                            </button>
-                            <button
-                              onClick={() => toggleWishlist({ id: prod.id, title: prod.title, price: prod.price, imageUrl: prod.imageUrl })}
-                              className={`${styles.cardHeartBtn} ${isInWishlist(prod.id) ? styles.cardHeartActive : ""}`}
-                              aria-label="Toggle Wishlist"
-                            >
-                              <svg width="12" height="12" viewBox="0 0 24 24" fill={isInWishlist(prod.id) ? "#ef4444" : "none"} stroke={isInWishlist(prod.id) ? "#ef4444" : "#132c66"} strokeWidth="2.5">
-                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                              </svg>
-                            </button>
                           </div>
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* Duplicate Copy */}
-                    <div className={styles.recentRow} aria-hidden="true">
-                      {filteredRecent.map((prod) => (
-                        <div key={`${prod.id}-2`} className={styles.recentCard}>
-                          <Link href={`/product/${prod.id}`} style={{ textDecoration: "none", color: "inherit", display: "flex", flexDirection: "column", flexGrow: 1 }}>
-                            <div className={styles.recentImgBox}>
-                              <Image
-                                src={optimizeProductCard(prod.imageUrl)}
-                                alt={prod.title}
-                                width={160}
-                                height={120}
-                                loading="lazy"
-                                className={styles.recentImg}
-                                style={{ objectFit: "contain" }}
-                              />
-                            </div>
-                            <div className={styles.recentInfo}>
-                              <h4 className={styles.recentTitle} title={prod.title}>{prod.title}</h4>
-                              <div className={styles.starsRow}>
-                                {[1, 2, 3, 4, 5].map((s) => (
-                                  <svg key={s} width="11" height="11" viewBox="0 0 24 24" fill="#ffd300" stroke="#ffd300" strokeWidth="1">
-                                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-                                  </svg>
-                                ))}
-                                <span>{prod.ratingCount || 0} Reviews</span>
-                              </div>
-                              <div style={{ marginTop: "4px", fontSize: "14px", fontWeight: 800, color: "#132c66" }}>
-                                ₹{prod.price.toLocaleString("en-IN")}
-                              </div>
-                            </div>
-                          </Link>
-                          <div className={styles.cardActions}>
-                            <button
-                              onClick={() => addToCart({ id: prod.id, title: prod.title, price: prod.price, imageUrl: prod.imageUrl })}
-                              className={styles.cardCartBtn}
-                            >
-                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                                <circle cx="9" cy="21" r="1"></circle>
-                                <circle cx="20" cy="21" r="1"></circle>
-                                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
-                              </svg>
-                              <span>Add To Cart</span>
-                            </button>
-                            <button
-                              onClick={() => toggleWishlist({ id: prod.id, title: prod.title, price: prod.price, imageUrl: prod.imageUrl })}
-                              className={`${styles.cardHeartBtn} ${isInWishlist(prod.id) ? styles.cardHeartActive : ""}`}
-                              aria-label="Toggle Wishlist"
-                            >
-                              <svg width="12" height="12" viewBox="0 0 24 24" fill={isInWishlist(prod.id) ? "#ef4444" : "none"} stroke={isInWishlist(prod.id) ? "#ef4444" : "#132c66"} strokeWidth="2.5">
-                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                              </svg>
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                        ))}
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}

@@ -46,7 +46,20 @@ interface IBrand {
   order?: number;
 }
 
-interface IProduct {
+export interface IAdminVariant {
+  id?: string;
+  name: string;
+  type: "degree" | "size" | "style" | "general";
+  degree?: string;
+  size?: string;
+  style?: string;
+  price?: number | string;
+  originalPrice?: number | string;
+  inStock?: boolean;
+  imageUrl: string;
+}
+
+export interface IProduct {
   id: string;
   title: string;
   price: number;
@@ -67,6 +80,7 @@ interface IProduct {
   degrees?: string[];
   sizes?: string[];
   styles?: string[];
+  variants?: IAdminVariant[];
 }
 
 interface IEnquiry {
@@ -268,6 +282,7 @@ export default function AdminDashboard() {
     degreesText: "",
     sizesText: "",
     stylesText: "",
+    variants: [] as IAdminVariant[],
   });
 
 
@@ -609,6 +624,137 @@ export default function AdminDashboard() {
     }
   };
 
+  // --- Product Variant Image & Row Handlers ---
+  const [uploadingVariantIndex, setUploadingVariantIndex] = useState<number | null>(null);
+
+  const handleVariantImageUpload = async (file: File, index: number) => {
+    setUploadingVariantIndex(index);
+    try {
+      const uploadedUrl = await uploadCustomMedia(file, "skill-store/products/variants");
+      if (uploadedUrl) {
+        setProductForm((prev) => {
+          const nextVariants = [...prev.variants];
+          if (nextVariants[index]) {
+            nextVariants[index] = { ...nextVariants[index], imageUrl: uploadedUrl };
+          }
+          return { ...prev, variants: nextVariants };
+        });
+      }
+    } catch (err) {
+      console.error("Variant image upload failed:", err);
+    } finally {
+      setUploadingVariantIndex(null);
+    }
+  };
+
+  const addVariantRow = (type: "degree" | "size" | "style" | "general" = "general", name: string = "") => {
+    setProductForm((prev) => ({
+      ...prev,
+      variants: [
+        ...prev.variants,
+        {
+          id: `var-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+          name: name,
+          type: type,
+          degree: type === "degree" ? name : "",
+          size: type === "size" ? name : "",
+          style: type === "style" ? name : "",
+          imageUrl: "",
+          price: "",
+          originalPrice: "",
+          inStock: true,
+        },
+      ],
+    }));
+  };
+
+  const removeVariantRow = (index: number) => {
+    setProductForm((prev) => ({
+      ...prev,
+      variants: prev.variants.filter((_, i) => i !== index),
+    }));
+  };
+
+  const updateVariantField = (index: number, field: keyof IAdminVariant, value: unknown) => {
+    setProductForm((prev) => {
+      const nextVariants = [...prev.variants];
+      if (nextVariants[index]) {
+        nextVariants[index] = { ...nextVariants[index], [field]: value };
+        if (field === "name") {
+          const t = nextVariants[index].type;
+          if (t === "degree") nextVariants[index].degree = String(value);
+          if (t === "size") nextVariants[index].size = String(value);
+          if (t === "style") nextVariants[index].style = String(value);
+        }
+      }
+      return { ...prev, variants: nextVariants };
+    });
+  };
+
+  const syncVariantsFromAttributes = () => {
+    const degs = productForm.degreesText.split(",").map((s) => s.trim()).filter(Boolean);
+    const szs = productForm.sizesText.split(",").map((s) => s.trim()).filter(Boolean);
+    const stls = productForm.stylesText.split(",").map((s) => s.trim()).filter(Boolean);
+
+    const existing = [...productForm.variants];
+    const newItems: IAdminVariant[] = [];
+
+    degs.forEach((d) => {
+      if (!existing.some((e) => e.name.toLowerCase() === d.toLowerCase())) {
+        newItems.push({
+          id: `var-deg-${Date.now()}-${Math.random().toString(36).substring(2, 5)}`,
+          name: d,
+          type: "degree",
+          degree: d,
+          imageUrl: "",
+          price: "",
+          originalPrice: "",
+          inStock: true,
+        });
+      }
+    });
+
+    szs.forEach((s) => {
+      if (!existing.some((e) => e.name.toLowerCase() === s.toLowerCase())) {
+        newItems.push({
+          id: `var-sz-${Date.now()}-${Math.random().toString(36).substring(2, 5)}`,
+          name: s,
+          type: "size",
+          size: s,
+          imageUrl: "",
+          price: "",
+          originalPrice: "",
+          inStock: true,
+        });
+      }
+    });
+
+    stls.forEach((st) => {
+      if (!existing.some((e) => e.name.toLowerCase() === st.toLowerCase())) {
+        newItems.push({
+          id: `var-stl-${Date.now()}-${Math.random().toString(36).substring(2, 5)}`,
+          name: st,
+          type: "style",
+          style: st,
+          imageUrl: "",
+          price: "",
+          originalPrice: "",
+          inStock: true,
+        });
+      }
+    });
+
+    if (newItems.length === 0 && degs.length === 0 && szs.length === 0 && stls.length === 0) {
+      alert("Please enter degrees, sizes, or styles in the input boxes above first, or click '+ Add Variant'.");
+      return;
+    }
+
+    setProductForm((prev) => ({
+      ...prev,
+      variants: [...prev.variants, ...newItems],
+    }));
+  };
+
   // --- Product CRUD Modals & Actions ---
   const openAddProductModal = () => {
     setEditingProduct(null);
@@ -632,6 +778,7 @@ export default function AdminDashboard() {
       degreesText: "",
       sizesText: "",
       stylesText: "",
+      variants: [],
     });
     setIsProductModalOpen(true);
   };
@@ -658,6 +805,18 @@ export default function AdminDashboard() {
       degreesText: Array.isArray(prod.degrees) ? prod.degrees.join(", ") : "",
       sizesText: Array.isArray(prod.sizes) ? prod.sizes.join(", ") : "",
       stylesText: Array.isArray(prod.styles) ? prod.styles.join(", ") : "",
+      variants: Array.isArray(prod.variants) ? prod.variants.map((v) => ({
+        id: v.id || "",
+        name: v.name || v.degree || v.size || v.style || "",
+        type: v.type || (v.degree ? "degree" : v.size ? "size" : v.style ? "style" : "general"),
+        degree: v.degree || "",
+        size: v.size || "",
+        style: v.style || "",
+        price: v.price !== undefined ? v.price.toString() : "",
+        originalPrice: v.originalPrice !== undefined ? v.originalPrice.toString() : "",
+        inStock: v.inStock !== false,
+        imageUrl: v.imageUrl || "",
+      })) : [],
     });
     setIsProductModalOpen(true);
   };
@@ -685,6 +844,18 @@ export default function AdminDashboard() {
       degrees: productForm.degreesText.split(",").map((s) => s.trim()).filter(Boolean),
       sizes: productForm.sizesText.split(",").map((s) => s.trim()).filter(Boolean),
       styles: productForm.stylesText.split(",").map((s) => s.trim()).filter(Boolean),
+      variants: productForm.variants.map((v) => ({
+        id: v.id || "",
+        name: v.name.trim(),
+        type: v.type || "general",
+        degree: v.type === "degree" ? v.name.trim() : (v.degree || "").trim(),
+        size: v.type === "size" ? v.name.trim() : (v.size || "").trim(),
+        style: v.type === "style" ? v.name.trim() : (v.style || "").trim(),
+        price: v.price !== undefined && v.price !== "" ? Number(v.price) : undefined,
+        originalPrice: v.originalPrice !== undefined && v.originalPrice !== "" ? Number(v.originalPrice) : undefined,
+        inStock: v.inStock !== false,
+        imageUrl: (v.imageUrl || "").trim(),
+      })).filter((v) => v.name || v.imageUrl),
     };
 
     try {
@@ -3961,9 +4132,9 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
-              {/* 5. Product Variants (Degree, Size, Style) */}
+              {/* 5. Product Variants & Images (Degree, Size, Style) */}
               <div className={styles.formSection}>
-                <div className={styles.sectionHeader}>5. Product Variants (Degree, Size, Style - Optional)</div>
+                <div className={styles.sectionHeader}>5. Product Variants &amp; Variant Images (Optional)</div>
                 <div className={styles.inputGrid3}>
                   <div className={styles.inputField}>
                     <label htmlFor="form-prod-degrees"><strong>Degrees (Spray Angle)</strong></label>
@@ -4006,6 +4177,126 @@ export default function AdminDashboard() {
                       💡 Separate multiple styles with commas
                     </span>
                   </div>
+                </div>
+
+                {/* Variant Image Manager */}
+                <div className={styles.variantManager}>
+                  <div className={styles.variantHeaderRow}>
+                    <span className={styles.variantHeaderTitle}>
+                      🖼️ Variation Images (Selecting a variation on the product page will show its image)
+                    </span>
+                    <div className={styles.variantActionBtns}>
+                      <button
+                        type="button"
+                        onClick={syncVariantsFromAttributes}
+                        className={styles.variantSyncBtn}
+                        title="Generate rows from Degrees, Sizes and Styles inputs above"
+                      >
+                        ⚡ Sync from Inputs
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => addVariantRow("general", "")}
+                        className={styles.variantAddBtn}
+                      >
+                        + Add Variant
+                      </button>
+                    </div>
+                  </div>
+
+                  {productForm.variants.length === 0 ? (
+                    <div style={{ textAlign: "center", padding: "16px", color: "#64748b", fontSize: "12.5px" }}>
+                      No variant images configured yet. Click <strong>&quot;⚡ Sync from Inputs&quot;</strong> or <strong>&quot;+ Add Variant&quot;</strong> to attach specific images to degrees, sizes, or styles.
+                    </div>
+                  ) : (
+                    <div className={styles.variantList}>
+                      {productForm.variants.map((variant, index) => (
+                        <div key={variant.id || index} className={styles.variantCardRow}>
+                          {/* Variant Type */}
+                          <select
+                            value={variant.type || "general"}
+                            onChange={(e) => updateVariantField(index, "type", e.target.value as "degree" | "size" | "style" | "general")}
+                            className={styles.variantTypeSelect}
+                          >
+                            <option value="degree">Degree (°)</option>
+                            <option value="size">Size/Length</option>
+                            <option value="style">Style/Type</option>
+                            <option value="general">Custom</option>
+                          </select>
+
+                          {/* Variant Name / Value */}
+                          <input
+                            type="text"
+                            placeholder="e.g. 0° / 5M / Red"
+                            value={variant.name}
+                            onChange={(e) => updateVariantField(index, "name", e.target.value)}
+                            className={styles.variantNameInput}
+                            required
+                          />
+
+                          {/* Variant Image Upload & URL */}
+                          <div className={styles.variantImageUploadBox}>
+                            {variant.imageUrl ? (
+                              <Image
+                                src={variant.imageUrl}
+                                alt={variant.name || "Variant Image"}
+                                width={36}
+                                height={36}
+                                className={styles.variantThumbPreview}
+                              />
+                            ) : (
+                              <div className={styles.variantThumbPreview} style={{ display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", color: "#94a3b8" }}>
+                                📷
+                              </div>
+                            )}
+
+                            <input
+                              type="text"
+                              placeholder="Image URL..."
+                              value={variant.imageUrl}
+                              onChange={(e) => updateVariantField(index, "imageUrl", e.target.value)}
+                              className={styles.variantUrlInput}
+                            />
+
+                            <label className={styles.variantUploadLabel}>
+                              {uploadingVariantIndex === index ? "Uploading..." : "Upload"}
+                              <input
+                                type="file"
+                                accept="image/*"
+                                style={{ display: "none" }}
+                                disabled={uploadingVariantIndex === index}
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) handleVariantImageUpload(file, index);
+                                }}
+                              />
+                            </label>
+                          </div>
+
+                          {/* Price Override (optional) */}
+                          <input
+                            type="number"
+                            placeholder="Price (₹)"
+                            value={variant.price || ""}
+                            onChange={(e) => updateVariantField(index, "price", e.target.value)}
+                            className={styles.variantPriceInput}
+                            title="Optional Price override for this variant"
+                          />
+
+                          {/* Delete Variant */}
+                          <button
+                            type="button"
+                            onClick={() => removeVariantRow(index)}
+                            className={styles.variantDeleteBtn}
+                            title="Delete this variant"
+                            aria-label="Delete variant"
+                          >
+                            &times;
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
 

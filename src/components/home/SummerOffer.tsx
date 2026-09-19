@@ -94,45 +94,27 @@ export default function SummerOffer() {
         {/* Continuous Scrolling Offers Marquee Slider (Equal balance on left & right) */}
         <div className={styles.marqueeContainer} ref={sliderRef}>
           <div className={styles.marqueeTrack}>
-            {/* Copy 1 */}
-            <div className={styles.bannersRow}>
-              {activeOffers.map((offer) => (
-                <Link href={offer.link || "/shop"} key={`${offer.id}-1`} className={styles.bannerCard}>
-                  <div className={styles.imageWrapper}>
-                    <Image
-                      src={optimizeProductDetail(offer.imageUrl)}
-                      alt={offer.title || title}
-                      width={560}
-                      height={340}
-                      loading="lazy"
-                      sizes="(max-width: 768px) 100vw, 560px"
-                      className={styles.image}
-                      style={{ objectFit: "contain" }}
-                    />
-                  </div>
-                </Link>
-              ))}
-            </div>
-
-            {/* Copy 2 (for seamless infinite loop) */}
-            <div className={styles.bannersRow} aria-hidden="true">
-              {activeOffers.map((offer) => (
-                <Link href={offer.link || "/shop"} key={`${offer.id}-2`} className={styles.bannerCard}>
-                  <div className={styles.imageWrapper}>
-                    <Image
-                      src={optimizeProductDetail(offer.imageUrl)}
-                      alt={offer.title || title}
-                      width={560}
-                      height={340}
-                      loading="lazy"
-                      sizes="(max-width: 768px) 100vw, 560px"
-                      className={styles.image}
-                      style={{ objectFit: "contain" }}
-                    />
-                  </div>
-                </Link>
-              ))}
-            </div>
+            {/* 4 Duplicated list copies for 100% gapless infinite loop */}
+            {[1, 2, 3, 4].map((copyIndex) => (
+              <div key={copyIndex} className={styles.bannersRow} aria-hidden={copyIndex > 1 ? "true" : undefined}>
+                {activeOffers.map((offer) => (
+                  <Link href={offer.link || "/shop"} key={`${offer.id}-copy-${copyIndex}`} className={styles.bannerCard}>
+                    <div className={styles.imageWrapper}>
+                      <Image
+                        src={optimizeProductDetail(offer.imageUrl)}
+                        alt={offer.title || title}
+                        width={560}
+                        height={340}
+                        loading="lazy"
+                        sizes="(max-width: 768px) 100vw, 560px"
+                        className={styles.image}
+                        style={{ objectFit: "contain" }}
+                      />
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            ))}
           </div>
         </div>
       </div>

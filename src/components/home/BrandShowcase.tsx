@@ -153,59 +153,34 @@ export default function BrandShowcase() {
             ) : (
               <div className={styles.brandsMarqueeContainer} ref={sliderRef}>
                 <div className={styles.brandsMarqueeTrack}>
-                  {/* Copy 1 */}
-                  <div className={styles.brandsRow}>
-                    {activeBrands.map((brand) => (
-                      <Link href={`/shop/${brand.slug}`} key={`${brand.slug}-1`} className={styles.brandCard}>
-                        <div className={styles.logoContainer}>
-                          <Image
-                            src={brand.logo}
-                            alt={`${brand.name} Logo`}
-                            width={brand.width || 110}
-                            height={brand.height || 34}
-                            loading="lazy"
-                            className={styles.brandLogo}
-                            style={{ objectFit: "contain" }}
-                          />
-                        </div>
-                        <p className={styles.tagline}>{brand.tagline}</p>
-                        <div className={styles.shopBrandBtn}>
-                          <span>Shop {brand.name}</span>
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                            <line x1="5" y1="12" x2="19" y2="12"></line>
-                            <polyline points="12 5 19 12 12 19"></polyline>
-                          </svg>
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
-
-                  {/* Copy 2 (for infinite loop) */}
-                  <div className={styles.brandsRow} aria-hidden="true">
-                    {activeBrands.map((brand) => (
-                      <Link href={`/shop/${brand.slug}`} key={`${brand.slug}-2`} className={styles.brandCard}>
-                        <div className={styles.logoContainer}>
-                          <Image
-                            src={brand.logo}
-                            alt={`${brand.name} Logo`}
-                            width={brand.width || 110}
-                            height={brand.height || 34}
-                            loading="lazy"
-                            className={styles.brandLogo}
-                            style={{ objectFit: "contain" }}
-                          />
-                        </div>
-                        <p className={styles.tagline}>{brand.tagline}</p>
-                        <div className={styles.shopBrandBtn}>
-                          <span>Shop {brand.name}</span>
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                            <line x1="5" y1="12" x2="19" y2="12"></line>
-                            <polyline points="12 5 19 12 12 19"></polyline>
-                          </svg>
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
+                  {/* 4 Duplicated list copies for 100% gapless infinite loop */}
+                  {[1, 2, 3, 4].map((copyIndex) => (
+                    <div key={copyIndex} className={styles.brandsRow} aria-hidden={copyIndex > 1 ? "true" : undefined}>
+                      {activeBrands.map((brand) => (
+                        <Link href={`/shop/${brand.slug}`} key={`${brand.slug}-copy-${copyIndex}`} className={styles.brandCard}>
+                          <div className={styles.logoContainer}>
+                            <Image
+                              src={brand.logo}
+                              alt={`${brand.name} Logo`}
+                              width={brand.width || 110}
+                              height={brand.height || 34}
+                              loading="lazy"
+                              className={styles.brandLogo}
+                              style={{ objectFit: "contain" }}
+                            />
+                          </div>
+                          <p className={styles.tagline}>{brand.tagline}</p>
+                          <div className={styles.shopBrandBtn}>
+                            <span>Shop {brand.name}</span>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                              <line x1="5" y1="12" x2="19" y2="12"></line>
+                              <polyline points="12 5 19 12 12 19"></polyline>
+                            </svg>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
@@ -216,22 +191,16 @@ export default function BrandShowcase() {
         {trustEnabled && activeUspItems.length > 0 && (
           <div className={styles.marqueeWrapper} style={{ marginTop: brandsEnabled && activeBrands.length > 0 ? undefined : "0" }}>
             <div className={styles.marqueeTrack}>
-              <div className={styles.marqueeList}>
-                {activeUspItems.map((item, i) => (
-                  <div key={item.id || i} className={styles.marqueeItem}>
-                    <span>{item.text}</span>
-                    <span className={styles.marqueeDot}></span>
-                  </div>
-                ))}
-              </div>
-              <div className={styles.marqueeList} aria-hidden="true">
-                {activeUspItems.map((item, i) => (
-                  <div key={`dup-${item.id || i}`} className={styles.marqueeItem}>
-                    <span>{item.text}</span>
-                    <span className={styles.marqueeDot}></span>
-                  </div>
-                ))}
-              </div>
+              {[1, 2, 3, 4].map((copyIndex) => (
+                <div key={copyIndex} className={styles.marqueeList} aria-hidden={copyIndex > 1 ? "true" : undefined}>
+                  {activeUspItems.map((item, i) => (
+                    <div key={`${item.id || i}-copy-${copyIndex}`} className={styles.marqueeItem}>
+                      <span>{item.text}</span>
+                      <span className={styles.marqueeDot}></span>
+                    </div>
+                  ))}
+                </div>
+              ))}
             </div>
           </div>
         )}

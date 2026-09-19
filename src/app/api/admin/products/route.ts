@@ -41,6 +41,35 @@ export async function GET(req: NextRequest) {
   }
 }
 
+interface RawVariant {
+  id?: string;
+  name?: string;
+  type?: string;
+  degree?: string;
+  size?: string;
+  style?: string;
+  price?: number | string;
+  originalPrice?: number | string;
+  inStock?: boolean;
+  imageUrl?: string;
+}
+
+function sanitizeVariants(variants: unknown) {
+  if (!Array.isArray(variants)) return [];
+  return variants.map((v: RawVariant) => ({
+    id: v.id ? String(v.id).trim() : "",
+    name: v.name ? String(v.name).trim() : "",
+    type: v.type ? String(v.type).trim() : "general",
+    degree: v.degree ? String(v.degree).trim() : "",
+    size: v.size ? String(v.size).trim() : "",
+    style: v.style ? String(v.style).trim() : "",
+    price: v.price !== undefined && v.price !== "" ? Number(v.price) : undefined,
+    originalPrice: v.originalPrice !== undefined && v.originalPrice !== "" ? Number(v.originalPrice) : undefined,
+    inStock: v.inStock !== undefined ? Boolean(v.inStock) : true,
+    imageUrl: v.imageUrl ? String(v.imageUrl).trim() : "",
+  })).filter(v => v.name || v.degree || v.size || v.style || v.imageUrl);
+}
+
 export async function POST(req: NextRequest) {
   try {
     await connectToDatabase();
@@ -100,7 +129,7 @@ export async function POST(req: NextRequest) {
       degrees: Array.isArray(degrees) ? degrees.map((d: string) => String(d).trim()).filter(Boolean) : (typeof degrees === "string" ? degrees.split(",").map((d: string) => d.trim()).filter(Boolean) : []),
       sizes: Array.isArray(sizes) ? sizes.map((s: string) => String(s).trim()).filter(Boolean) : (typeof sizes === "string" ? sizes.split(",").map((s: string) => s.trim()).filter(Boolean) : []),
       styles: Array.isArray(styles) ? styles.map((st: string) => String(st).trim()).filter(Boolean) : (typeof styles === "string" ? styles.split(",").map((st: string) => st.trim()).filter(Boolean) : []),
-      variants: Array.isArray(variants) ? variants : []
+      variants: sanitizeVariants(variants)
     });
 
     return NextResponse.json({ success: true, data: newProduct });
@@ -176,7 +205,7 @@ export async function PUT(req: NextRequest) {
       updateFields.styles = Array.isArray(styles) ? styles.map((st: string) => String(st).trim()).filter(Boolean) : (typeof styles === "string" ? styles.split(",").map((st: string) => st.trim()).filter(Boolean) : []);
     }
     if (variants !== undefined) {
-      updateFields.variants = Array.isArray(variants) ? variants : [];
+      updateFields.variants = sanitizeVariants(variants);
     }
 
 

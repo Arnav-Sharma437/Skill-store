@@ -153,7 +153,7 @@ export default function Footer() {
 
       {/* Black Copyright Bar */}
       <div className={styles.copyrightBar}>
-        <p className={styles.copyrightText}>COPYRIGHT © 2025 SKILLSTORE ALL RIGHT RESERVED</p>
+        <p className={styles.copyrightText}>COPYRIGHT © 2026 SKILLSTORE ALL RIGHT RESERVED</p>
       </div>
     </footer>
   );

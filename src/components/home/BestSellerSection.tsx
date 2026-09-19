@@ -116,18 +116,14 @@ export default function BestSellerSection() {
           ) : (
             <div className={styles.marqueeContainer} ref={sliderRef}>
               <div className={styles.marqueeTrack}>
-                {/* First list copy */}
-                <div className={styles.productRow}>
-                  {products.map((product) => (
-                    <ProductCard key={`${product.id}-1`} product={product} />
-                  ))}
-                </div>
-                {/* Duplicated list copy for seamless infinite loop */}
-                <div className={styles.productRow} aria-hidden="true">
-                  {products.map((product) => (
-                    <ProductCard key={`${product.id}-2`} product={product} />
-                  ))}
-                </div>
+                {/* 4 Duplicated list copies for 100% gapless infinite loop */}
+                {[1, 2, 3, 4].map((copyIndex) => (
+                  <div key={copyIndex} className={styles.productRow} aria-hidden={copyIndex > 1 ? "true" : undefined}>
+                    {products.map((product) => (
+                      <ProductCard key={`${product.id}-copy-${copyIndex}`} product={product} />
+                    ))}
+                  </div>
+                ))}
               </div>
             </div>
           )

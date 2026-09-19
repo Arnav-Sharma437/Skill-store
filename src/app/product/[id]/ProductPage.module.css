@@ -435,6 +435,82 @@
   color: #132c66;
 }
 
+/* Variant selectors */
+.variantsContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 18px;
+  padding: 14px;
+  background: #f8fafc;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+}
+
+.variantGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.variantLabel {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 700;
+  color: #334155;
+}
+
+.variantActiveVal {
+  color: #132c66;
+  font-weight: 800;
+}
+
+.variantPills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.variantPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: 1.5px solid #cbd5e1;
+  background: #ffffff;
+  color: #334155;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 750;
+  cursor: pointer;
+  transition: all var(--transition-fast) ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.variantPill:hover {
+  border-color: #132c66;
+  color: #132c66;
+}
+
+.variantPillActive {
+  border-color: #132c66;
+  background: #132c66;
+  color: #ffffff !important;
+  box-shadow: 0 2px 6px rgba(19, 44, 102, 0.2);
+}
+
+.variantThumbBox {
+  width: 24px;
+  height: 24px;
+  position: relative;
+  border-radius: 4px;
+  overflow: hidden;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
+}
+
 /* Actions block */
 .actionsBlock {
   display: grid;

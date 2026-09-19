@@ -1531,3 +1531,192 @@
   border-radius: 4px;
 }
 
+/* Variant Manager Styles */
+.variantManager {
+  margin-top: 14px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 16px;
+}
+
+.variantHeaderRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.variantHeaderTitle {
+  font-size: 13px;
+  font-weight: 800;
+  color: #1e293b;
+}
+
+.variantActionBtns {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.variantAddBtn {
+  background: #132c66;
+  color: #ffffff;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: background 0.15s ease;
+}
+
+.variantAddBtn:hover {
+  background: #38b6ff;
+}
+
+.variantSyncBtn {
+  background: #e2e8f0;
+  color: #1e293b;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.variantSyncBtn:hover {
+  background: #cbd5e1;
+}
+
+.variantList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.variantCardRow {
+  display: grid;
+  grid-template-columns: 110px 140px 1fr 90px 34px;
+  gap: 10px;
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.variantTypeSelect {
+  height: 36px;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 0 8px;
+  font-size: 12px;
+  font-weight: 600;
+  background: #ffffff;
+  outline: none;
+}
+
+.variantNameInput {
+  height: 36px;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 600;
+  outline: none;
+}
+
+.variantImageUploadBox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.variantThumbPreview {
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  object-fit: contain;
+  background: #f8fafc;
+  flex-shrink: 0;
+}
+
+.variantUrlInput {
+  flex: 1;
+  min-width: 80px;
+  height: 36px;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 0 8px;
+  font-size: 11.5px;
+  outline: none;
+}
+
+.variantUploadLabel {
+  background: #f1f5f9;
+  border: 1px dashed #94a3b8;
+  color: #334155;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 36px;
+  box-sizing: border-box;
+}
+
+.variantUploadLabel:hover {
+  background: #e2e8f0;
+  border-color: #132c66;
+}
+
+.variantPriceInput {
+  height: 36px;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 0 8px;
+  font-size: 12px;
+  outline: none;
+}
+
+.variantDeleteBtn {
+  background: #fee2e2;
+  color: #dc2626;
+  border: none;
+  border-radius: 6px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background 0.15s ease;
+}
+
+.variantDeleteBtn:hover {
+  background: #fca5a5;
+}
+
+@media (max-width: 768px) {
+  .variantCardRow {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+}
+
