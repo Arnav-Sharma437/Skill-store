@@ -1477,6 +1477,101 @@
   background: #1e3a8a;
 }
 
+.subCatOrderList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 6px;
+  max-height: 260px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.subCatOrderItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 6px 10px;
+  transition: all 0.15s ease;
+}
+
+.subCatOrderItem:hover {
+  border-color: #38b6ff;
+  background: #f8fafc;
+}
+
+.subCatOrderLeft {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+}
+
+.subCatOrderBadge {
+  background: #e0f2fe;
+  color: #0369a1;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 4px;
+  border: 1px solid #bae6fd;
+  flex-shrink: 0;
+}
+
+.subCatOrderName {
+  font-size: 12.5px;
+  color: #1e293b;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.subCatOrderSlug {
+  font-size: 11px;
+  color: #64748b;
+  background: #f1f5f9;
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+
+.subCatOrderControls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.subCatMoveBtn {
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  color: #475569;
+  border-radius: 4px;
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.subCatMoveBtn:hover:not(:disabled) {
+  background: #132c66;
+  color: #ffffff;
+  border-color: #132c66;
+}
+
+.subCatMoveBtn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
 .subCatTagList {
   display: flex;
   flex-wrap: wrap;
@@ -1500,14 +1595,16 @@
 .subCatRemoveBtn {
   background: transparent;
   border: none;
-  color: #0284c7;
+  color: #94a3b8;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 18px;
   line-height: 1;
-  padding: 0;
+  padding: 0 4px;
   display: flex;
   align-items: center;
   justify-content: center;
+  border-radius: 4px;
+  transition: color 0.15s ease;
 }
 
 .subCatRemoveBtn:hover {

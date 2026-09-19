@@ -1038,6 +1038,21 @@ export default function AdminDashboard() {
     }));
   };
 
+  const handleMoveSubCategory = (index: number, direction: "up" | "down") => {
+    setCategoryForm((prev) => {
+      const list = [...prev.subcategories];
+      const targetIndex = direction === "up" ? index - 1 : index + 1;
+      if (targetIndex < 0 || targetIndex >= list.length) return prev;
+      const temp = list[index];
+      list[index] = list[targetIndex];
+      list[targetIndex] = temp;
+      return {
+        ...prev,
+        subcategories: list,
+      };
+    });
+  };
+
   const handleCategorySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!categoryForm.name.trim()) {
@@ -2270,8 +2285,9 @@ export default function AdminDashboard() {
 
                             {cat.subcategories && cat.subcategories.length > 0 && (
                               <div className={styles.subCatGridPills}>
-                                {cat.subcategories.map((sub) => (
-                                  <span key={sub.id} className={styles.subCatGridPill} title={`Slug: ${sub.id}`}>
+                                {cat.subcategories.map((sub, sIdx) => (
+                                  <span key={sub.id} className={styles.subCatGridPill} title={`Slug: ${sub.id} | Order: #${sIdx + 1}`}>
+                                    <span style={{ color: "#0284c7", fontWeight: 750, marginRight: "3px" }}>{sIdx + 1}.</span>
                                     {sub.name}
                                   </span>
                                 ))}
@@ -4832,18 +4848,44 @@ export default function AdminDashboard() {
                 </div>
 
                 {categoryForm.subcategories.length > 0 ? (
-                  <div className={styles.subCatTagList}>
-                    {categoryForm.subcategories.map((sub) => (
-                      <div key={sub.id} className={styles.subCatTagItem}>
-                        <span>{sub.name} <code style={{ fontSize: "10px", color: "#64748b" }}>({sub.id})</code></span>
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveSubCategory(sub.id)}
-                          className={styles.subCatRemoveBtn}
-                          title="Remove Subcategory"
-                        >
-                          &times;
-                        </button>
+                  <div className={styles.subCatOrderList}>
+                    {categoryForm.subcategories.map((sub, idx) => (
+                      <div key={sub.id} className={styles.subCatOrderItem}>
+                        <div className={styles.subCatOrderLeft}>
+                          <span className={styles.subCatOrderBadge}>#{idx + 1}</span>
+                          <span className={styles.subCatOrderName}>
+                            <strong>{sub.name}</strong>
+                            <code className={styles.subCatOrderSlug}>({sub.id})</code>
+                          </span>
+                        </div>
+                        <div className={styles.subCatOrderControls}>
+                          <button
+                            type="button"
+                            onClick={() => handleMoveSubCategory(idx, "up")}
+                            disabled={idx === 0}
+                            className={styles.subCatMoveBtn}
+                            title="Move Up"
+                          >
+                            ▲
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleMoveSubCategory(idx, "down")}
+                            disabled={idx === categoryForm.subcategories.length - 1}
+                            className={styles.subCatMoveBtn}
+                            title="Move Down"
+                          >
+                            ▼
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveSubCategory(sub.id)}
+                            className={styles.subCatRemoveBtn}
+                            title="Remove Subcategory"
+                          >
+                            &times;
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>

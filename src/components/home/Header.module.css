@@ -425,6 +425,9 @@
   border-radius: 6px;
   text-decoration: none;
   background: transparent;
+  border: none;
+  outline: none;
+  font-family: inherit;
   transition: all var(--transition-fast) ease;
 }
 
@@ -447,6 +450,21 @@
 
 .chevronRotate {
   transform: rotate(180deg);
+}
+
+.submenuCaretBtn {
+  background: transparent;
+  border: none;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: inherit;
+}
+
+.submenuCaretRotate {
+  transform: rotate(90deg);
 }
 
 .subDivider {
@@ -694,7 +712,80 @@
     display: none;
   }
   .subHeader {
-    display: none !important;
+    display: flex !important;
+    height: 38px;
+    background: linear-gradient(90deg, #132c66 0%, #1e3a8a 50%, #132c66 100%);
+    border-bottom: 2px solid #ffd300;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+    position: relative;
+    z-index: 40;
+    padding: 0 4px;
+  }
+  .subContainer {
+    padding: 0 4px;
+    gap: 4px;
+    justify-content: space-around;
+    width: 100%;
+  }
+  .subTabWrapper {
+    flex: 1;
+    justify-content: center;
+  }
+  .subTab {
+    width: 100%;
+    justify-content: center;
+    padding: 0 6px;
+    height: 30px;
+    gap: 5px;
+  }
+  .subTabText {
+    font-size: 11px;
+    letter-spacing: 0.2px;
+    white-space: nowrap;
+  }
+  .categoryDropdown {
+    position: absolute;
+    top: 100%;
+    left: 4px;
+    right: 4px;
+    width: calc(100vw - 8px);
+    max-width: 380px;
+    max-height: 70vh;
+    overflow-y: auto;
+    border-radius: 0 0 10px 10px;
+    border: 1.5px solid rgba(56, 182, 255, 0.3);
+    border-top: 2px solid #ffd300;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
+    z-index: 150;
+  }
+  .submenuBox {
+    position: static;
+    width: 100%;
+    border-left: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 0;
+    box-shadow: none;
+    background: #142a66;
+    padding: 4px 0;
+  }
+  .submenuItem {
+    padding: 8px 16px 8px 36px;
+    font-size: 11px;
+  }
+  .brandsDropdown {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: calc(100vw - 16px);
+    max-width: 340px;
+    max-height: 70vh;
+    overflow-y: auto;
+    border-radius: 0 0 10px 10px;
+    border: 1.5px solid rgba(56, 182, 255, 0.3);
+    border-top: 2px solid #ffd300;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
+    z-index: 150;
   }
   .actions {
     display: none !important;
