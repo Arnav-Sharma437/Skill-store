@@ -658,8 +658,8 @@
 @media (max-width: 768px) {
   .logoBg {
     display: block;
-    width: 140px;
-    clip-path: polygon(0 0, 100% 0, calc(100% - 25px) 100%, 0 100%);
+    width: 175px;
+    clip-path: polygon(0 0, 100% 0, calc(100% - 28px) 100%, 0 100%);
     background: #ffffff;
     z-index: 1;
   }
@@ -668,7 +668,7 @@
     padding: 0 10px;
   }
   .container {
-    gap: 8px;
+    gap: 10px;
   }
   .logoLink {
     background: transparent;
@@ -676,6 +676,17 @@
     box-shadow: none;
     z-index: 3;
     padding-left: 2px;
+    flex-shrink: 0;
+  }
+  .logo {
+    display: flex;
+    align-items: center;
+  }
+  .logo img {
+    width: 125px !important;
+    height: auto !important;
+    max-height: 38px;
+    object-fit: contain;
   }
   .desktopNav {
     display: none;
@@ -689,8 +700,10 @@
   .searchWrapper {
     max-width: none;
     flex-grow: 1;
+    flex-shrink: 1;
+    min-width: 0;
     z-index: 10;
-    margin-left: 4px;
+    margin-left: 2px;
   }
   .searchForm {
     max-width: none;
@@ -702,13 +715,13 @@
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
   }
   .searchInput {
-    font-size: 12.5px;
-    padding: 0 32px 0 12px;
+    font-size: 12px;
+    padding: 0 28px 0 12px;
   }
   .micButton {
-    right: 8px;
+    right: 6px;
   }
   .searchButton {
-    width: 40px;
+    width: 38px;
   }
 }
