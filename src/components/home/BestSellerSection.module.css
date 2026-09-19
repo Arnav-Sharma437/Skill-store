@@ -119,24 +119,30 @@
 }
 
 @media (max-width: 768px) {
+  .section {
+    padding: 16px 0;
+  }
+  .headerRow {
+    margin-bottom: 14px;
+  }
   .title {
-    font-size: 14px;
+    font-size: 13px;
   }
   .titleTab {
-    padding: 6px 25px 6px 15px;
+    padding: 5px 20px 5px 12px;
     clip-path: polygon(0 0, 100% 0, calc(100% - 15px) 100%, 0 100%);
   }
   .productRow {
-    gap: 14px;
-    padding-right: 14px;
+    gap: 12px;
+    padding-right: 12px;
   }
   .productGrid {
     flex-wrap: nowrap;
     overflow-x: auto;
     scroll-snap-type: x mandatory;
     -webkit-overflow-scrolling: touch;
-    gap: 14px;
-    padding: 6px 4px 16px;
+    gap: 12px;
+    padding: 4px 4px 12px;
     scrollbar-width: thin;
   }
   .productGrid::-webkit-scrollbar {

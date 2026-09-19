@@ -236,27 +236,34 @@
 
 @media (max-width: 768px) {
   .section {
-    padding: 35px 0;
+    padding: 16px 0;
+  }
+  .headerRow {
+    margin-bottom: 14px;
+    gap: 8px;
   }
   .title {
-    font-size: 22px;
+    font-size: 18px;
+  }
+  .subtitle {
+    font-size: 10px;
   }
   .brandCard {
-    width: 200px;
-    padding: 18px 14px 14px;
+    width: 180px;
+    padding: 14px 12px 12px;
     scroll-snap-align: start;
   }
   .brandsRow {
-    gap: 14px;
-    padding-right: 14px;
+    gap: 12px;
+    padding-right: 12px;
   }
   .brandsGrid {
     flex-wrap: nowrap;
     overflow-x: auto;
     scroll-snap-type: x mandatory;
     -webkit-overflow-scrolling: touch;
-    padding: 6px 4px 20px;
-    gap: 14px;
+    padding: 4px 4px 12px;
+    gap: 12px;
     scrollbar-width: thin;
   }
   .brandsGrid::-webkit-scrollbar {

@@ -299,32 +299,35 @@
 
 @media (max-width: 768px) {
   .section {
-    padding: 45px 0 35px;
+    padding: 24px 0 20px;
+  }
+  .headerRow {
+    margin-bottom: 20px;
   }
   .title {
-    font-size: 22px;
+    font-size: 20px;
   }
   .carouselTrack {
-    height: 370px;
+    height: 350px;
   }
   .testimonialCard {
-    width: 320px;
-    padding: 22px 18px;
+    width: 300px;
+    padding: 18px 16px;
   }
   .cardCenter {
     transform: translate3d(-50%, -50%, 0) scale(1);
   }
   .cardLeft {
-    transform: translate3d(calc(-50% - 160px), -50%, -40px) scale(0.8);
+    transform: translate3d(calc(-50% - 150px), -50%, -40px) scale(0.8);
     opacity: 0.25;
   }
   .cardRight {
-    transform: translate3d(calc(-50% + 160px), -50%, -40px) scale(0.8);
+    transform: translate3d(calc(-50% + 150px), -50%, -40px) scale(0.8);
     opacity: 0.25;
   }
   .quoteText {
-    font-size: 13px;
-    height: 84px;
+    font-size: 12.5px;
+    height: 80px;
     -webkit-line-clamp: 4;
   }
 }

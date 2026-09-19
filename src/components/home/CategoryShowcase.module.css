@@ -225,31 +225,35 @@
 
 @media (max-width: 768px) {
   .section {
-    padding: 30px 0;
+    padding: 16px 0;
+  }
+  .headerRow {
+    margin-bottom: 14px;
+    gap: 8px;
   }
   .title {
-    font-size: 20px;
+    font-size: 18px;
   }
   .card {
-    width: 185px;
+    width: 170px;
     padding: 10px;
     scroll-snap-align: start;
   }
   .imageBox {
-    height: 140px;
+    height: 125px;
     border-radius: 8px;
   }
   .categoryRow {
-    gap: 14px;
-    padding-right: 14px;
+    gap: 12px;
+    padding-right: 12px;
   }
   .categoryGrid {
     flex-wrap: nowrap;
     overflow-x: auto;
     scroll-snap-type: x mandatory;
     -webkit-overflow-scrolling: touch;
-    padding: 6px 4px 16px;
-    gap: 14px;
+    padding: 4px 4px 10px;
+    gap: 12px;
     scrollbar-width: thin;
   }
   .categoryGrid::-webkit-scrollbar {

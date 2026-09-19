@@ -125,7 +125,6 @@ export default function CategoryShowcase() {
         {/* Header Title Row */}
         <div className={styles.headerRow}>
           <div className={styles.titleArea}>
-            <span className={styles.subtitle}>EXPLORE THE CATALOG</span>
             <h2 className={styles.title}>SHOP BY CATEGORIES</h2>
           </div>
           <div className={styles.headerActions}>
@@ -136,29 +135,27 @@ export default function CategoryShowcase() {
                 <polyline points="12 5 19 12 12 19"></polyline>
               </svg>
             </Link>
-            {/* Navigation Arrows for Mobile Slider (< 5 categories) */}
-            {topCategories.length < 5 && (
-              <div className={styles.navButtons}>
-                <button
-                  className={styles.arrowBtn}
-                  onClick={() => scrollSlider("left")}
-                  aria-label="Scroll left"
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                    <polyline points="15 18 9 12 15 6"></polyline>
-                  </svg>
-                </button>
-                <button
-                  className={styles.arrowBtn}
-                  onClick={() => scrollSlider("right")}
-                  aria-label="Scroll right"
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                    <polyline points="9 18 15 12 9 6"></polyline>
-                  </svg>
-                </button>
-              </div>
-            )}
+            {/* Navigation Arrows for Slider */}
+            <div className={styles.navButtons}>
+              <button
+                className={styles.arrowBtn}
+                onClick={() => scrollSlider("left")}
+                aria-label="Scroll left"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
+              </button>
+              <button
+                className={styles.arrowBtn}
+                onClick={() => scrollSlider("right")}
+                aria-label="Scroll right"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
 

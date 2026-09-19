@@ -18,8 +18,8 @@ export default function Home() {
         <HeroBanner />
         <FeatureBadges />
         <CategoryShowcase />
-        <BestSellerSection />
         <BrandShowcase />
+        <BestSellerSection />
         <SummerOffer />
         <TestimonialsSection />
       </main>

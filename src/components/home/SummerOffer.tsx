@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import styles from "./SummerOffer.module.css";
@@ -12,6 +12,14 @@ export default function SummerOffer() {
   const [title, setTitle] = useState("PREMIUM SUMMER OFFER");
   const [offers, setOffers] = useState<ISummerOfferItem[]>(DEFAULT_HOME_SETTINGS.summerOffer.offers);
   const [isLoaded, setIsLoaded] = useState(false);
+  const sliderRef = useRef<HTMLDivElement>(null);
+
+  const scrollSlider = (direction: "left" | "right") => {
+    if (sliderRef.current) {
+      const scrollAmount = direction === "left" ? -340 : 340;
+      sliderRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
+    }
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -59,10 +67,32 @@ export default function SummerOffer() {
           </div>
           {/* Bottom underline */}
           <div className={styles.headerLine}></div>
+
+          {/* Navigation Arrows for Slider */}
+          <div className={styles.navButtons}>
+            <button
+              className={styles.arrowBtn}
+              onClick={() => scrollSlider("left")}
+              aria-label="Scroll left"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <polyline points="15 18 9 12 15 6"></polyline>
+              </svg>
+            </button>
+            <button
+              className={styles.arrowBtn}
+              onClick={() => scrollSlider("right")}
+              aria-label="Scroll right"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            </button>
+          </div>
         </div>
 
         {/* Continuous Scrolling Offers Marquee Slider (Equal balance on left & right) */}
-        <div className={styles.marqueeContainer}>
+        <div className={styles.marqueeContainer} ref={sliderRef}>
           <div className={styles.marqueeTrack}>
             {/* Copy 1 */}
             <div className={styles.bannersRow}>

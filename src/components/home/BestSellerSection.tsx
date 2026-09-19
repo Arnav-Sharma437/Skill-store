@@ -78,8 +78,8 @@ export default function BestSellerSection() {
           {/* Bottom underline of the tab row */}
           <div className={styles.headerLine}></div>
 
-          {/* Navigation Arrows for Mobile Slider (< 5 products) */}
-          {products.length > 0 && products.length < 5 && (
+          {/* Navigation Arrows for Slider */}
+          {products.length > 0 && (
             <div className={styles.navButtons}>
               <button
                 className={styles.arrowBtn}
