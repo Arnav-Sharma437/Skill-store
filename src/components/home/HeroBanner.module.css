@@ -99,11 +99,34 @@
 /* --- Responsive Adjustments --- */
 @media (max-width: 768px) {
   .heroSection {
-    aspect-ratio: 16 / 7;
-    min-height: 160px;
+    aspect-ratio: 16 / 7.5;
+    min-height: 180px;
   }
   .navButton {
-    width: 36px;
-    height: 36px;
+    width: 28px;
+    height: 28px;
+    background: rgba(255, 255, 255, 0.82);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+  }
+  .navButton svg {
+    width: 14px;
+    height: 14px;
+  }
+  .prevButton {
+    left: 8px;
+  }
+  .nextButton {
+    right: 8px;
+  }
+  .pagination {
+    bottom: 8px;
+    gap: 6px;
+  }
+  .dot {
+    width: 6px;
+    height: 6px;
+  }
+  .activeDot {
+    width: 6px;
   }
 }

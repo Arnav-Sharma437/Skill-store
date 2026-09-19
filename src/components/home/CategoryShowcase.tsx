@@ -129,72 +129,98 @@ export default function CategoryShowcase() {
           </Link>
         </div>
 
-        {/* Category Continuous Scrolling Marquee Track (Leftwards) */}
-        <div className={styles.marqueeContainer}>
-          <div className={styles.marqueeTrack}>
-            {/* First copy */}
-            <div className={styles.categoryRow}>
-              {topCategories.map((cat) => (
-                <Link href={`/category/${cat.slug}`} key={`${cat.slug}-1`} className={styles.card}>
-                  <div className={styles.imageBox}>
-                    <Image
-                      src={optimizeProductCard(cat.imageUrl)}
-                      alt={cat.name}
-                      width={140}
-                      height={120}
-                      loading="lazy"
-                      sizes="140px"
-                      className={styles.image}
-                      style={{ objectFit: "contain" }}
-                    />
+        {/* Display static grid on desktop / slider on mobile if < 5 categories, else continuous marquee */}
+        {topCategories.length < 5 ? (
+          <div className={styles.categoryGrid}>
+            {topCategories.map((cat) => (
+              <Link href={`/category/${cat.slug}`} key={cat.slug} className={styles.card}>
+                <div className={styles.imageBox}>
+                  <Image
+                    src={optimizeProductCard(cat.imageUrl)}
+                    alt={cat.name}
+                    fill
+                    loading="lazy"
+                    sizes="(max-width: 768px) 190px, 220px"
+                    className={styles.image}
+                  />
+                </div>
+                <div className={styles.cardContent}>
+                  <h3 className={styles.categoryTitle}>{cat.name}</h3>
+                  <span className={styles.productCount}>{cat.count}</span>
+                  <div className={styles.exploreArrow}>
+                    <span>Explore</span>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                      <line x1="5" y1="12" x2="19" y2="12"></line>
+                      <polyline points="12 5 19 12 12 19"></polyline>
+                    </svg>
                   </div>
-                  <div className={styles.cardContent}>
-                    <h3 className={styles.categoryTitle}>{cat.name}</h3>
-                    <span className={styles.productCount}>{cat.count}</span>
-                    <div className={styles.exploreArrow}>
-                      <span>Explore</span>
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                        <line x1="5" y1="12" x2="19" y2="12"></line>
-                        <polyline points="12 5 19 12 12 19"></polyline>
-                      </svg>
+                </div>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <div className={styles.marqueeContainer}>
+            <div className={styles.marqueeTrack}>
+              {/* First copy */}
+              <div className={styles.categoryRow}>
+                {topCategories.map((cat) => (
+                  <Link href={`/category/${cat.slug}`} key={`${cat.slug}-1`} className={styles.card}>
+                    <div className={styles.imageBox}>
+                      <Image
+                        src={optimizeProductCard(cat.imageUrl)}
+                        alt={cat.name}
+                        fill
+                        loading="lazy"
+                        sizes="(max-width: 768px) 190px, 220px"
+                        className={styles.image}
+                      />
                     </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
+                    <div className={styles.cardContent}>
+                      <h3 className={styles.categoryTitle}>{cat.name}</h3>
+                      <span className={styles.productCount}>{cat.count}</span>
+                      <div className={styles.exploreArrow}>
+                        <span>Explore</span>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                          <line x1="5" y1="12" x2="19" y2="12"></line>
+                          <polyline points="12 5 19 12 12 19"></polyline>
+                        </svg>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
 
-            {/* Duplicate copy for infinite seamless loop */}
-            <div className={styles.categoryRow} aria-hidden="true">
-              {topCategories.map((cat) => (
-                <Link href={`/category/${cat.slug}`} key={`${cat.slug}-2`} className={styles.card}>
-                  <div className={styles.imageBox}>
-                    <Image
-                      src={optimizeProductCard(cat.imageUrl)}
-                      alt={cat.name}
-                      width={140}
-                      height={120}
-                      loading="lazy"
-                      sizes="140px"
-                      className={styles.image}
-                      style={{ objectFit: "contain" }}
-                    />
-                  </div>
-                  <div className={styles.cardContent}>
-                    <h3 className={styles.categoryTitle}>{cat.name}</h3>
-                    <span className={styles.productCount}>{cat.count}</span>
-                    <div className={styles.exploreArrow}>
-                      <span>Explore</span>
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                        <line x1="5" y1="12" x2="19" y2="12"></line>
-                        <polyline points="12 5 19 12 12 19"></polyline>
-                      </svg>
+              {/* Duplicate copy for infinite seamless loop */}
+              <div className={styles.categoryRow} aria-hidden="true">
+                {topCategories.map((cat) => (
+                  <Link href={`/category/${cat.slug}`} key={`${cat.slug}-2`} className={styles.card}>
+                    <div className={styles.imageBox}>
+                      <Image
+                        src={optimizeProductCard(cat.imageUrl)}
+                        alt={cat.name}
+                        fill
+                        loading="lazy"
+                        sizes="(max-width: 768px) 190px, 220px"
+                        className={styles.image}
+                      />
                     </div>
-                  </div>
-                </Link>
-              ))}
+                    <div className={styles.cardContent}>
+                      <h3 className={styles.categoryTitle}>{cat.name}</h3>
+                      <span className={styles.productCount}>{cat.count}</span>
+                      <div className={styles.exploreArrow}>
+                        <span>Explore</span>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                          <line x1="5" y1="12" x2="19" y2="12"></line>
+                          <polyline points="12 5 19 12 12 19"></polyline>
+                        </svg>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
     </section>
   );
