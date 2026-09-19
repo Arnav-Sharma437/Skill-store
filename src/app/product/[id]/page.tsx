@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, use, useEffect } from "react";
+import React, { useState, useMemo, use, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -10,15 +10,6 @@ import Footer from "@/components/home/Footer";
 import { useApp } from "@/context/AppContext";
 import { optimizeProductDetail, optimizeGalleryThumbnail, optimizeProductCard } from "@/lib/imageOptimization";
 import styles from "./ProductPage.module.css";
-
-// Accessory Products for "Based on your recent views"
-const RECENT_PRODUCTS = [
-  { id: "acc-1", title: "Brass Coupler Connector Fitting Quick Join", price: 499, imageUrl: "/images/products/nozzle_tips.jpg", rating: 5, ratingCount: 241 },
-  { id: "acc-2", title: "TUQO Premium 4Pcs Spray Nozzle Set", price: 899, imageUrl: "/images/products/nozzle_tips.jpg", rating: 5, ratingCount: 780 },
-  { id: "acc-3", title: "Heavy Duty Brass Adapter Coupling Male/Female", price: 650, imageUrl: "/images/products/trigger_gun.jpg", rating: 4, ratingCount: 605 },
-  { id: "acc-4", title: "Universal Red Adapter Quick Release Fitting", price: 399, imageUrl: "/images/products/trigger_gun.jpg", rating: 4, ratingCount: 420 },
-  { id: "acc-5", title: "High Pressure Washer Water Hose 5 Meters", price: 1200, imageUrl: "/images/products/hw2000.jpg", rating: 5, ratingCount: 241 }
-];
 
 interface ReviewItem {
   _id: string;
@@ -65,7 +56,7 @@ interface ProductData {
 export default function ProductPage({ params }: PageProps) {
   const { id } = use(params);
   const router = useRouter();
-  const { addToCart, toggleWishlist, isInWishlist } = useApp();
+  const { addToCart, toggleWishlist, isInWishlist, recentlyViewed, addRecentlyViewed } = useApp();
 
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
@@ -73,6 +64,18 @@ export default function ProductPage({ params }: PageProps) {
   const [selectedImage, setSelectedImage] = useState<string>("");
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState("description");
+  const recentSliderRef = useRef<HTMLDivElement>(null);
+
+  const scrollRecentSlider = (direction: "left" | "right") => {
+    if (recentSliderRef.current) {
+      const scrollAmount = direction === "left" ? -240 : 240;
+      recentSliderRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
+    }
+  };
+
+  const filteredRecent = useMemo(() => {
+    return recentlyViewed.filter((item) => item.id !== id);
+  }, [recentlyViewed, id]);
 
   // Variant selection states
   const [selectedDegree, setSelectedDegree] = useState<string>("");
@@ -143,6 +146,15 @@ export default function ProductPage({ params }: PageProps) {
                 setSelectedStyle(normalized.styles[0]);
               }
               setNotFound(false);
+              addRecentlyViewed({
+                id: normalized.id,
+                title: normalized.title,
+                price: normalized.price,
+                originalPrice: normalized.originalPrice,
+                imageUrl: normalized.imageUrl,
+                rating: normalized.rating,
+                ratingCount: normalized.ratingCount,
+              });
             }
           } else {
             if (isMounted) setNotFound(true);
@@ -857,43 +869,71 @@ export default function ProductPage({ params }: PageProps) {
           </div>
 
           {/* Section: Based on your recent views */}
-          <div className={styles.recentSection}>
-            <div className={styles.sectionHeaderRow}>
-              <div className={styles.titleTab}>
-                <h2 className={styles.titleText}>BASED ON YOUR RECENT VIEWS</h2>
-              </div>
-              <div className={styles.headerLine}></div>
-            </div>
+          {filteredRecent.length > 0 && (
+            <div className={styles.recentSection}>
+              <div className={styles.sectionHeaderRow}>
+                <div className={styles.titleTab}>
+                  <h2 className={styles.titleText}>BASED ON YOUR RECENT VIEWS</h2>
+                </div>
+                <div className={styles.headerLine}></div>
 
-            <div className={styles.recentMarqueeContainer}>
-              <div className={styles.recentMarqueeTrack}>
-                {/* First Copy */}
-                <div className={styles.recentRow}>
-                  {RECENT_PRODUCTS.map((prod) => (
-                    <div key={`${prod.id}-1`} className={styles.recentCard}>
-                      <div className={styles.recentImgBox}>
-                        <Image
-                          src={optimizeProductCard(prod.imageUrl)}
-                          alt={prod.title}
-                          width={160}
-                          height={120}
-                          loading="lazy"
-                          className={styles.recentImg}
-                          style={{ objectFit: "contain" }}
-                        />
-                      </div>
-                      <div className={styles.recentInfo}>
-                        <h4 className={styles.recentTitle} title={prod.title}>{prod.title}</h4>
-                        <div className={styles.starsRow}>
-                          {[1,2,3,4,5].map((s) => (
-                            <svg key={s} width="11" height="11" viewBox="0 0 24 24" fill="#ffd300" stroke="#ffd300" strokeWidth="1">
-                              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-                            </svg>
-                          ))}
-                          <span>{prod.ratingCount} Reviews</span>
-                        </div>
+                {/* Navigation Arrows for Slider */}
+                <div className={styles.navButtons}>
+                  <button
+                    className={styles.arrowBtn}
+                    onClick={() => scrollRecentSlider("left")}
+                    aria-label="Scroll left"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                  </button>
+                  <button
+                    className={styles.arrowBtn}
+                    onClick={() => scrollRecentSlider("right")}
+                    aria-label="Scroll right"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              {filteredRecent.length < 5 ? (
+                <div className={styles.recentSliderContainer}>
+                  <div className={styles.recentGrid} ref={recentSliderRef}>
+                    {filteredRecent.map((prod) => (
+                      <div key={prod.id} className={styles.recentCard}>
+                        <Link href={`/product/${prod.id}`} style={{ textDecoration: "none", color: "inherit", display: "flex", flexDirection: "column", flexGrow: 1 }}>
+                          <div className={styles.recentImgBox}>
+                            <Image
+                              src={optimizeProductCard(prod.imageUrl)}
+                              alt={prod.title}
+                              width={160}
+                              height={120}
+                              loading="lazy"
+                              className={styles.recentImg}
+                              style={{ objectFit: "contain" }}
+                            />
+                          </div>
+                          <div className={styles.recentInfo}>
+                            <h4 className={styles.recentTitle} title={prod.title}>{prod.title}</h4>
+                            <div className={styles.starsRow}>
+                              {[1, 2, 3, 4, 5].map((s) => (
+                                <svg key={s} width="11" height="11" viewBox="0 0 24 24" fill="#ffd300" stroke="#ffd300" strokeWidth="1">
+                                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                </svg>
+                              ))}
+                              <span>{prod.ratingCount || 0} Reviews</span>
+                            </div>
+                            <div style={{ marginTop: "4px", fontSize: "14px", fontWeight: 800, color: "#132c66" }}>
+                              ₹{prod.price.toLocaleString("en-IN")}
+                            </div>
+                          </div>
+                        </Link>
                         <div className={styles.cardActions}>
-                          <button 
+                          <button
                             onClick={() => addToCart({ id: prod.id, title: prod.title, price: prod.price, imageUrl: prod.imageUrl })}
                             className={styles.cardCartBtn}
                           >
@@ -904,7 +944,7 @@ export default function ProductPage({ params }: PageProps) {
                             </svg>
                             <span>Add To Cart</span>
                           </button>
-                          <button 
+                          <button
                             onClick={() => toggleWishlist({ id: prod.id, title: prod.title, price: prod.price, imageUrl: prod.imageUrl })}
                             className={`${styles.cardHeartBtn} ${isInWishlist(prod.id) ? styles.cardHeartActive : ""}`}
                             aria-label="Toggle Wishlist"
@@ -915,64 +955,130 @@ export default function ProductPage({ params }: PageProps) {
                           </button>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
+              ) : (
+                <div className={styles.recentMarqueeContainer} ref={recentSliderRef}>
+                  <div className={styles.recentMarqueeTrack}>
+                    {/* First Copy */}
+                    <div className={styles.recentRow}>
+                      {filteredRecent.map((prod) => (
+                        <div key={`${prod.id}-1`} className={styles.recentCard}>
+                          <Link href={`/product/${prod.id}`} style={{ textDecoration: "none", color: "inherit", display: "flex", flexDirection: "column", flexGrow: 1 }}>
+                            <div className={styles.recentImgBox}>
+                              <Image
+                                src={optimizeProductCard(prod.imageUrl)}
+                                alt={prod.title}
+                                width={160}
+                                height={120}
+                                loading="lazy"
+                                className={styles.recentImg}
+                                style={{ objectFit: "contain" }}
+                              />
+                            </div>
+                            <div className={styles.recentInfo}>
+                              <h4 className={styles.recentTitle} title={prod.title}>{prod.title}</h4>
+                              <div className={styles.starsRow}>
+                                {[1, 2, 3, 4, 5].map((s) => (
+                                  <svg key={s} width="11" height="11" viewBox="0 0 24 24" fill="#ffd300" stroke="#ffd300" strokeWidth="1">
+                                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                  </svg>
+                                ))}
+                                <span>{prod.ratingCount || 0} Reviews</span>
+                              </div>
+                              <div style={{ marginTop: "4px", fontSize: "14px", fontWeight: 800, color: "#132c66" }}>
+                                ₹{prod.price.toLocaleString("en-IN")}
+                              </div>
+                            </div>
+                          </Link>
+                          <div className={styles.cardActions}>
+                            <button
+                              onClick={() => addToCart({ id: prod.id, title: prod.title, price: prod.price, imageUrl: prod.imageUrl })}
+                              className={styles.cardCartBtn}
+                            >
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                <circle cx="9" cy="21" r="1"></circle>
+                                <circle cx="20" cy="21" r="1"></circle>
+                                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                              </svg>
+                              <span>Add To Cart</span>
+                            </button>
+                            <button
+                              onClick={() => toggleWishlist({ id: prod.id, title: prod.title, price: prod.price, imageUrl: prod.imageUrl })}
+                              className={`${styles.cardHeartBtn} ${isInWishlist(prod.id) ? styles.cardHeartActive : ""}`}
+                              aria-label="Toggle Wishlist"
+                            >
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill={isInWishlist(prod.id) ? "#ef4444" : "none"} stroke={isInWishlist(prod.id) ? "#ef4444" : "#132c66"} strokeWidth="2.5">
+                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                              </svg>
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
 
-                {/* Duplicate Copy */}
-                <div className={styles.recentRow} aria-hidden="true">
-                  {RECENT_PRODUCTS.map((prod) => (
-                    <div key={`${prod.id}-2`} className={styles.recentCard}>
-                      <div className={styles.recentImgBox}>
-                        <Image
-                          src={optimizeProductCard(prod.imageUrl)}
-                          alt={prod.title}
-                          width={160}
-                          height={120}
-                          loading="lazy"
-                          className={styles.recentImg}
-                          style={{ objectFit: "contain" }}
-                        />
-                      </div>
-                      <div className={styles.recentInfo}>
-                        <h4 className={styles.recentTitle} title={prod.title}>{prod.title}</h4>
-                        <div className={styles.starsRow}>
-                          {[1,2,3,4,5].map((s) => (
-                            <svg key={s} width="11" height="11" viewBox="0 0 24 24" fill="#ffd300" stroke="#ffd300" strokeWidth="1">
-                              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-                            </svg>
-                          ))}
-                          <span>{prod.ratingCount} Reviews</span>
+                    {/* Duplicate Copy */}
+                    <div className={styles.recentRow} aria-hidden="true">
+                      {filteredRecent.map((prod) => (
+                        <div key={`${prod.id}-2`} className={styles.recentCard}>
+                          <Link href={`/product/${prod.id}`} style={{ textDecoration: "none", color: "inherit", display: "flex", flexDirection: "column", flexGrow: 1 }}>
+                            <div className={styles.recentImgBox}>
+                              <Image
+                                src={optimizeProductCard(prod.imageUrl)}
+                                alt={prod.title}
+                                width={160}
+                                height={120}
+                                loading="lazy"
+                                className={styles.recentImg}
+                                style={{ objectFit: "contain" }}
+                              />
+                            </div>
+                            <div className={styles.recentInfo}>
+                              <h4 className={styles.recentTitle} title={prod.title}>{prod.title}</h4>
+                              <div className={styles.starsRow}>
+                                {[1, 2, 3, 4, 5].map((s) => (
+                                  <svg key={s} width="11" height="11" viewBox="0 0 24 24" fill="#ffd300" stroke="#ffd300" strokeWidth="1">
+                                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                  </svg>
+                                ))}
+                                <span>{prod.ratingCount || 0} Reviews</span>
+                              </div>
+                              <div style={{ marginTop: "4px", fontSize: "14px", fontWeight: 800, color: "#132c66" }}>
+                                ₹{prod.price.toLocaleString("en-IN")}
+                              </div>
+                            </div>
+                          </Link>
+                          <div className={styles.cardActions}>
+                            <button
+                              onClick={() => addToCart({ id: prod.id, title: prod.title, price: prod.price, imageUrl: prod.imageUrl })}
+                              className={styles.cardCartBtn}
+                            >
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                <circle cx="9" cy="21" r="1"></circle>
+                                <circle cx="20" cy="21" r="1"></circle>
+                                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                              </svg>
+                              <span>Add To Cart</span>
+                            </button>
+                            <button
+                              onClick={() => toggleWishlist({ id: prod.id, title: prod.title, price: prod.price, imageUrl: prod.imageUrl })}
+                              className={`${styles.cardHeartBtn} ${isInWishlist(prod.id) ? styles.cardHeartActive : ""}`}
+                              aria-label="Toggle Wishlist"
+                            >
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill={isInWishlist(prod.id) ? "#ef4444" : "none"} stroke={isInWishlist(prod.id) ? "#ef4444" : "#132c66"} strokeWidth="2.5">
+                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                              </svg>
+                            </button>
+                          </div>
                         </div>
-                        <div className={styles.cardActions}>
-                          <button 
-                            onClick={() => addToCart({ id: prod.id, title: prod.title, price: prod.price, imageUrl: prod.imageUrl })}
-                            className={styles.cardCartBtn}
-                          >
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                              <circle cx="9" cy="21" r="1"></circle>
-                              <circle cx="20" cy="21" r="1"></circle>
-                              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
-                            </svg>
-                            <span>Add To Cart</span>
-                          </button>
-                          <button 
-                            onClick={() => toggleWishlist({ id: prod.id, title: prod.title, price: prod.price, imageUrl: prod.imageUrl })}
-                            className={`${styles.cardHeartBtn} ${isInWishlist(prod.id) ? styles.cardHeartActive : ""}`}
-                            aria-label="Toggle Wishlist"
-                          >
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill={isInWishlist(prod.id) ? "#ef4444" : "none"} stroke={isInWishlist(prod.id) ? "#ef4444" : "#132c66"} strokeWidth="2.5">
-                              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                            </svg>
-                          </button>
-                        </div>
-                      </div>
+                      ))}
                     </div>
-                  ))}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
-          </div>
+          )}
         </div>
       </main>
 

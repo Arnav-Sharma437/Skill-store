@@ -102,12 +102,18 @@
 /* Continuous Marquee Ticker Container (Leftwards) */
 .marqueeContainer {
   width: 100%;
-  overflow: hidden;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
   position: relative;
   display: flex;
   padding: 6px 0 16px;
   mask-image: linear-gradient(to right, transparent 0%, black 2%, black 98%, transparent 100%);
   -webkit-mask-image: linear-gradient(to right, transparent 0%, black 2%, black 98%, transparent 100%);
+}
+
+.marqueeContainer::-webkit-scrollbar {
+  display: none;
 }
 
 .marqueeTrack {

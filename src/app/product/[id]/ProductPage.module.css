@@ -919,15 +919,66 @@
   flex-grow: 1;
 }
 
+.navButtons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.arrowBtn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 1.5px solid #132c66;
+  color: #132c66;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition-fast) ease;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+}
+
+.arrowBtn:hover {
+  background: #132c66;
+  color: #ffd300;
+  transform: scale(1.05);
+}
+
+.arrowBtn:active {
+  transform: scale(0.95);
+}
+
+/* Recent Grid & Slider for < 5 items */
+.recentSliderContainer {
+  width: 100%;
+  padding: 6px 0 16px;
+}
+
+.recentGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: flex-start;
+}
+
 /* Recent Marquee Container */
 .recentMarqueeContainer {
   width: 100%;
-  overflow: hidden;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
   position: relative;
   display: flex;
   padding: 6px 0 16px;
   mask-image: linear-gradient(to right, transparent 0%, black 2%, black 98%, transparent 100%);
   -webkit-mask-image: linear-gradient(to right, transparent 0%, black 2%, black 98%, transparent 100%);
+}
+
+.recentMarqueeContainer::-webkit-scrollbar {
+  display: none;
 }
 
 .recentMarqueeTrack {
@@ -1127,6 +1178,18 @@
   }
   .reviewsListGrid {
     grid-template-columns: 1fr;
+  }
+  .recentGrid {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    gap: 12px;
+    padding: 4px 4px 12px;
+    scrollbar-width: thin;
+  }
+  .recentGrid::-webkit-scrollbar {
+    height: 4px;
   }
   .recentCard {
     width: 170px;

@@ -189,7 +189,7 @@ export default function CategoryShowcase() {
             ))}
           </div>
         ) : (
-          <div className={styles.marqueeContainer}>
+          <div className={styles.marqueeContainer} ref={sliderRef}>
             <div className={styles.marqueeTrack}>
               {/* First copy */}
               <div className={styles.categoryRow}>

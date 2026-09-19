@@ -151,7 +151,7 @@ export default function BrandShowcase() {
                 ))}
               </div>
             ) : (
-              <div className={styles.brandsMarqueeContainer}>
+              <div className={styles.brandsMarqueeContainer} ref={sliderRef}>
                 <div className={styles.brandsMarqueeTrack}>
                   {/* Copy 1 */}
                   <div className={styles.brandsRow}>

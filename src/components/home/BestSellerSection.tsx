@@ -114,7 +114,7 @@ export default function BestSellerSection() {
               </div>
             </div>
           ) : (
-            <div className={styles.marqueeContainer}>
+            <div className={styles.marqueeContainer} ref={sliderRef}>
               <div className={styles.marqueeTrack}>
                 {/* First list copy */}
                 <div className={styles.productRow}>

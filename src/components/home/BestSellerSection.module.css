@@ -83,12 +83,18 @@
 /* Continuous Marquee Ticker Container (Scrolling Rightwards) inside Container */
 .marqueeContainer {
   width: 100%;
-  overflow: hidden;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
   position: relative;
   display: flex;
   padding: 10px 0 20px;
   mask-image: linear-gradient(to right, transparent 0%, black 2%, black 98%, transparent 100%);
   -webkit-mask-image: linear-gradient(to right, transparent 0%, black 2%, black 98%, transparent 100%);
+}
+
+.marqueeContainer::-webkit-scrollbar {
+  display: none;
 }
 
 .marqueeTrack {
