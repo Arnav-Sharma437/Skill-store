@@ -844,24 +844,7 @@
     background: #0f2352;
   }
   .actions {
-    display: flex;
-    gap: 8px;
-  }
-  .actionIcon {
-    width: 34px;
-    height: 34px;
-  }
-  .actionIcon svg {
-    width: 17px;
-    height: 17px;
-  }
-  .badge {
-    top: -3px;
-    right: -3px;
-    min-width: 15px;
-    height: 15px;
-    font-size: 8px;
-    padding: 0 2px;
+    display: none !important;
   }
   .searchWrapper {
     max-width: none;
@@ -869,7 +852,8 @@
     flex-shrink: 1;
     min-width: 0;
     z-index: 10;
-    margin-left: 6px;
+    margin-left: 10px;
+    margin-right: 4px;
   }
   .searchForm {
     max-width: none;
