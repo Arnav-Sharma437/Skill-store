@@ -227,7 +227,7 @@ export default function Header() {
               <div className={styles.searchInputWrapper}>
                 <input
                   type="text"
-                  placeholder="Search Products, Washers, Compressors..."
+                  placeholder="Search Products"
                   value={searchQuery}
                   onChange={(e) => {
                     setSearchQuery(e.target.value);

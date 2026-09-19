@@ -105,17 +105,25 @@
 /* --- Responsive Adjustments --- */
 @media (max-width: 768px) {
   .heroSection {
-    aspect-ratio: 16 / 7.5;
+    aspect-ratio: 16 / 8.5;
     min-height: 180px;
+    max-height: 280px;
+    height: auto;
+  }
+  .image {
+    object-fit: cover;
+    object-position: center;
   }
   .mobileOnlyImage {
     display: block;
     z-index: 2;
+    object-fit: cover;
+    object-position: center;
   }
   .navButton {
     width: 28px;
     height: 28px;
-    background: rgba(255, 255, 255, 0.82);
+    background: rgba(255, 255, 255, 0.85);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
   }
   .navButton svg {
