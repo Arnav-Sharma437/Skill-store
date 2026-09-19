@@ -36,6 +36,18 @@
   object-position: center;
 }
 
+.desktopImage {
+  object-fit: cover;
+  object-position: center;
+  display: block;
+}
+
+.mobileImage {
+  object-fit: cover;
+  object-position: center;
+  display: none;
+}
+
 /* --- Navigation Buttons (White circles with black arrow icon) --- */
 .navButton {
   position: absolute;
@@ -101,6 +113,12 @@
   .heroSection {
     aspect-ratio: 16 / 7.5;
     min-height: 180px;
+  }
+  .desktopImage {
+    display: none;
+  }
+  .mobileImage {
+    display: block;
   }
   .navButton {
     width: 28px;

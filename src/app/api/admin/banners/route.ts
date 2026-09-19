@@ -24,13 +24,18 @@ export async function POST(req: NextRequest) {
   try {
     await connectToDatabase();
     const body = await req.json();
-    const { id, imageUrl, link } = body;
+    const { id, imageUrl, mobileImageUrl, link } = body;
 
     if (!id || !imageUrl) {
       return NextResponse.json({ success: false, error: "Missing required fields: id, imageUrl" }, { status: 400 });
     }
 
-    const newBanner = await Banner.create({ id: id.trim(), imageUrl: imageUrl.trim(), link: link ? link.trim() : "/" });
+    const newBanner = await Banner.create({
+      id: id.trim(),
+      imageUrl: imageUrl.trim(),
+      mobileImageUrl: mobileImageUrl ? mobileImageUrl.trim() : "",
+      link: link ? link.trim() : "/",
+    });
     return NextResponse.json(
       { success: true, data: newBanner },
       { headers: { "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate" } }
@@ -45,15 +50,20 @@ export async function PUT(req: NextRequest) {
   try {
     await connectToDatabase();
     const body = await req.json();
-    const { id, imageUrl, link } = body;
+    const { id, imageUrl, mobileImageUrl, link } = body;
 
     if (!id) {
       return NextResponse.json({ success: false, error: "Missing banner ID" }, { status: 400 });
     }
 
+    const updateFields: Record<string, unknown> = {};
+    if (imageUrl !== undefined) updateFields.imageUrl = imageUrl.trim();
+    if (mobileImageUrl !== undefined) updateFields.mobileImageUrl = mobileImageUrl.trim();
+    if (link !== undefined) updateFields.link = link.trim();
+
     const updatedBanner = await Banner.findOneAndUpdate(
       { id: id.trim() },
-      { imageUrl: imageUrl?.trim(), link: link?.trim() },
+      { $set: updateFields },
       { new: true }
     );
 

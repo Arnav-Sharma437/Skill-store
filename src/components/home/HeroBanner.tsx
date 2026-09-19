@@ -20,9 +20,10 @@ export default function HeroBanner() {
         if (res.ok) {
           const json = await res.json();
           if (json.success && Array.isArray(json.data) && json.data.length > 0) {
-            const dbSlides: HeroSlide[] = json.data.map((b: { id: string; imageUrl: string; link?: string }) => ({
+            const dbSlides: HeroSlide[] = json.data.map((b: { id: string; imageUrl: string; mobileImageUrl?: string; link?: string }) => ({
               id: b.id,
               imageUrl: b.imageUrl,
+              mobileImageUrl: b.mobileImageUrl || "",
               link: b.link || "/"
             }));
             if (isMounted && dbSlides.length > 0) {
@@ -83,15 +84,28 @@ export default function HeroBanner() {
             aria-hidden={idx !== currentSlide}
           >
             <div className={styles.imageContainer}>
+              {/* Desktop Banner Image */}
               <Image
                 src={optimizeHeroBanner(slide.imageUrl)}
                 alt={`Machinery Banner ${idx + 1}`}
                 fill
                 priority={idx === 0}
                 loading={idx === 0 ? "eager" : "lazy"}
-                className={styles.image}
+                className={slide.mobileImageUrl ? styles.desktopImage : styles.image}
                 sizes="100vw"
               />
+              {/* Dedicated Mobile Banner Image (if available) */}
+              {slide.mobileImageUrl && (
+                <Image
+                  src={optimizeHeroBanner(slide.mobileImageUrl)}
+                  alt={`Machinery Banner Mobile ${idx + 1}`}
+                  fill
+                  priority={idx === 0}
+                  loading={idx === 0 ? "eager" : "lazy"}
+                  className={styles.mobileImage}
+                  sizes="100vw"
+                />
+              )}
             </div>
           </div>
         ))}

@@ -151,6 +151,7 @@ const BrandSchema: Schema = new Schema(
 export interface IBanner extends Document {
   id: string;
   imageUrl: string;
+  mobileImageUrl?: string;
   link: string;
 }
 
@@ -158,6 +159,7 @@ const BannerSchema: Schema = new Schema(
   {
     id: { type: String, required: true, unique: true },
     imageUrl: { type: String, required: true },
+    mobileImageUrl: { type: String, default: "" },
     link: { type: String, default: "/" },
   },
   { timestamps: true }

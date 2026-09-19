@@ -14,6 +14,7 @@ import styles from "./AdminPage.module.css";
 interface IBanner {
   id: string;
   imageUrl: string;
+  mobileImageUrl?: string;
   link: string;
 }
 
@@ -243,6 +244,7 @@ export default function AdminDashboard() {
   const [isUploadingVideo, setIsUploadingVideo] = useState(false);
   const [isUploadingGallery, setIsUploadingGallery] = useState(false);
   const [isUploadingBanner, setIsUploadingBanner] = useState(false);
+  const [isUploadingMobileBanner, setIsUploadingMobileBanner] = useState(false);
   const [isUploadingCategoryImg, setIsUploadingCategoryImg] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
@@ -296,7 +298,12 @@ export default function AdminDashboard() {
   const [newSubCatSlug, setNewSubCatSlug] = useState("");
 
   // Banner Form State
-  const [bannerForm, setBannerForm] = useState({ id: "", imageUrl: "", link: "" });
+  const [bannerForm, setBannerForm] = useState<{
+    id: string;
+    imageUrl: string;
+    mobileImageUrl: string;
+    link: string;
+  }>({ id: "", imageUrl: "", mobileImageUrl: "", link: "" });
   const [editingBannerId, setEditingBannerId] = useState<string | null>(null);
 
   // --- Data Fetching Callbacks ---
@@ -498,13 +505,14 @@ export default function AdminDashboard() {
   // --- Upload Handlers ---
   const handleFileUpload = async (
     file: File,
-    targetType: "main_image" | "video" | "gallery" | "banner" | "category" | "brand"
+    targetType: "main_image" | "video" | "gallery" | "banner" | "banner_mobile" | "category" | "brand"
   ) => {
     setUploadError(null);
     if (targetType === "main_image") setIsUploadingImage(true);
     if (targetType === "video") setIsUploadingVideo(true);
     if (targetType === "gallery") setIsUploadingGallery(true);
     if (targetType === "banner") setIsUploadingBanner(true);
+    if (targetType === "banner_mobile") setIsUploadingMobileBanner(true);
     if (targetType === "category") setIsUploadingCategoryImg(true);
     if (targetType === "brand") setIsUploadingBrandLogoImg(true);
 
@@ -522,6 +530,7 @@ export default function AdminDashboard() {
 
       let uploadFolder = "skill-store/products";
       if (targetType === "banner") uploadFolder = "skill-store/banners";
+      if (targetType === "banner_mobile") uploadFolder = "skill-store/banners/mobile";
       if (targetType === "category") uploadFolder = "skill-store/categories";
       if (targetType === "brand") uploadFolder = "skill-store/brands";
 
@@ -550,6 +559,8 @@ export default function AdminDashboard() {
         }));
       } else if (targetType === "banner") {
         setBannerForm((prev) => ({ ...prev, imageUrl: data.url }));
+      } else if (targetType === "banner_mobile") {
+        setBannerForm((prev) => ({ ...prev, mobileImageUrl: data.url }));
       } else if (targetType === "category") {
         setCategoryForm((prev) => ({ ...prev, imageUrl: data.url }));
       } else if (targetType === "brand") {
@@ -564,6 +575,7 @@ export default function AdminDashboard() {
       if (targetType === "video") setIsUploadingVideo(false);
       if (targetType === "gallery") setIsUploadingGallery(false);
       if (targetType === "banner") setIsUploadingBanner(false);
+      if (targetType === "banner_mobile") setIsUploadingMobileBanner(false);
       if (targetType === "category") setIsUploadingCategoryImg(false);
       if (targetType === "brand") setIsUploadingBrandLogoImg(false);
     }
@@ -752,7 +764,7 @@ export default function AdminDashboard() {
       const json = await res.json();
       if (json.success) {
         alert(editingBannerId ? "Banner updated!" : "Banner created!");
-        setBannerForm({ id: "", imageUrl: "", link: "" });
+        setBannerForm({ id: "", imageUrl: "", mobileImageUrl: "", link: "" });
         setEditingBannerId(null);
         fetchBanners();
       } else {
@@ -2318,9 +2330,9 @@ export default function AdminDashboard() {
                           />
                         </div>
 
-                        {/* Banner Image Upload & URL input */}
+                        {/* Desktop Banner Image Upload & URL input */}
                         <div className={styles.mediaUploadBox}>
-                          <label><strong>Banner Image * (Upload from device or paste URL)</strong></label>
+                          <label><strong>Desktop Banner Image * (1920x600 Widescreen)</strong></label>
                           <div className={styles.uploadRow}>
                             <input
                               id="form-banner-image"
@@ -2332,7 +2344,7 @@ export default function AdminDashboard() {
                               style={{ flex: 1 }}
                             />
                             <label className={styles.uploadBtn}>
-                              {isUploadingBanner ? "Uploading..." : "📁 Upload Banner"}
+                              {isUploadingBanner ? "Uploading..." : "📁 Upload Desktop Banner"}
                               <input
                                 type="file"
                                 accept="image/*"
@@ -2348,7 +2360,7 @@ export default function AdminDashboard() {
                             <div className={styles.mediaPreview} style={{ width: "100%", height: "90px", marginTop: "4px" }}>
                               <Image
                                 src={optimizeAdminPreview(bannerForm.imageUrl)}
-                                alt="Banner Preview"
+                                alt="Desktop Banner Preview"
                                 width={240}
                                 height={80}
                                 loading="lazy"
@@ -2356,6 +2368,48 @@ export default function AdminDashboard() {
                               />
                             </div>
                           )}
+                        </div>
+
+                        {/* Mobile Banner Image Upload & URL input */}
+                        <div className={styles.mediaUploadBox}>
+                          <label><strong>📱 Mobile Banner Image (Optional for phones, e.g. 750x600 or 1080x720)</strong></label>
+                          <div className={styles.uploadRow}>
+                            <input
+                              id="form-banner-mobile-image"
+                              type="text"
+                              placeholder="e.g. /images/banners/banner1-mobile.jpg (Optional)"
+                              value={bannerForm.mobileImageUrl}
+                              onChange={(e) => setBannerForm({ ...bannerForm, mobileImageUrl: e.target.value })}
+                              style={{ flex: 1 }}
+                            />
+                            <label className={styles.uploadBtn} style={{ background: "#38b6ff", color: "#ffffff" }}>
+                              {isUploadingMobileBanner ? "Uploading..." : "📱 Upload Mobile Banner"}
+                              <input
+                                type="file"
+                                accept="image/*"
+                                style={{ display: "none" }}
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) handleFileUpload(file, "banner_mobile");
+                                }}
+                              />
+                            </label>
+                          </div>
+                          {bannerForm.mobileImageUrl && (
+                            <div className={styles.mediaPreview} style={{ width: "100%", height: "90px", marginTop: "4px" }}>
+                              <Image
+                                src={optimizeAdminPreview(bannerForm.mobileImageUrl)}
+                                alt="Mobile Banner Preview"
+                                width={120}
+                                height={80}
+                                loading="lazy"
+                                style={{ objectFit: "contain", maxHeight: "80px" }}
+                              />
+                            </div>
+                          )}
+                          <small style={{ color: "#64748b", fontSize: "11px", display: "block", marginTop: "2px" }}>
+                            If provided, mobile visitors will see this optimized banner instead of the desktop widescreen.
+                          </small>
                         </div>
 
                         <div className={styles.inputField}>
@@ -2377,7 +2431,7 @@ export default function AdminDashboard() {
                             type="button"
                             onClick={() => {
                               setEditingBannerId(null);
-                              setBannerForm({ id: "", imageUrl: "", link: "" });
+                              setBannerForm({ id: "", imageUrl: "", mobileImageUrl: "", link: "" });
                             }}
                             className={styles.cancelBtn}
                           >
@@ -2405,12 +2459,22 @@ export default function AdminDashboard() {
                             <div className={styles.bannerInfo}>
                               <strong>{b.id}</strong>
                               <span>Link: {b.link}</span>
+                              {b.mobileImageUrl && (
+                                <span style={{ fontSize: "11px", color: "#0284c7", fontWeight: 700 }}>
+                                  📱 Has Mobile Banner
+                                </span>
+                              )}
                             </div>
                             <div className={styles.rowActions}>
                               <button
                                 onClick={() => {
                                   setEditingBannerId(b.id);
-                                  setBannerForm({ id: b.id, imageUrl: b.imageUrl, link: b.link });
+                                  setBannerForm({
+                                    id: b.id,
+                                    imageUrl: b.imageUrl,
+                                    mobileImageUrl: b.mobileImageUrl || "",
+                                    link: b.link,
+                                  });
                                 }}
                                 className={styles.editBtn}
                               >

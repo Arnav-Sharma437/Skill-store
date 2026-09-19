@@ -1,6 +1,7 @@
 export interface HeroSlide {
   id: string;
   imageUrl: string;
+  mobileImageUrl?: string;
   link: string;
 }
 
