@@ -17,7 +17,7 @@ export default function Footer() {
           {/* Social Icons Row */}
           <div className={styles.socialsRow}>
             <a 
-              href="https://facebook.com" 
+              href="https://www.facebook.com/share/19iTiP4m9P/?mibextid=wwXIfr" 
               target="_blank" 
               rel="noopener noreferrer" 
               className={`${styles.socialCircle} ${styles.socialFacebook}`} 
@@ -33,7 +33,7 @@ export default function Footer() {
               />
             </a>
             <a 
-              href="https://instagram.com" 
+              href="https://www.instagram.com/skill_store_retail?stkn=MWk2aWxodTYwdDUxaw==" 
               target="_blank" 
               rel="noopener noreferrer" 
               className={`${styles.socialCircle} ${styles.socialInstagram}`} 
