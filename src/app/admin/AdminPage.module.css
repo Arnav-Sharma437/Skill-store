@@ -1701,8 +1701,8 @@
 
 .variantCardRow {
   display: grid;
-  grid-template-columns: 110px 140px 1fr 90px 34px;
-  gap: 10px;
+  grid-template-columns: 105px 125px 125px 1fr 90px 34px;
+  gap: 8px;
   align-items: center;
   background: #ffffff;
   border: 1px solid #cbd5e1;
@@ -1729,6 +1729,17 @@
   font-size: 12px;
   font-weight: 600;
   outline: none;
+}
+
+.variantSkuInput {
+  height: 36px;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 0 8px;
+  font-size: 12px;
+  font-weight: 600;
+  outline: none;
+  background: #f8fafc;
 }
 
 .variantImageUploadBox {

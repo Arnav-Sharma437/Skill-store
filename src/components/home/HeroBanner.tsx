@@ -55,7 +55,7 @@ export default function HeroBanner() {
 
   useEffect(() => {
     if (!isPaused && slides.length > 1) {
-      slideInterval.current = setInterval(nextSlide, 5000); // 5s auto-scroll
+      slideInterval.current = setInterval(nextSlide, 8000); // 8s smooth slow auto-scroll
     }
 
     return () => {

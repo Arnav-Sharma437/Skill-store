@@ -3,6 +3,7 @@ import mongoose, { Schema, Document, Model } from "mongoose";
 // Product Variant Interface
 export interface IProductVariant {
   id?: string;
+  sku?: string;
   name?: string; // e.g. "0° Red Nozzle" or "10M Hose"
   type?: string; // "degree" | "size" | "style" | "general"
   degree?: string;
@@ -42,6 +43,7 @@ export interface IProduct extends Document {
 const ProductVariantSchema: Schema = new Schema(
   {
     id: { type: String, default: "" },
+    sku: { type: String, default: "" },
     name: { type: String, default: "" },
     type: { type: String, default: "general" },
     degree: { type: String, default: "" },

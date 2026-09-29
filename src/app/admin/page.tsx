@@ -48,6 +48,7 @@ interface IBrand {
 
 export interface IAdminVariant {
   id?: string;
+  sku?: string;
   name: string;
   type: "degree" | "size" | "style" | "general";
   degree?: string;
@@ -654,6 +655,7 @@ export default function AdminDashboard() {
         ...prev.variants,
         {
           id: `var-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+          sku: "",
           name: name,
           type: type,
           degree: type === "degree" ? name : "",
@@ -703,6 +705,7 @@ export default function AdminDashboard() {
       if (!existing.some((e) => e.name.toLowerCase() === d.toLowerCase())) {
         newItems.push({
           id: `var-deg-${Date.now()}-${Math.random().toString(36).substring(2, 5)}`,
+          sku: "",
           name: d,
           type: "degree",
           degree: d,
@@ -718,6 +721,7 @@ export default function AdminDashboard() {
       if (!existing.some((e) => e.name.toLowerCase() === s.toLowerCase())) {
         newItems.push({
           id: `var-sz-${Date.now()}-${Math.random().toString(36).substring(2, 5)}`,
+          sku: "",
           name: s,
           type: "size",
           size: s,
@@ -733,6 +737,7 @@ export default function AdminDashboard() {
       if (!existing.some((e) => e.name.toLowerCase() === st.toLowerCase())) {
         newItems.push({
           id: `var-stl-${Date.now()}-${Math.random().toString(36).substring(2, 5)}`,
+          sku: "",
           name: st,
           type: "style",
           style: st,
@@ -807,6 +812,7 @@ export default function AdminDashboard() {
       stylesText: Array.isArray(prod.styles) ? prod.styles.join(", ") : "",
       variants: Array.isArray(prod.variants) ? prod.variants.map((v) => ({
         id: v.id || "",
+        sku: v.sku || "",
         name: v.name || v.degree || v.size || v.style || "",
         type: v.type || (v.degree ? "degree" : v.size ? "size" : v.style ? "style" : "general"),
         degree: v.degree || "",
@@ -846,6 +852,7 @@ export default function AdminDashboard() {
       styles: productForm.stylesText.split(",").map((s) => s.trim()).filter(Boolean),
       variants: productForm.variants.map((v) => ({
         id: v.id || "",
+        sku: (v.sku || "").trim(),
         name: v.name.trim(),
         type: v.type || "general",
         degree: v.type === "degree" ? v.name.trim() : (v.degree || "").trim(),
@@ -855,7 +862,7 @@ export default function AdminDashboard() {
         originalPrice: v.originalPrice !== undefined && v.originalPrice !== "" ? Number(v.originalPrice) : undefined,
         inStock: v.inStock !== false,
         imageUrl: (v.imageUrl || "").trim(),
-      })).filter((v) => v.name || v.imageUrl),
+      })).filter((v) => v.name || v.imageUrl || v.sku),
     };
 
     try {
@@ -4248,6 +4255,16 @@ export default function AdminDashboard() {
                             onChange={(e) => updateVariantField(index, "name", e.target.value)}
                             className={styles.variantNameInput}
                             required
+                          />
+
+                          {/* Variant SKU */}
+                          <input
+                            type="text"
+                            placeholder="SKU (e.g. NZL-0DEG)"
+                            value={variant.sku || ""}
+                            onChange={(e) => updateVariantField(index, "sku", e.target.value)}
+                            className={styles.variantSkuInput}
+                            title="Variant specific SKU code"
                           />
 
                           {/* Variant Image Upload & URL */}

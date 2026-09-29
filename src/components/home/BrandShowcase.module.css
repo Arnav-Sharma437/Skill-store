@@ -96,7 +96,7 @@
 .brandsMarqueeTrack {
   display: flex;
   width: max-content;
-  animation: scrollBrandsLeft 14s linear infinite;
+  animation: scrollBrandsLeft 30s linear infinite;
 }
 
 /* Pause on hover */

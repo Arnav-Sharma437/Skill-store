@@ -30,6 +30,7 @@ type PageProps = {
 
 interface ProductVariant {
   id?: string;
+  sku?: string;
   name?: string;
   type?: string;
   degree?: string;
@@ -76,6 +77,7 @@ export default function ProductPage({ params }: PageProps) {
   const [notFound, setNotFound] = useState(false);
   const [product, setProduct] = useState<ProductData | null>(null);
   const [selectedImage, setSelectedImage] = useState<string>("");
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState("description");
   const recentSliderRef = useRef<HTMLDivElement>(null);
@@ -527,7 +529,11 @@ export default function ProductPage({ params }: PageProps) {
                     <polyline points="15 18 9 12 15 6"></polyline>
                   </svg>
                 </button>
-                <div className={styles.mainImageContainer}>
+                <div 
+                  className={styles.mainImageContainer}
+                  onClick={() => setIsLightboxOpen(true)}
+                  title="Click to view full image in high resolution"
+                >
                   <Image
                     src={optimizeProductDetail(selectedImage || product.imageUrl)}
                     alt={product.title}
@@ -538,6 +544,15 @@ export default function ProductPage({ params }: PageProps) {
                     sizes="(max-width: 768px) 100vw, 50vw"
                     style={{ objectFit: "contain" }}
                   />
+                  <div className={styles.zoomHintBadge}>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="11" cy="11" r="8"></circle>
+                      <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                      <line x1="11" y1="8" x2="11" y2="14"></line>
+                      <line x1="8" y1="11" x2="14" y2="11"></line>
+                    </svg>
+                    <span>Click to Zoom</span>
+                  </div>
                 </div>
                 <button onClick={handleNextImage} className={styles.galleryArrowRight} aria-label="Next image">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -593,8 +608,8 @@ export default function ProductPage({ params }: PageProps) {
                 </button>
               </div>
 
-              {/* In Stock / Out of Stock status */}
-              <div style={{ marginBottom: "12px" }}>
+              {/* In Stock / Out of Stock status & Dynamic SKU */}
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "8px", marginBottom: "12px" }}>
                 {isInStock ? (
                   <span style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "13px", fontWeight: 700, color: "#16a34a" }}>
                     <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#16a34a" }}></span>
@@ -606,6 +621,11 @@ export default function ProductPage({ params }: PageProps) {
                     Currently Out of Stock
                   </span>
                 )}
+
+                {/* Active SKU code badge */}
+                <span style={{ fontSize: "12px", fontWeight: 750, color: "#475569", background: "#f1f5f9", padding: "3px 10px", borderRadius: "6px", border: "1px solid #e2e8f0" }}>
+                  SKU: <strong style={{ color: "#132c66" }}>{activeMatchedVariant?.sku || product.id}</strong>
+                </span>
               </div>
 
               {/* Price block */}
@@ -1305,6 +1325,73 @@ export default function ProductPage({ params }: PageProps) {
                 </button>
               </form>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Product Image Zoom Lightbox Modal */}
+      {isLightboxOpen && product && (
+        <div 
+          className={styles.lightboxBackdrop}
+          onClick={() => setIsLightboxOpen(false)}
+        >
+          <div 
+            className={styles.lightboxContent}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setIsLightboxOpen(false)}
+              className={styles.lightboxCloseBtn}
+              aria-label="Close image zoom"
+              title="Close (Esc)"
+            >
+              &times;
+            </button>
+
+            {gallery.length > 1 && (
+              <>
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handlePrevImage();
+                  }} 
+                  className={styles.lightboxNavBtnLeft}
+                  aria-label="Previous image"
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="15 18 9 12 15 6"></polyline>
+                  </svg>
+                </button>
+
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleNextImage();
+                  }} 
+                  className={styles.lightboxNavBtnRight}
+                  aria-label="Next image"
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                  </svg>
+                </button>
+              </>
+            )}
+
+            <div className={styles.lightboxImageWrapper}>
+              <Image
+                src={selectedImage || product.imageUrl}
+                alt={product.title}
+                width={800}
+                height={800}
+                priority
+                style={{ width: "100%", height: "100%", objectFit: "contain" }}
+              />
+            </div>
+
+            <div className={styles.lightboxHint}>
+              <span>{product.title} {gallery.length > 1 && `(${gallery.indexOf(selectedImage || product.imageUrl) + 1} of ${gallery.length})`}</span>
+            </div>
           </div>
         </div>
       )}

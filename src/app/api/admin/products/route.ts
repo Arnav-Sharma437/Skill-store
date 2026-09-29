@@ -43,6 +43,7 @@ export async function GET(req: NextRequest) {
 
 interface RawVariant {
   id?: string;
+  sku?: string;
   name?: string;
   type?: string;
   degree?: string;
@@ -58,6 +59,7 @@ function sanitizeVariants(variants: unknown) {
   if (!Array.isArray(variants)) return [];
   return variants.map((v: RawVariant) => ({
     id: v.id ? String(v.id).trim() : "",
+    sku: v.sku ? String(v.sku).trim() : "",
     name: v.name ? String(v.name).trim() : "",
     type: v.type ? String(v.type).trim() : "general",
     degree: v.degree ? String(v.degree).trim() : "",
@@ -67,7 +69,7 @@ function sanitizeVariants(variants: unknown) {
     originalPrice: v.originalPrice !== undefined && v.originalPrice !== "" ? Number(v.originalPrice) : undefined,
     inStock: v.inStock !== undefined ? Boolean(v.inStock) : true,
     imageUrl: v.imageUrl ? String(v.imageUrl).trim() : "",
-  })).filter(v => v.name || v.degree || v.size || v.style || v.imageUrl);
+  })).filter(v => v.name || v.degree || v.size || v.style || v.imageUrl || v.sku);
 }
 
 export async function POST(req: NextRequest) {

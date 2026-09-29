@@ -100,7 +100,7 @@
 .marqueeTrack {
   display: flex;
   width: max-content;
-  animation: scrollProductsRight 16s linear infinite;
+  animation: scrollProductsRight 34s linear infinite;
 }
 
 /* Pause animation on hover to allow users to inspect/click product cards */
