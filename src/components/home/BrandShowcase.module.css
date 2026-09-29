@@ -202,7 +202,7 @@
 .marqueeTrack {
   display: flex;
   width: max-content;
-  animation: scrollMarquee 12s linear infinite;
+  animation: scrollMarquee 38s linear infinite;
 }
 
 .marqueeList {
