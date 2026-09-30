@@ -73,6 +73,7 @@ export interface IProduct {
   subCategory: string;
   inStock: boolean;
   isBestSeller?: boolean;
+  order?: number;
   rating?: number;
   ratingCount?: number;
   description?: string[];
@@ -277,6 +278,7 @@ export default function AdminDashboard() {
     subCategory: "domestic",
     inStock: true,
     isBestSeller: false,
+    order: "",
     descriptionText: "",
     specificationsText: "",
     whatsInBoxText: "",
@@ -777,6 +779,7 @@ export default function AdminDashboard() {
       subCategory: "domestic",
       inStock: true,
       isBestSeller: false,
+      order: "",
       descriptionText: "",
       specificationsText: "",
       whatsInBoxText: "",
@@ -804,6 +807,7 @@ export default function AdminDashboard() {
       subCategory: prod.subCategory || "domestic",
       inStock: prod.inStock !== false,
       isBestSeller: Boolean(prod.isBestSeller),
+      order: prod.order !== undefined && prod.order > 0 ? prod.order.toString() : "",
       descriptionText: Array.isArray(prod.description) ? prod.description.join("\n") : "",
       specificationsText: Array.isArray(prod.specifications) ? prod.specifications.join("\n") : "",
       whatsInBoxText: Array.isArray(prod.whatsInBox) ? prod.whatsInBox.join("\n") : "",
@@ -844,6 +848,7 @@ export default function AdminDashboard() {
       subCategory: productForm.subCategory.toLowerCase(),
       inStock: productForm.inStock,
       isBestSeller: Boolean(productForm.isBestSeller),
+      order: productForm.order !== "" ? Number(productForm.order) : 0,
       description: productForm.descriptionText.split("\n").filter((l) => l.trim().length > 0),
       specifications: productForm.specificationsText.split("\n").filter((l) => l.trim().length > 0),
       whatsInBox: productForm.whatsInBoxText.split("\n").filter((l) => l.trim().length > 0),
@@ -2083,6 +2088,11 @@ export default function AdminDashboard() {
                                               Sub: {p.subCategory}
                                             </span>
                                           ) : null}
+                                          {p.order !== undefined && p.order > 0 && (
+                                            <span style={{ fontSize: "10.5px", background: "#f0fdf4", color: "#166534", padding: "1px 6px", borderRadius: "4px", fontWeight: "800", border: "1px solid #bbf7d0" }}>
+                                              📌 Order: #{p.order}
+                                            </span>
+                                          )}
                                           {p.isBestSeller && (
                                             <span style={{ fontSize: "10.5px", background: "#fef3c7", color: "#b45309", padding: "1px 6px", borderRadius: "4px", fontWeight: "800" }}>
                                               ⭐ Best Seller
@@ -4001,6 +4011,21 @@ export default function AdminDashboard() {
                       </span>
                     </div>
                   </div>
+
+                  <div className={styles.inputField}>
+                    <label htmlFor="form-prod-order">Display Order in Category (Position Sequence)</label>
+                    <input
+                      id="form-prod-order"
+                      type="number"
+                      min="0"
+                      placeholder="e.g. 1, 2, 3 (Leave empty for default date order)"
+                      value={productForm.order}
+                      onChange={(e) => setProductForm({ ...productForm, order: e.target.value })}
+                    />
+                    <small style={{ color: "#64748b", fontSize: "11px", marginTop: "3px" }}>
+                      Lower numbers (1, 2, 3...) appear first in this category &amp; shop listings.
+                    </small>
+                  </div>
                 </div>
               </div>
 
@@ -4402,7 +4427,12 @@ export default function AdminDashboard() {
                 <div>
                   <h4 style={{ margin: "0 0 6px 0", fontSize: "16px", color: "#132c66" }}>{viewingProduct.title}</h4>
                   <div style={{ fontSize: "13px", color: "#64748b" }}>SKU ID: <strong>{viewingProduct.id}</strong></div>
-                  <div style={{ fontSize: "13px", color: "#64748b" }}>Brand: <strong>{viewingProduct.brand.toUpperCase()}</strong> | Category: <strong>{viewingProduct.category}</strong></div>
+                  <div style={{ fontSize: "13px", color: "#64748b" }}>
+                    Brand: <strong>{viewingProduct.brand.toUpperCase()}</strong> | Category: <strong>{viewingProduct.category}</strong>
+                    {viewingProduct.order !== undefined && viewingProduct.order > 0 ? (
+                      <> | Sequence Order: <strong>#{viewingProduct.order}</strong></>
+                    ) : null}
+                  </div>
                   <div style={{ fontSize: "18px", fontWeight: "900", color: "#132c66", marginTop: "8px" }}>
                     ₹{viewingProduct.price.toLocaleString("en-IN")}{" "}
                     {viewingProduct.originalPrice > viewingProduct.price && (

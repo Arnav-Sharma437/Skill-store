@@ -105,6 +105,7 @@ export default function CategoryPage({ params }: PageProps) {
               subCategory?: string;
               brand?: string;
               inStock?: boolean;
+              order?: number;
             }) => ({
               id: item.id,
               title: item.title,
@@ -115,7 +116,8 @@ export default function CategoryPage({ params }: PageProps) {
               ratingCount: item.ratingCount || 0,
               subType: (item.subCategory || "domestic") as "domestic" | "commercial" | "accessory" | "general",
               brand: item.brand ? item.brand.toUpperCase() : "TUQO",
-              inStock: item.inStock !== false
+              inStock: item.inStock !== false,
+              order: item.order
             }));
 
             if (isMounted) {

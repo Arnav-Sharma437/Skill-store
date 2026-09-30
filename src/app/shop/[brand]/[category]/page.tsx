@@ -56,6 +56,7 @@ export default function CategoryProductsPage({ params }: PageProps) {
               subCategory?: string;
               brand?: string;
               inStock?: boolean;
+              order?: number;
             }) => ({
               id: item.id,
               title: item.title,
@@ -66,7 +67,8 @@ export default function CategoryProductsPage({ params }: PageProps) {
               ratingCount: item.ratingCount || 0,
               subType: (item.subCategory || "domestic") as "domestic" | "commercial" | "accessory" | "general",
               brand: item.brand ? item.brand.toUpperCase() : brandName,
-              inStock: item.inStock !== false
+              inStock: item.inStock !== false,
+              order: item.order
             }));
 
             if (isMounted) {

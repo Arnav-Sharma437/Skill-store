@@ -9,6 +9,7 @@ export interface CategoryProduct {
   subType?: "domestic" | "commercial" | "accessory" | "general";
   brand?: string;
   inStock?: boolean;
+  order?: number;
 }
 
 export interface CategoryDetail {

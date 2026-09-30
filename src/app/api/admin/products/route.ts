@@ -30,7 +30,18 @@ export async function GET(req: NextRequest) {
       ];
     }
 
-    const products = await Product.find(query).sort({ createdAt: -1 });
+    const rawProducts = await Product.find(query).lean();
+    const products = (rawProducts as (typeof rawProducts[0] & { order?: number; createdAt?: string | Date })[]).sort((a, b) => {
+      const orderA = typeof a.order === "number" && a.order > 0 ? a.order : 999999;
+      const orderB = typeof b.order === "number" && b.order > 0 ? b.order : 999999;
+      if (orderA !== orderB) {
+        return orderA - orderB;
+      }
+      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return dateB - dateA;
+    });
+
     return NextResponse.json(
       { success: true, data: products },
       { headers: { "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate" } }
@@ -94,6 +105,7 @@ export async function POST(req: NextRequest) {
       whatsInBox,
       inStock,
       isBestSeller,
+      order,
       degrees,
       sizes,
       styles,
@@ -109,6 +121,8 @@ export async function POST(req: NextRequest) {
     if (existing) {
       return NextResponse.json({ success: false, error: `Product with SKU ID "${id}" already exists.` }, { status: 400 });
     }
+
+    const parsedOrder = typeof order === "number" && !isNaN(order) && order > 0 ? order : (Number(order) > 0 ? Number(order) : 0);
 
     const newProduct = await Product.create({
       id: id.trim(),
@@ -128,6 +142,7 @@ export async function POST(req: NextRequest) {
       whatsInBox: Array.isArray(whatsInBox) ? whatsInBox : (typeof whatsInBox === "string" ? whatsInBox.split("\n").filter(Boolean) : []),
       inStock: inStock !== undefined ? inStock : true,
       isBestSeller: Boolean(isBestSeller),
+      order: parsedOrder,
       degrees: Array.isArray(degrees) ? degrees.map((d: string) => String(d).trim()).filter(Boolean) : (typeof degrees === "string" ? degrees.split(",").map((d: string) => d.trim()).filter(Boolean) : []),
       sizes: Array.isArray(sizes) ? sizes.map((s: string) => String(s).trim()).filter(Boolean) : (typeof sizes === "string" ? sizes.split(",").map((s: string) => s.trim()).filter(Boolean) : []),
       styles: Array.isArray(styles) ? styles.map((st: string) => String(st).trim()).filter(Boolean) : (typeof styles === "string" ? styles.split(",").map((st: string) => st.trim()).filter(Boolean) : []),
@@ -163,6 +178,7 @@ export async function PUT(req: NextRequest) {
       whatsInBox,
       inStock,
       isBestSeller,
+      order,
       degrees,
       sizes,
       styles,
@@ -197,6 +213,10 @@ export async function PUT(req: NextRequest) {
     }
     if (inStock !== undefined) updateFields.inStock = Boolean(inStock);
     if (isBestSeller !== undefined) updateFields.isBestSeller = Boolean(isBestSeller);
+    if (order !== undefined) {
+      const parsed = Number(order);
+      updateFields.order = !isNaN(parsed) && parsed >= 0 ? parsed : 0;
+    }
     if (degrees !== undefined) {
       updateFields.degrees = Array.isArray(degrees) ? degrees.map((d: string) => String(d).trim()).filter(Boolean) : (typeof degrees === "string" ? degrees.split(",").map((d: string) => d.trim()).filter(Boolean) : []);
     }

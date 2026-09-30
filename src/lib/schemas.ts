@@ -34,6 +34,7 @@ export interface IProduct extends Document {
   whatsInBox: string[];
   inStock: boolean;
   isBestSeller?: boolean;
+  order?: number;
   degrees?: string[];
   sizes?: string[];
   styles?: string[];
@@ -76,6 +77,7 @@ const ProductSchema: Schema = new Schema(
     whatsInBox: { type: [String], default: [] },
     inStock: { type: Boolean, default: true },
     isBestSeller: { type: Boolean, default: false },
+    order: { type: Number, default: 0 },
     degrees: { type: [String], default: [] },
     sizes: { type: [String], default: [] },
     styles: { type: [String], default: [] },

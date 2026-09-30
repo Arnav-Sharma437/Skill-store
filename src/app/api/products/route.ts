@@ -57,19 +57,27 @@ export async function GET(req: NextRequest) {
       ];
     }
 
-    let mongoQuery = Product.find(query).sort({ createdAt: -1 });
+    const rawProducts = await Product.find(query).lean();
 
-    if (limit > 0) {
-      mongoQuery = mongoQuery.limit(limit);
-    }
+    // Sort products by custom order ascending (1, 2, 3...), then by newest date descending
+    const products = (rawProducts as (typeof rawProducts[0] & { order?: number; createdAt?: string | Date })[]).sort((a, b) => {
+      const orderA = typeof a.order === "number" && a.order > 0 ? a.order : 999999;
+      const orderB = typeof b.order === "number" && b.order > 0 ? b.order : 999999;
+      if (orderA !== orderB) {
+        return orderA - orderB;
+      }
+      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return dateB - dateA;
+    });
 
-    const products = await mongoQuery.lean();
+    const finalProducts = limit > 0 ? products.slice(0, limit) : products;
 
     return NextResponse.json(
       {
         success: true,
-        count: products.length,
-        data: products
+        count: finalProducts.length,
+        data: finalProducts
       },
       {
         headers: {
