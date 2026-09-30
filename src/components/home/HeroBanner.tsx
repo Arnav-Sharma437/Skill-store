@@ -77,38 +77,41 @@ export default function HeroBanner() {
         className={styles.slidesWrapper}
         style={{ transform: `translateX(-${currentSlide * 100}%)` }}
       >
-        {slides.map((slide, idx) => (
-          <div 
-            key={slide.id || idx} 
-            className={styles.slide}
-            aria-hidden={idx !== currentSlide}
-          >
-            <div className={styles.imageContainer}>
-              {/* Base Banner Image (Always active) */}
-              <Image
-                src={optimizeHeroBanner(slide.imageUrl)}
-                alt={`Machinery Banner ${idx + 1}`}
-                fill
-                priority={idx === 0}
-                loading={idx === 0 ? "eager" : "lazy"}
-                className={styles.image}
-                sizes="100vw"
-              />
-              {/* Dedicated Mobile Banner (if uploaded, overlays on mobile screens) */}
-              {slide.mobileImageUrl && slide.mobileImageUrl.trim() !== "" && (
+        {slides.map((slide, idx) => {
+          const hasMobile = Boolean(slide.mobileImageUrl && slide.mobileImageUrl.trim() !== "");
+          return (
+            <div 
+              key={slide.id || idx} 
+              className={styles.slide}
+              aria-hidden={idx !== currentSlide}
+            >
+              <div className={styles.imageContainer}>
+                {/* Desktop Banner Image (Hidden on mobile if dedicated mobile banner is uploaded) */}
                 <Image
-                  src={optimizeHeroBanner(slide.mobileImageUrl)}
-                  alt={`Machinery Banner Mobile ${idx + 1}`}
+                  src={optimizeHeroBanner(slide.imageUrl)}
+                  alt={`Machinery Banner ${idx + 1}`}
                   fill
                   priority={idx === 0}
                   loading={idx === 0 ? "eager" : "lazy"}
-                  className={styles.mobileOnlyImage}
-                  sizes="100vw"
+                  className={hasMobile ? styles.desktopImageWithMobileAlternative : styles.desktopImageOnly}
+                  sizes="(max-width: 768px) 100vw, 100vw"
                 />
-              )}
+                {/* Dedicated Mobile Banner (Visible ONLY on mobile devices) */}
+                {hasMobile && (
+                  <Image
+                    src={optimizeHeroBanner(slide.mobileImageUrl!)}
+                    alt={`Machinery Banner Mobile ${idx + 1}`}
+                    fill
+                    priority={idx === 0}
+                    loading={idx === 0 ? "eager" : "lazy"}
+                    className={styles.mobileImageOnly}
+                    sizes="100vw"
+                  />
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Navigation Arrows */}

@@ -34,14 +34,15 @@
   justify-content: center;
 }
 
-.image {
+.desktopImageOnly,
+.desktopImageWithMobileAlternative {
   width: 100% !important;
   height: 100% !important;
-  object-fit: fill; /* Displays complete banner without cropping top/bottom */
+  object-fit: fill; /* Complete banner displayed without cropping */
   object-position: center;
 }
 
-.mobileOnlyImage {
+.mobileImageOnly {
   display: none;
   width: 100% !important;
   height: 100% !important;
@@ -112,19 +113,23 @@
 /* --- Responsive Adjustments --- */
 @media (max-width: 768px) {
   .heroSection {
-    aspect-ratio: 1440 / 444; /* Keep natural full banner proportion on mobile when using desktop banner */
-    min-height: 120px;
-    max-height: 240px;
+    aspect-ratio: 16 / 9; /* Mobile optimized 16:9 banner proportion */
+    min-height: 160px;
+    max-height: 280px;
     height: auto;
   }
-  .image {
+  .desktopImageOnly {
+    display: block !important;
     width: 100% !important;
     height: 100% !important;
     object-fit: fill;
     object-position: center;
   }
-  .mobileOnlyImage {
-    display: block;
+  .desktopImageWithMobileAlternative {
+    display: none !important; /* Hide desktop banner on phone when mobile banner is provided */
+  }
+  .mobileImageOnly {
+    display: block !important; /* Show mobile uploaded banner on phone */
     z-index: 2;
     width: 100% !important;
     height: 100% !important;
