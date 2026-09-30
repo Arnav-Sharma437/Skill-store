@@ -1699,6 +1699,18 @@
   gap: 10px;
 }
 
+.variantHeaderLabels {
+  display: grid;
+  grid-template-columns: 105px 125px 125px 1fr 90px 34px;
+  gap: 8px;
+  padding: 0 12px;
+  font-size: 11px;
+  font-weight: 800;
+  color: #475569;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
 .variantCardRow {
   display: grid;
   grid-template-columns: 105px 125px 125px 1fr 90px 34px;

@@ -2094,9 +2094,26 @@ export default function AdminDashboard() {
                                   </div>
                                 </td>
                                 <td>
-                                  <code style={{ background: "#f1f5f9", padding: "2px 6px", borderRadius: "4px" }}>
+                                  <code style={{ background: "#f1f5f9", padding: "2px 6px", borderRadius: "4px", fontWeight: "700", color: "#1e293b" }}>
                                     {p.id}
                                   </code>
+                                  {p.variants && p.variants.length > 0 && (
+                                    <div style={{ marginTop: "4px" }}>
+                                      <span style={{ fontSize: "10.5px", background: "#e0f2fe", color: "#0369a1", padding: "1px 6px", borderRadius: "4px", fontWeight: "750" }}>
+                                        {p.variants.length} Variants
+                                      </span>
+                                      <div style={{ display: "flex", flexWrap: "wrap", gap: "3px", marginTop: "3px", maxWidth: "160px" }}>
+                                        {p.variants.slice(0, 3).map((v, i) => (
+                                          <span key={i} style={{ fontSize: "9.5px", color: "#475569", background: "#f8fafc", padding: "0 4px", borderRadius: "3px", border: "1px solid #e2e8f0" }}>
+                                            {v.sku || v.name}
+                                          </span>
+                                        ))}
+                                        {p.variants.length > 3 && (
+                                          <span style={{ fontSize: "9px", color: "#94a3b8" }}>+{p.variants.length - 3} more</span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  )}
                                 </td>
                                 <td>
                                   <div style={{ fontWeight: "750", textTransform: "uppercase" }}>{p.brand}</div>
@@ -4229,10 +4246,20 @@ export default function AdminDashboard() {
 
                   {productForm.variants.length === 0 ? (
                     <div style={{ textAlign: "center", padding: "16px", color: "#64748b", fontSize: "12.5px" }}>
-                      No variant images configured yet. Click <strong>&quot;⚡ Sync from Inputs&quot;</strong> or <strong>&quot;+ Add Variant&quot;</strong> to attach specific images to degrees, sizes, or styles.
+                      No variant images configured yet. Click <strong>&quot;⚡ Sync from Inputs&quot;</strong> or <strong>&quot;+ Add Variant&quot;</strong> to attach specific images, SKUs, or custom prices to degrees, sizes, or styles.
                     </div>
                   ) : (
                     <div className={styles.variantList}>
+                      {/* Column Header Row */}
+                      <div className={styles.variantHeaderLabels}>
+                        <span>Type</span>
+                        <span>Variant Name *</span>
+                        <span>Variant SKU</span>
+                        <span>Image &amp; Upload</span>
+                        <span>Price (₹)</span>
+                        <span></span>
+                      </div>
+
                       {productForm.variants.map((variant, index) => (
                         <div key={variant.id || index} className={styles.variantCardRow}>
                           {/* Variant Type */}
