@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
       session?.user?.email ||
       customerDetails?.email ||
       shippingAddress?.email ||
-      "customer@skillstore.in"
+      "support.skillstore@gmail.com"
     )
       .toLowerCase()
       .trim();

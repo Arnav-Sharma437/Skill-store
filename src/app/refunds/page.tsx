@@ -70,7 +70,7 @@ export default function RefundPolicyPage() {
               <p>To initiate a return or replacement, follow these steps:</p>
               <ol className={styles.orderedList}>
                 <li>
-                  Contact our customer support team via Phone at <strong>8754301661</strong> or Email at <a href="mailto:skillstore.info@gmail.com"><strong>skillstore.info@gmail.com</strong></a> to report the issue and receive official authorization.
+                  Contact our customer support team via Phone at <strong>+91 95006 94111</strong> or Email at <a href="mailto:support.skillstore@gmail.com"><strong>support.skillstore@gmail.com</strong></a> to report the issue and receive official authorization.
                 </li>
                 <li>
                   Ship the item back to the specific warehouse address provided by our customer support team.
@@ -94,8 +94,8 @@ export default function RefundPolicyPage() {
               <h2>Contact Information</h2>
               <p>If you have any questions or concerns about our return and refund policy, please contact our customer support team:</p>
               <div className={styles.contactDetails}>
-                <p><strong>Phone Support:</strong> 8754301661</p>
-                <p><strong>Email Support:</strong> <a href="mailto:skillstore.info@gmail.com">skillstore.info@gmail.com</a></p>
+                <p><strong>Phone Support:</strong> +91 95006 94111</p>
+                <p><strong>Email Support:</strong> <a href="mailto:support.skillstore@gmail.com">support.skillstore@gmail.com</a></p>
               </div>
             </section>
 

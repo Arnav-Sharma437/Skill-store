@@ -117,8 +117,8 @@ export default function PrivacyPolicyPage() {
               <h2>11. Contact Information</h2>
               <p>If you have any questions or concerns about this Privacy Policy, please contact us at:</p>
               <div className={styles.contactDetails}>
-                <p><strong>Phone:</strong> 8754301661</p>
-                <p><strong>Email:</strong> <a href="mailto:skillstore.info@gmail.com">skillstore.info@gmail.com</a></p>
+                <p><strong>Phone:</strong> +91 95006 94111</p>
+                <p><strong>Email:</strong> <a href="mailto:support.skillstore@gmail.com">support.skillstore@gmail.com</a></p>
                 <p><strong>Address:</strong> P.r.p Garden Road, Krishnarayapuram Illango Nagar, Coimbatore, 641004 - Coimbatore TN, India.</p>
               </div>
             </section>

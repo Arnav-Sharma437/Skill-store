@@ -38,7 +38,7 @@ export default function ContactPage() {
                 If you have any questions, concerns, or need assistance with your order, our customer support team is ready to help.
               </p>
               <div className={styles.cardValue}>
-                <a href="tel:8754301661">8754301661</a>
+                <a href="tel:+919500694111">+91 95006 94111</a>
               </div>
               <span className={styles.cardNote}>Time : 10:00 AM - 7:00 PM</span>
             </div>
@@ -56,7 +56,7 @@ export default function ContactPage() {
                 Send us an email and we will get back to you shortly. Feel free to attach order invoices or support files.
               </p>
               <div className={styles.cardValue}>
-                <a href="mailto:skillstore.info@gmail.com">skillstore.info@gmail.com</a>
+                <a href="mailto:support.skillstore@gmail.com">support.skillstore@gmail.com</a>
               </div>
               <span className={styles.cardNote}>We reply within 24 hours</span>
             </div>

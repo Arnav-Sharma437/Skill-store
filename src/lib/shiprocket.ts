@@ -185,8 +185,8 @@ export async function createShiprocketOrder(order: IOrder): Promise<{
   const firstName = nameParts[0] || "Valued";
   const lastName = nameParts.slice(1).join(" ") || "Customer";
 
-  const phone = (shipping.phone || order.userPhone || "9999999999").replace(/\D/g, "") || "9999999999";
-  const email = order.userEmail || "customer@skillstore.in";
+  const phone = (shipping.phone || order.userPhone || "9500694111").replace(/\D/g, "") || "9500694111";
+  const email = order.userEmail || "support.skillstore@gmail.com";
 
   const street = (shipping.street || "Main Market / Commercial Address").trim();
   const city = (shipping.city || "New Delhi").trim();

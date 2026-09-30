@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
     // Authenticate session if user is logged in
     const session = await getServerSession(authOptions);
     const userId = session?.user?.id || null;
-    const userEmail = (session?.user?.email || customerDetails?.email || "customer@skillstore.in")
+    const userEmail = (session?.user?.email || customerDetails?.email || "support.skillstore@gmail.com")
       .toLowerCase()
       .trim();
     const userName = session?.user?.name || customerDetails?.name || "Skill Store Customer";
