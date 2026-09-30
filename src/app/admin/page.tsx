@@ -2526,7 +2526,7 @@ export default function AdminDashboard() {
 
                         {/* Desktop Banner Image Upload & URL input */}
                         <div className={styles.mediaUploadBox}>
-                          <label><strong>Desktop Banner Image * (1920x600 Widescreen)</strong></label>
+                          <label><strong>Desktop Banner Image * (1440x444 or 1920x600 Widescreen)</strong></label>
                           <div className={styles.uploadRow}>
                             <input
                               id="form-banner-image"
@@ -2566,7 +2566,7 @@ export default function AdminDashboard() {
 
                         {/* Mobile Banner Image Upload & URL input */}
                         <div className={styles.mediaUploadBox}>
-                          <label><strong>📱 Mobile Banner Image (Optional for phones, e.g. 750x600 or 1080x720)</strong></label>
+                          <label><strong>📱 Mobile Banner Image (Optional for phones, e.g. 1080x720 or 750x500)</strong></label>
                           <div className={styles.uploadRow}>
                             <input
                               id="form-banner-mobile-image"
