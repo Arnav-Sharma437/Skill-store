@@ -12,16 +12,21 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1.2.0
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          port: 22
-          script: |
+      - name: Execute Remote Deployment via SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/id_rsa
+          echo "" >> ~/.ssh/id_rsa
+          chmod 700 ~/.ssh
+          chmod 600 ~/.ssh/id_rsa
+
+          ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=30 -o ServerAliveInterval=60 -i ~/.ssh/id_rsa -p 22 ${VPS_USER}@${VPS_HOST} << 'EOF'
             set -e
-            echo "🚀 Starting Skill Store deployment..."
+            echo "🚀 Starting Skill Store deployment on VPS..."
             cd /var/www/skill-store
             git fetch origin main
             git reset --hard origin/main
@@ -30,3 +35,6 @@ jobs:
             pm2 restart skill-store --update-env
             pm2 save
             echo "✅ Skill Store deployment completed successfully!"
+          EOF
+
+          rm -f ~/.ssh/id_rsa
