@@ -18,13 +18,14 @@ jobs:
           VPS_USER: ${{ secrets.VPS_USER }}
           VPS_HOST: ${{ secrets.VPS_HOST }}
         run: |
+          exec > >(tee -a deploy.log) 2>&1
           echo "=== 1. Checking Secret Variables Presence ==="
           echo "VPS_HOST is: '${VPS_HOST}'"
           echo "VPS_USER is: '${VPS_USER}'"
           echo "SSH_PRIVATE_KEY length: ${#SSH_PRIVATE_KEY} chars"
 
           echo "=== 2. Testing Network Connectivity to Port 22 ==="
-          timeout 5 bash -c "</dev/tcp/${VPS_HOST}/22" && echo "Port 22 is reachable from runner!" || echo "Port 22 connection timed out or refused!"
+          timeout 5 bash -c "</dev/tcp/${VPS_HOST}/22" && echo "Port 22 reachable!" || echo "Port 22 connection timed out/refused!"
 
           echo "=== 3. Writing and inspecting SSH Key ==="
           mkdir -p ~/.ssh
@@ -35,7 +36,7 @@ jobs:
           echo "Deriving public key fingerprint from private key..."
           ssh-keygen -l -f ~/.ssh/id_rsa || echo "Invalid key format!"
 
-          echo "=== 4. Attempting SSH Connection ==="
+          echo "=== 4. Testing SSH Handshake ==="
           ssh -v -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=15 -i ~/.ssh/id_rsa -p 22 ${VPS_USER}@${VPS_HOST} << 'EOF'
             set -e
             echo "🚀 Starting Skill Store deployment on VPS..."
@@ -49,4 +50,9 @@ jobs:
             echo "✅ Skill Store deployment completed successfully!"
           EOF
 
-          rm -f ~/.ssh/id_rsa
+      - name: Upload Deployment Log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployment-debug-log
+          path: deploy.log
