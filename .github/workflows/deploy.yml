@@ -23,27 +23,45 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           mkdir -p ~/.ssh
-          printf '%s\n' "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/id_rsa
+
+          # Python script to normalize and format the SSH key cleanly regardless of how it was pasted
+          python3 -c "
+          import os, re
+
+          key = os.environ.get('SSH_PRIVATE_KEY', '').strip()
+
+          def format_key(k):
+              # Check for standard BEGIN / END headers
+              m = re.search(r'(-----BEGIN [^-]+-----)(.*?)(-----END [^-]+-----)', k, re.DOTALL)
+              if m:
+                  hdr, body, ftr = m.group(1).strip(), m.group(2).strip(), m.group(3).strip()
+                  clean_b64 = ''.join(body.split())
+                  wrapped = '\n'.join([clean_b64[i:i+64] for i in range(0, len(clean_b64), 64)])
+                  return f'{hdr}\n{wrapped}\n{ftr}\n'
+              
+              # If user pasted raw base64 without header
+              clean_b64 = ''.join(k.split())
+              # Try OpenSSH private key header by default
+              wrapped = '\n'.join([clean_b64[i:i+64] for i in range(0, len(clean_b64), 64)])
+              return f'-----BEGIN OPENSSH PRIVATE KEY-----\n{wrapped}\n-----END OPENSSH PRIVATE KEY-----\n'
+
+          formatted = format_key(key)
+          with open(os.path.expanduser('~/.ssh/id_rsa'), 'w') as f:
+              f.write(formatted)
+          "
+
           chmod 700 ~/.ssh
           chmod 600 ~/.ssh/id_rsa
 
           {
-            echo "### 🔍 VPS Deployment Diagnostics Report"
+            echo "### 🔍 VPS Deployment Key & Connection Verification"
             echo "- **VPS_HOST**: \`$VPS_HOST\`"
             echo "- **VPS_USER**: \`$VPS_USER\`"
-            echo "- **Key length**: \`${#SSH_PRIVATE_KEY}\` chars"
-            echo "- **Key Fingerprint**:"
-            ssh-keygen -l -f ~/.ssh/id_rsa || echo "Invalid key format"
+            echo "- **Normalized Key Fingerprint**:"
+            ssh-keygen -l -f ~/.ssh/id_rsa 2>&1 || echo "Invalid key format after normalization"
             echo ""
-            echo "- **Port 22 TCP Connectivity Test**:"
-            if timeout 5 bash -c "</dev/tcp/${VPS_HOST}/22" 2>&1; then
-              echo "✅ Port 22 reachable from GitHub runner"
-            else
-              echo "❌ Port 22 connection timed out or refused"
-            fi
-            echo ""
-            echo "- **Verbose SSH Handshake Output**:"
-            ssh -v -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=15 -o BatchMode=yes -i ~/.ssh/id_rsa -p 22 ${VPS_USER}@${VPS_HOST} "echo SSH_AUTHENTICATION_SUCCESS" 2>&1 || true
+            echo "- **Testing SSH Connection**:"
+            ssh -v -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=15 -o BatchMode=yes -i ~/.ssh/id_rsa -p 22 ${VPS_USER}@${VPS_HOST} "echo SSH_CONNECTION_SUCCESSFUL" 2>&1 || true
           } > /tmp/ssh_diag.txt
 
           # Post diagnostic output as commit comment
@@ -54,7 +72,7 @@ jobs:
               https://api.github.com/repos/${{ github.repository }}/commits/${{ github.sha }}/comments \
               -d @-
 
-          # Run the actual deployment command
+          # Run deployment
           ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=30 -i ~/.ssh/id_rsa -p 22 ${VPS_USER}@${VPS_HOST} << 'EOF'
             set -e
             echo "🚀 Starting Skill Store deployment on VPS..."
