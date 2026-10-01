@@ -10,10 +10,10 @@ export default function BrandShowcase() {
   const [brandsEnabled, setBrandsEnabled] = useState(true);
   const [sectionTitle, setSectionTitle] = useState("SHOP BY BRANDS");
   const [sectionSubtitle, setSectionSubtitle] = useState("OFFICIAL PARTNERS");
-  const [brands, setBrands] = useState<IBrandItem[]>([]);
+  const [brands, setBrands] = useState<IBrandItem[]>(DEFAULT_HOME_SETTINGS.brandsSection.brands);
 
   const [trustEnabled, setTrustEnabled] = useState(true);
-  const [uspItems, setUspItems] = useState<IUspItem[]>([]);
+  const [uspItems, setUspItems] = useState<IUspItem[]>(DEFAULT_HOME_SETTINGS.trustMarquee.items);
   const [isLoaded, setIsLoaded] = useState(false);
   const sliderRef = useRef<HTMLDivElement>(null);
 

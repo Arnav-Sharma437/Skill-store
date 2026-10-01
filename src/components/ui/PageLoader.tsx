@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
@@ -9,23 +9,51 @@ export default function PageLoader() {
   const [fadeOut, setFadeOut] = useState(false);
 
   useEffect(() => {
-    // Show loader on initial page mount/reload until everything loads
-    const timer = setTimeout(() => {
-      setFadeOut(true);
-      setTimeout(() => {
-        setLoading(false);
-      }, 400); // 400ms fadeout transition
-    }, 750); // 750ms brand loader
+    // Lock body scroll while loader is active
+    document.body.style.overflow = "hidden";
 
-    return () => clearTimeout(timer);
+    let fadeTimer: NodeJS.Timeout;
+    let removeTimer: NodeJS.Timeout;
+
+    const handleReady = () => {
+      // Smooth minimum display time so it doesn't flash abruptly
+      fadeTimer = setTimeout(() => {
+        setFadeOut(true);
+        removeTimer = setTimeout(() => {
+          setLoading(false);
+          document.body.style.overflow = "";
+        }, 400); // 400ms fadeout transition
+      }, 700);
+    };
+
+    if (document.readyState === "complete") {
+      handleReady();
+    } else {
+      window.addEventListener("load", handleReady, { once: true });
+      // Safety fallback after 1.8s in case external assets take too long
+      const safetyTimer = setTimeout(handleReady, 1800);
+      return () => {
+        window.removeEventListener("load", handleReady);
+        clearTimeout(safetyTimer);
+        clearTimeout(fadeTimer);
+        clearTimeout(removeTimer);
+        document.body.style.overflow = "";
+      };
+    }
+
+    return () => {
+      clearTimeout(fadeTimer);
+      clearTimeout(removeTimer);
+      document.body.style.overflow = "";
+    };
   }, []);
 
   if (!loading) return null;
 
   return (
-    <div className={`${styles.loaderOverlay} ${fadeOut ? styles.fadeOut : ""}`}>
+    <div className={`${styles.loaderOverlay} ${fadeOut ? styles.fadeOut : ""}`} aria-hidden="true">
       <div className={styles.loaderBox}>
-        {/* Brand Logo with Pulsing Glow */}
+        {/* Brand Logo with Glow */}
         <div className={styles.logoWrapper}>
           <Image
             src="/images/logos/Skill Store Logo.png"
@@ -44,7 +72,7 @@ export default function PageLoader() {
         </div>
 
         {/* Subtitle */}
-        <span className={styles.loaderTagline}>PREMIUM MACHINERY & TOOLS</span>
+        <span className={styles.loaderTagline}>PREMIUM MACHINERY &amp; TOOLS</span>
       </div>
     </div>
   );

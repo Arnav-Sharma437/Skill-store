@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { HERO_SLIDES, HeroSlide } from "@/data/home";
 import { optimizeHeroBanner } from "@/lib/imageOptimization";
 import styles from "./HeroBanner.module.css";
@@ -16,18 +17,22 @@ export default function HeroBanner() {
     let isMounted = true;
     async function loadBanners() {
       try {
-        const res = await fetch("/api/banners");
+        const res = await fetch("/api/banners?_t=" + Date.now(), { cache: "no-store" });
         if (res.ok) {
           const json = await res.json();
           if (json.success && Array.isArray(json.data) && json.data.length > 0) {
-            const dbSlides: HeroSlide[] = json.data.map((b: { id: string; imageUrl: string; mobileImageUrl?: string; link?: string }) => ({
-              id: b.id,
-              imageUrl: b.imageUrl,
-              mobileImageUrl: b.mobileImageUrl || "",
-              link: b.link || "/"
-            }));
+            const dbSlides: HeroSlide[] = json.data
+              .map((b: { id: string; imageUrl: string; mobileImageUrl?: string; link?: string }) => ({
+                id: b.id,
+                imageUrl: b.imageUrl ? b.imageUrl.trim() : "",
+                mobileImageUrl: b.mobileImageUrl ? b.mobileImageUrl.trim() : "",
+                link: b.link ? b.link.trim() : "/"
+              }))
+              .filter((b: HeroSlide) => Boolean(b.imageUrl));
+
             if (isMounted && dbSlides.length > 0) {
               setSlides(dbSlides);
+              setCurrentSlide(0);
             }
           }
         }
@@ -42,20 +47,22 @@ export default function HeroBanner() {
   }, []);
 
   const nextSlide = useCallback(() => {
-    setCurrentSlide((prev) => (prev === slides.length - 1 ? 0 : prev + 1));
+    setCurrentSlide((prev) => (prev >= slides.length - 1 ? 0 : prev + 1));
   }, [slides.length]);
 
-  const prevSlide = () => {
-    setCurrentSlide((prev) => (prev === 0 ? slides.length - 1 : prev - 1));
-  };
+  const prevSlide = useCallback(() => {
+    setCurrentSlide((prev) => (prev <= 0 ? slides.length - 1 : prev - 1));
+  }, [slides.length]);
 
   const goToSlide = (index: number) => {
-    setCurrentSlide(index);
+    if (index >= 0 && index < slides.length) {
+      setCurrentSlide(index);
+    }
   };
 
   useEffect(() => {
     if (!isPaused && slides.length > 1) {
-      slideInterval.current = setInterval(nextSlide, 8000); // 8s smooth slow auto-scroll
+      slideInterval.current = setInterval(nextSlide, 7500); // 7.5s smooth auto-scroll
     }
 
     return () => {
@@ -79,36 +86,46 @@ export default function HeroBanner() {
       >
         {slides.map((slide, idx) => {
           const hasMobile = Boolean(slide.mobileImageUrl && slide.mobileImageUrl.trim() !== "");
+          const bannerContent = (
+            <div className={styles.imageContainer}>
+              {/* Desktop Banner Image */}
+              <Image
+                src={optimizeHeroBanner(slide.imageUrl)}
+                alt={`Machinery Banner ${idx + 1}`}
+                fill
+                priority={idx === 0}
+                loading={idx === 0 ? "eager" : "lazy"}
+                className={hasMobile ? styles.desktopImageWithMobileAlternative : styles.desktopImageOnly}
+                sizes="(max-width: 768px) 100vw, 100vw"
+              />
+              {/* Dedicated Mobile Banner */}
+              {hasMobile && (
+                <Image
+                  src={optimizeHeroBanner(slide.mobileImageUrl!)}
+                  alt={`Machinery Banner Mobile ${idx + 1}`}
+                  fill
+                  priority={idx === 0}
+                  loading={idx === 0 ? "eager" : "lazy"}
+                  className={styles.mobileImageOnly}
+                  sizes="100vw"
+                />
+              )}
+            </div>
+          );
+
           return (
             <div 
               key={slide.id || idx} 
               className={styles.slide}
               aria-hidden={idx !== currentSlide}
             >
-              <div className={styles.imageContainer}>
-                {/* Desktop Banner Image (Hidden on mobile if dedicated mobile banner is uploaded) */}
-                <Image
-                  src={optimizeHeroBanner(slide.imageUrl)}
-                  alt={`Machinery Banner ${idx + 1}`}
-                  fill
-                  priority={idx === 0}
-                  loading={idx === 0 ? "eager" : "lazy"}
-                  className={hasMobile ? styles.desktopImageWithMobileAlternative : styles.desktopImageOnly}
-                  sizes="(max-width: 768px) 100vw, 100vw"
-                />
-                {/* Dedicated Mobile Banner (Visible ONLY on mobile devices) */}
-                {hasMobile && (
-                  <Image
-                    src={optimizeHeroBanner(slide.mobileImageUrl!)}
-                    alt={`Machinery Banner Mobile ${idx + 1}`}
-                    fill
-                    priority={idx === 0}
-                    loading={idx === 0 ? "eager" : "lazy"}
-                    className={styles.mobileImageOnly}
-                    sizes="100vw"
-                  />
-                )}
-              </div>
+              {slide.link && slide.link !== "/" ? (
+                <Link href={slide.link} className={styles.slideLink} aria-label={`View banner ${idx + 1}`}>
+                  {bannerContent}
+                </Link>
+              ) : (
+                bannerContent
+              )}
             </div>
           );
         })}

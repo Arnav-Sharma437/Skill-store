@@ -83,8 +83,7 @@ interface ApiCategory {
 }
 
 export default function CategoryShowcase() {
-  const [categories, setCategories] = useState<CategoryItem[]>([]);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [categories, setCategories] = useState<CategoryItem[]>(defaultCategories);
   const sliderRef = useRef<HTMLDivElement>(null);
 
   const scrollSlider = (direction: "left" | "right") => {
@@ -109,11 +108,10 @@ export default function CategoryShowcase() {
           setCategories(mapped);
         }
       })
-      .catch((err) => console.error("Error loading categories:", err))
-      .finally(() => setIsLoaded(true));
+      .catch((err) => console.error("Error loading categories:", err));
   }, []);
 
-  if (!isLoaded || categories.length === 0) {
+  if (categories.length === 0) {
     return null;
   }
 
