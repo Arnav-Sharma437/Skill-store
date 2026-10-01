@@ -18,26 +18,36 @@ jobs:
           VPS_USER: ${{ secrets.VPS_USER }}
           VPS_HOST: ${{ secrets.VPS_HOST }}
         run: |
-          exec > >(tee -a deploy.log) 2>&1
-          echo "=== 1. Checking Secret Variables Presence ==="
-          echo "VPS_HOST is: '${VPS_HOST}'"
-          echo "VPS_USER is: '${VPS_USER}'"
-          echo "SSH_PRIVATE_KEY length: ${#SSH_PRIVATE_KEY} chars"
-
-          echo "=== 2. Testing Network Connectivity to Port 22 ==="
-          timeout 5 bash -c "</dev/tcp/${VPS_HOST}/22" && echo "Port 22 reachable!" || echo "Port 22 connection timed out/refused!"
-
-          echo "=== 3. Writing and inspecting SSH Key ==="
           mkdir -p ~/.ssh
           printf '%s\n' "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/id_rsa
           chmod 700 ~/.ssh
           chmod 600 ~/.ssh/id_rsa
 
-          echo "Deriving public key fingerprint from private key..."
-          ssh-keygen -l -f ~/.ssh/id_rsa || echo "Invalid key format!"
+          echo "## Skill Store Deployment Diagnostics" >> $GITHUB_STEP_SUMMARY
+          echo "- **VPS_HOST**: \`$VPS_HOST\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **VPS_USER**: \`$VPS_USER\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Key length**: \`${#SSH_PRIVATE_KEY}\` chars" >> $GITHUB_STEP_SUMMARY
 
-          echo "=== 4. Testing SSH Handshake ==="
-          ssh -v -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=15 -i ~/.ssh/id_rsa -p 22 ${VPS_USER}@${VPS_HOST} << 'EOF'
+          KEY_INFO=$(ssh-keygen -l -f ~/.ssh/id_rsa 2>&1 || true)
+          echo "- **Key Info**: \`$KEY_INFO\`" >> $GITHUB_STEP_SUMMARY
+
+          echo "Testing TCP port 22..."
+          if timeout 5 bash -c "</dev/tcp/${VPS_HOST}/22"; then
+            echo "- **Port 22 Reachability**: ✅ Reachable" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- **Port 22 Reachability**: ❌ Connection Timed Out / Refused" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "Attempting SSH connection test..."
+          SSH_TEST_OUT=$(ssh -v -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=15 -o BatchMode=yes -i ~/.ssh/id_rsa -p 22 ${VPS_USER}@${VPS_HOST} "echo SSH_CONNECTION_SUCCESSFUL" 2>&1 || true)
+          
+          echo "### SSH Output:" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "$SSH_TEST_OUT" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+          # Now execute deployment if test passed
+          ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=30 -i ~/.ssh/id_rsa -p 22 ${VPS_USER}@${VPS_HOST} << 'EOF'
             set -e
             echo "🚀 Starting Skill Store deployment on VPS..."
             cd /var/www/skill-store
@@ -50,9 +60,4 @@ jobs:
             echo "✅ Skill Store deployment completed successfully!"
           EOF
 
-      - name: Upload Deployment Log
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: deployment-debug-log
-          path: deploy.log
+          rm -f ~/.ssh/id_rsa
