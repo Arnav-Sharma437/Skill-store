@@ -453,14 +453,21 @@ export default function AdminDashboard() {
 
   const uploadCustomMedia = async (file: File, folder: string = "skill-store/homepage"): Promise<string | null> => {
     try {
-      const compressed = await compressImageBeforeUpload(file, {
-        maxWidth: 1920,
-        maxHeight: 1920,
-        quality: 0.85,
-        targetFormat: "image/webp",
-      });
+      let fileToUpload = file;
+      try {
+        fileToUpload = await compressImageBeforeUpload(file, {
+          maxWidth: 1920,
+          maxHeight: 1920,
+          quality: 0.85,
+          targetFormat: "image/webp",
+        });
+      } catch (compressionErr) {
+        console.warn("Client compression bypassed:", compressionErr);
+        fileToUpload = file;
+      }
+
       const formData = new FormData();
-      formData.append("file", compressed);
+      formData.append("file", fileToUpload);
       formData.append("folder", folder);
       const res = await fetch("/api/admin/upload", { method: "POST", body: formData });
       const data = await res.json();
@@ -538,12 +545,17 @@ export default function AdminDashboard() {
       // Automatically pre-compress and resize images (max width 1920px WebP) before upload
       let fileToUpload = file;
       if (targetType !== "video") {
-        fileToUpload = await compressImageBeforeUpload(file, {
-          maxWidth: 1920,
-          maxHeight: 1920,
-          quality: 0.85,
-          targetFormat: "image/webp",
-        });
+        try {
+          fileToUpload = await compressImageBeforeUpload(file, {
+            maxWidth: 1920,
+            maxHeight: 1920,
+            quality: 0.85,
+            targetFormat: "image/webp",
+          });
+        } catch (compressionErr) {
+          console.warn("Pre-compression skipped:", compressionErr);
+          fileToUpload = file;
+        }
       }
 
       let uploadFolder = "skill-store/products";

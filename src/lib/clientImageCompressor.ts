@@ -21,6 +21,11 @@ export async function compressImageBeforeUpload(
   file: File,
   options: CompressionOptions = {}
 ): Promise<File> {
+  // Gracefully fallback to original file in non-browser environments or on any error
+  if (typeof window === "undefined" || !file) {
+    return file;
+  }
+
   const {
     maxWidth = 1920,
     maxHeight = 1920,
@@ -28,36 +33,34 @@ export async function compressImageBeforeUpload(
     targetFormat = "image/webp",
   } = options;
 
-  // Don't process non-browser environments
-  if (typeof window === "undefined") {
-    return file;
-  }
-
-  const mimeType = (file.type || "").toLowerCase();
-  const name = file.name || "image";
-
-  // Skip videos, SVGs, and non-image files
-  if (
-    mimeType.startsWith("video/") ||
-    mimeType === "image/svg+xml" ||
-    mimeType === "image/gif" ||
-    name.endsWith(".svg") ||
-    name.endsWith(".gif")
-  ) {
-    return file;
-  }
-
-  // Only process standard raster images
-  if (
-    !mimeType.startsWith("image/") &&
-    !/\.(jpe?g|png|webp|bmp|avif)$/i.test(name)
-  ) {
-    return file;
-  }
-
   try {
+    const mimeType = (file.type || "").toLowerCase();
+    const name = file.name || "upload.jpg";
+
+    // Skip videos, SVGs, animated GIFs, and non-image files
+    if (
+      mimeType.startsWith("video/") ||
+      mimeType === "image/svg+xml" ||
+      mimeType === "image/gif" ||
+      /\.(svg|gif|mp4|webm|mov|mkv)$/i.test(name)
+    ) {
+      return file;
+    }
+
+    // Only process standard raster images
+    if (
+      !mimeType.startsWith("image/") &&
+      !/\.(jpe?g|png|webp|bmp|avif)$/i.test(name)
+    ) {
+      return file;
+    }
+
     const bitmapOrImage = await createImageElement(file);
     const { naturalWidth, naturalHeight } = bitmapOrImage;
+
+    if (!naturalWidth || !naturalHeight || naturalWidth <= 0 || naturalHeight <= 0) {
+      return file;
+    }
 
     // Calculate new aspect-ratio preserving dimensions
     let targetWidth = naturalWidth;
@@ -65,16 +68,16 @@ export async function compressImageBeforeUpload(
 
     if (targetWidth > maxWidth || targetHeight > maxHeight) {
       const ratio = Math.min(maxWidth / targetWidth, maxHeight / targetHeight);
-      targetWidth = Math.round(targetWidth * ratio);
-      targetHeight = Math.round(targetHeight * ratio);
+      targetWidth = Math.max(1, Math.round(targetWidth * ratio));
+      targetHeight = Math.max(1, Math.round(targetHeight * ratio));
     }
 
-    // If image is already smaller than max dimensions and under 250KB WebP, return original
+    // If image is already smaller than max dimensions and under 300KB WebP, return original
     if (
       targetWidth === naturalWidth &&
       targetHeight === naturalHeight &&
       mimeType === "image/webp" &&
-      file.size < 250 * 1024
+      file.size < 300 * 1024
     ) {
       return file;
     }
@@ -93,37 +96,53 @@ export async function compressImageBeforeUpload(
     ctx.imageSmoothingQuality = "high";
     ctx.drawImage(bitmapOrImage.element, 0, 0, targetWidth, targetHeight);
 
-    // Export compressed blob
+    // Export compressed blob safely
+    const clampedQuality = Math.min(Math.max(quality, 0.1), 1.0);
+    const safeFormat = targetFormat.includes("webp") ? "image/webp" : "image/jpeg";
+
     const blob = await new Promise<Blob | null>((resolve) => {
-      canvas.toBlob(
-        (b) => {
-          if (b) {
-            resolve(b);
-          } else {
-            // Fallback to jpeg if webp export failed
-            canvas.toBlob((fallbackBlob) => resolve(fallbackBlob), "image/jpeg", quality);
-          }
-        },
-        targetFormat,
-        quality
-      );
+      try {
+        canvas.toBlob(
+          (b) => {
+            if (b) {
+              resolve(b);
+            } else {
+              try {
+                canvas.toBlob((fallbackBlob) => resolve(fallbackBlob), "image/jpeg", clampedQuality);
+              } catch {
+                resolve(null);
+              }
+            }
+          },
+          safeFormat,
+          clampedQuality
+        );
+      } catch {
+        resolve(null);
+      }
     });
 
     if (!blob) {
       return file;
     }
 
-    // Replace extension with .webp
+    // Replace extension safely
     const dotIndex = name.lastIndexOf(".");
-    const baseName = dotIndex !== -1 ? name.slice(0, dotIndex) : name;
-    const newName = `${baseName}.webp`;
+    const baseName = (dotIndex !== -1 ? name.slice(0, dotIndex) : name).replace(/[^a-zA-Z0-9_-]/g, "_");
+    const newExt = blob.type.includes("webp") ? ".webp" : ".jpg";
+    const newName = `${baseName || "image"}${newExt}`;
 
-    return new File([blob], newName, {
-      type: blob.type || "image/webp",
-      lastModified: Date.now(),
-    });
+    try {
+      return new File([blob], newName, {
+        type: blob.type || "image/webp",
+        lastModified: Date.now(),
+      });
+    } catch {
+      // Fallback if new File constructor has browser quirks
+      return file;
+    }
   } catch (err) {
-    console.warn("Client-side image compression fallback to original:", err);
+    console.warn("Client-side image pre-compression bypassed (using original):", err);
     return file;
   }
 }
@@ -136,20 +155,34 @@ interface LoadedImageResult {
 
 function createImageElement(file: File): Promise<LoadedImageResult> {
   return new Promise((resolve, reject) => {
-    const objectUrl = URL.createObjectURL(file);
+    let objectUrl = "";
+    try {
+      objectUrl = URL.createObjectURL(file);
+    } catch (urlErr) {
+      return reject(urlErr);
+    }
+
     const img = new Image();
 
     img.onload = () => {
-      URL.revokeObjectURL(objectUrl);
+      try {
+        URL.revokeObjectURL(objectUrl);
+      } catch {
+        // Ignore revoke errors
+      }
       resolve({
-        naturalWidth: img.naturalWidth || img.width,
-        naturalHeight: img.naturalHeight || img.height,
+        naturalWidth: img.naturalWidth || img.width || 0,
+        naturalHeight: img.naturalHeight || img.height || 0,
         element: img,
       });
     };
 
     img.onerror = (err) => {
-      URL.revokeObjectURL(objectUrl);
+      try {
+        URL.revokeObjectURL(objectUrl);
+      } catch {
+        // Ignore revoke errors
+      }
       reject(err);
     };
 
