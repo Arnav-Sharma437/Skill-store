@@ -3,6 +3,7 @@ import { connectToDatabase } from "@/lib/db";
 import { HomeSettings, DEFAULT_HOME_SETTINGS } from "@/lib/schemas";
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export async function GET() {
   try {
@@ -11,9 +12,15 @@ export async function GET() {
     if (!settings) {
       settings = await HomeSettings.create(DEFAULT_HOME_SETTINGS);
     }
-    return NextResponse.json({ success: true, data: settings });
+    return NextResponse.json(
+      { success: true, data: settings },
+      { headers: { "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate" } }
+    );
   } catch (error: unknown) {
     const errMessage = error instanceof Error ? error.message : "Unknown error";
-    return NextResponse.json({ success: true, data: DEFAULT_HOME_SETTINGS, fallback: true, error: errMessage });
+    return NextResponse.json(
+      { success: true, data: DEFAULT_HOME_SETTINGS, fallback: true, error: errMessage },
+      { headers: { "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate" } }
+    );
   }
 }

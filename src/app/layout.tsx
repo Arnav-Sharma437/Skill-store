@@ -33,7 +33,6 @@ export const metadata: Metadata = {
 
 import { AppProvider } from "@/context/AppContext";
 import BottomNav from "@/components/home/BottomNav";
-import PageLoader from "@/components/ui/PageLoader";
 
 export default function RootLayout({
   children,
@@ -44,7 +43,6 @@ export default function RootLayout({
     <html lang="en" className={`${publicSans.variable} ${firaSans.variable}`}>
       <body>
         <AppProvider>
-          <PageLoader />
           {children}
           <BottomNav />
         </AppProvider>
