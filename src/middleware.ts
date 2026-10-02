@@ -16,15 +16,26 @@ export function middleware(req: NextRequest) {
     process.env.MAINTENANCE_MODE === "true" ||
     process.env.NEXT_PUBLIC_MAINTENANCE_MODE === "true";
 
+  // Helper to attach anti-cache headers for Safari & all browsers
+  const withAntiCacheHeaders = (res: NextResponse) => {
+    if (req.nextUrl.pathname.startsWith("/api/") || req.nextUrl.pathname.startsWith("/admin")) {
+      res.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0, s-maxage=0");
+      res.headers.set("Pragma", "no-cache");
+      res.headers.set("Expires", "0");
+      res.headers.set("Surrogate-Control", "no-store");
+    }
+    return res;
+  };
+
   // If maintenance mode is not active, allow all normal traffic
   if (!isMaintenanceMode) {
-    return NextResponse.next();
+    return withAntiCacheHeaders(NextResponse.next());
   }
 
   // If user is a logged-in admin, allow full access to the entire frontend so they can inspect and test products!
   const adminCookie = req.cookies.get("skill_store_admin_token")?.value;
   if (adminCookie === "logged_in") {
-    return NextResponse.next();
+    return withAntiCacheHeaders(NextResponse.next());
   }
 
   const { pathname } = req.nextUrl;

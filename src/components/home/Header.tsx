@@ -95,7 +95,7 @@ export default function Header() {
     }
     const timer = setTimeout(async () => {
       try {
-        const res = await fetch(`/api/products?search=${encodeURIComponent(searchQuery.trim())}&limit=4`);
+        const res = await fetch(`/api/products?search=${encodeURIComponent(searchQuery.trim())}&limit=4&_t=${Date.now()}`, { cache: "no-store" });
         if (res.ok) {
           const json = await res.json();
           if (json.success && Array.isArray(json.data) && isMounted) {

@@ -20,7 +20,7 @@ export default function BestSellerSection() {
     let isMounted = true;
     async function loadBestSellers() {
       try {
-        const res = await fetch("/api/products?bestSeller=true&limit=12");
+        const res = await fetch(`/api/products?bestSeller=true&limit=12&_t=${Date.now()}`, { cache: "no-store" });
         if (res.ok) {
           const json = await res.json();
           if (json.success && Array.isArray(json.data) && json.data.length > 0) {

@@ -25,7 +25,7 @@ export default function SummerOffer() {
     let isMounted = true;
     async function loadSummerOffers() {
       try {
-        const res = await fetch("/api/home-settings");
+        const res = await fetch(`/api/home-settings?_t=${Date.now()}`, { cache: "no-store" });
         if (res.ok) {
           const json = await res.json();
           if (json.success && json.data?.summerOffer) {

@@ -366,7 +366,7 @@ export default function AdminDashboard() {
 
   const fetchEnquiries = useCallback(async () => {
     try {
-      const res = await fetch("/api/admin/enquiries");
+      const res = await fetch(`/api/admin/enquiries?_t=${Date.now()}`, { cache: "no-store" });
       const json = await res.json();
       if (json.success) setEnquiries(json.data);
     } catch (e) {
@@ -376,7 +376,7 @@ export default function AdminDashboard() {
 
   const fetchReviews = useCallback(async () => {
     try {
-      const res = await fetch("/api/admin/reviews");
+      const res = await fetch(`/api/admin/reviews?_t=${Date.now()}`, { cache: "no-store" });
       const json = await res.json();
       if (json.reviews && Array.isArray(json.reviews)) {
         setReviews(json.reviews);
@@ -389,7 +389,7 @@ export default function AdminDashboard() {
   const fetchOrders = useCallback(async () => {
     setOrdersLoading(true);
     try {
-      const res = await fetch("/api/admin/orders");
+      const res = await fetch(`/api/admin/orders?_t=${Date.now()}`, { cache: "no-store" });
       const json = await res.json();
       if (json.success && Array.isArray(json.data)) {
         setOrders(json.data);
@@ -403,7 +403,7 @@ export default function AdminDashboard() {
 
   const fetchHomeSettings = useCallback(async () => {
     try {
-      const res = await fetch("/api/admin/home-settings");
+      const res = await fetch(`/api/admin/home-settings?_t=${Date.now()}`, { cache: "no-store" });
       const json = await res.json();
       if (json.success && json.data) {
         setHomeSettings(json.data);
@@ -1536,59 +1536,6 @@ export default function AdminDashboard() {
         </div>
 
         <div className={styles.headerRight} style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          <button
-            onClick={handleSeedDatabase}
-            disabled={isSeeding}
-            style={{
-              background: isSeeding ? "#94a3b8" : "#0284c7",
-              color: "#ffffff",
-              border: "none",
-              padding: "7px 14px",
-              borderRadius: "6px",
-              fontWeight: 600,
-              fontSize: "12px",
-              cursor: isSeeding ? "not-allowed" : "pointer",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
-              boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
-              transition: "all 0.2s ease",
-            }}
-            title="Populate all initial products, categories, subcategories, brands, and banners into MongoDB"
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
-            </svg>
-            <span>{isSeeding ? "Syncing Data..." : "🔄 Sync / Populate All Data"}</span>
-          </button>
-
-          <button
-            onClick={handleClearDatabase}
-            disabled={isClearing}
-            style={{
-              background: isClearing ? "#94a3b8" : "#dc2626",
-              color: "#ffffff",
-              border: "none",
-              padding: "7px 14px",
-              borderRadius: "6px",
-              fontWeight: 600,
-              fontSize: "12px",
-              cursor: isClearing ? "not-allowed" : "pointer",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
-              boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
-              transition: "all 0.2s ease",
-            }}
-            title="Permanently wipe all data from MongoDB for a fresh start"
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="3 6 5 6 21 6"></polyline>
-              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-            </svg>
-            <span>{isClearing ? "Wiping Data..." : "🗑️ Wipe Database (Fresh Start)"}</span>
-          </button>
-
           <div className={styles.adminMeta}>
             <strong>Super Admin</strong>
             <span>Verified Session</span>

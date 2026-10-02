@@ -29,8 +29,8 @@ export default function BrandShowcase() {
     async function loadBrandAndTrustSettings() {
       try {
         const [settingsRes, brandsRes] = await Promise.allSettled([
-          fetch("/api/home-settings", { cache: "no-store" }),
-          fetch("/api/brands", { cache: "no-store" }),
+          fetch(`/api/home-settings?_t=${Date.now()}`, { cache: "no-store" }),
+          fetch(`/api/brands?_t=${Date.now()}`, { cache: "no-store" }),
         ]);
 
         if (settingsRes.status === "fulfilled" && settingsRes.value.ok) {
