@@ -9,6 +9,7 @@ interface ShiprocketAuthResponse {
   last_name?: string;
   email?: string;
   message?: string;
+  status_code?: number;
 }
 
 interface ShiprocketOrderResponse {
@@ -20,7 +21,7 @@ interface ShiprocketOrderResponse {
   courier_name?: string;
   courier_company_id?: number;
   message?: string;
-  errors?: Record<string, string[]>;
+  errors?: Record<string, string[] | string>;
 }
 
 interface ShiprocketTrackResponse {
@@ -53,12 +54,58 @@ interface ShiprocketTrackResponse {
 let cachedToken: string | null = null;
 let tokenExpiresAt = 0;
 
-// Helper to ensure .env.production / .env.local are parsed if Next.js/PM2 runtime missed them
-let envLoaded = false;
-function ensureEnvLoaded() {
-  if (envLoaded) return;
-  envLoaded = true;
+/**
+ * Robust filesystem environment variable loader
+ * Checks multiple candidates and handles BOM, 'export ' prefixes, comments, and quotes
+ */
+function parseEnvFile(filePath: string) {
+  try {
+    if (!fs.existsSync(/*turbopackIgnore: true*/ filePath)) return;
+    let content = fs.readFileSync(/*turbopackIgnore: true*/ filePath, "utf-8");
+    // Remove BOM if present
+    if (content.charCodeAt(0) === 0xfeff) {
+      content = content.slice(1);
+    }
+    const lines = content.split(/\r?\n/);
+    for (const rawLine of lines) {
+      let line = rawLine.trim();
+      if (!line || line.startsWith("#")) continue;
+      // Strip leading 'export '
+      if (line.startsWith("export ")) {
+        line = line.substring(7).trim();
+      }
+      const eqIdx = line.indexOf("=");
+      if (eqIdx > 0) {
+        const key = line.substring(0, eqIdx).trim();
+        let val = line.substring(eqIdx + 1).trim();
 
+        // Strip inline comments if not inside quotes
+        if (!val.startsWith('"') && !val.startsWith("'")) {
+          const hashIdx = val.indexOf("#");
+          if (hashIdx >= 0) {
+            val = val.substring(0, hashIdx).trim();
+          }
+        }
+
+        // Strip quotes
+        if (
+          (val.startsWith('"') && val.endsWith('"')) ||
+          (val.startsWith("'") && val.endsWith("'"))
+        ) {
+          val = val.slice(1, -1);
+        }
+
+        if (key) {
+          process.env[key] = val;
+        }
+      }
+    }
+  } catch {
+    // Ignore file read error
+  }
+}
+
+function loadAllPossibleEnvFiles() {
   const candidatePaths = [
     path.join(process.cwd(), ".env.production"),
     path.join(process.cwd(), ".env.production.local"),
@@ -70,97 +117,94 @@ function ensureEnvLoaded() {
     "/var/www/skill-store/.env",
   ];
 
-  for (const envPath of candidatePaths) {
-    try {
-      if (fs.existsSync(/*turbopackIgnore: true*/ envPath)) {
-        const content = fs.readFileSync(/*turbopackIgnore: true*/ envPath, "utf-8");
-        const lines = content.split(/\r?\n/);
-        for (const rawLine of lines) {
-          const line = rawLine.trim();
-          if (!line || line.startsWith("#")) continue;
-          const eqIdx = line.indexOf("=");
-          if (eqIdx > 0) {
-            const key = line.substring(0, eqIdx).trim();
-            let val = line.substring(eqIdx + 1).trim();
-            if (
-              (val.startsWith('"') && val.endsWith('"')) ||
-              (val.startsWith("'") && val.endsWith("'"))
-            ) {
-              val = val.slice(1, -1);
-            }
-            if (key && (!process.env[key] || process.env[key]?.trim() === "")) {
-              process.env[key] = val;
-            }
-          }
-        }
-      }
-    } catch {
-      // Ignore file reading errors
-    }
+  for (const p of candidatePaths) {
+    parseEnvFile(p);
   }
-}
-
-// Helper to get trimmed env var across common alias names
-function getEnv(keys: string[]): string | undefined {
-  ensureEnvLoaded();
-  for (const key of keys) {
-    const val = process.env[key];
-    if (val && typeof val === "string" && val.trim().length > 0) {
-      return val.trim().replace(/^["']|["']$/g, "").trim();
-    }
-  }
-  return undefined;
 }
 
 /**
- * Generates or retrieves cached Shiprocket JWT authentication token
+ * Retrieve environment variable by checking exact names, aliases, and fuzzy match
  */
-export async function getShiprocketToken(forceRefresh = false): Promise<string | null> {
-  ensureEnvLoaded();
+function getEnvValue(primaryKeys: string[], fallbackSubstring: string[]): string | undefined {
+  loadAllPossibleEnvFiles();
 
-  // If a direct token is configured in environment, use it
-  const directToken = getEnv([
-    "SHIPROCKET_TOKEN",
-    "SHIPROCKET_AUTH_TOKEN",
-    "SHIPROCKET_BEARER_TOKEN",
-    "SR_TOKEN",
-  ]);
+  // 1. Direct match on primary alias keys
+  for (const k of primaryKeys) {
+    const v = process.env[k];
+    if (v && typeof v === "string" && v.trim().length > 0) {
+      return v.trim().replace(/^["']|["']$/g, "").trim();
+    }
+  }
+
+  // 2. Case-insensitive / fuzzy scan over all process.env keys
+  const allKeys = Object.keys(process.env);
+  for (const k of allKeys) {
+    const upper = k.toUpperCase().replace(/[^A-Z0-9]/g, "");
+    for (const sub of fallbackSubstring) {
+      if (upper.includes(sub)) {
+        const v = process.env[k];
+        if (v && typeof v === "string" && v.trim().length > 0) {
+          return v.trim().replace(/^["']|["']$/g, "").trim();
+        }
+      }
+    }
+  }
+
+  return undefined;
+}
+
+export async function getShiprocketAuth(forceRefresh = false): Promise<{ token: string | null; error?: string }> {
+  // If direct token is provided, use it
+  const directToken = getEnvValue(
+    ["SHIPROCKET_TOKEN", "SHIPROCKET_AUTH_TOKEN", "SHIPROCKET_BEARER_TOKEN", "SR_TOKEN"],
+    ["SHIPROCKETTOKEN", "SRTOKEN"]
+  );
   if (directToken && !forceRefresh) {
-    return directToken;
+    return { token: directToken };
   }
 
-  // Return cached token if still valid
+  // Return cached token if valid
   if (!forceRefresh && cachedToken && Date.now() < tokenExpiresAt) {
-    return cachedToken;
+    return { token: cachedToken };
   }
 
-  const email = getEnv([
-    "SHIPROCKET_EMAIL",
-    "SHIPROCKET_USER",
-    "SHIPROCKET_USERNAME",
-    "SHIPROCKET_AUTH_EMAIL",
-    "SHIPROCKET_API_EMAIL",
-    "SHIPROCKET_LOGIN",
-    "SHIPROCKET_ID",
-    "SHIP_ROCKET_EMAIL",
-    "SR_EMAIL",
-    "SHIPROCKET_USER_EMAIL",
-  ]);
+  const email = getEnvValue(
+    [
+      "SHIPROCKET_EMAIL",
+      "SHIPROCKET_USER",
+      "SHIPROCKET_USERNAME",
+      "SHIPROCKET_AUTH_EMAIL",
+      "SHIPROCKET_API_EMAIL",
+      "SHIPROCKET_LOGIN",
+      "SHIPROCKET_ID",
+      "SHIP_ROCKET_EMAIL",
+      "SR_EMAIL",
+      "SHIPROCKET_USER_EMAIL",
+    ],
+    ["SHIPROCKETEMAIL", "SHIPROCKETUSER", "SREMAIL", "SHIPROCKETLOGIN"]
+  );
 
-  const password = getEnv([
-    "SHIPROCKET_PASSWORD",
-    "SHIPROCKET_PASS",
-    "SHIPROCKET_AUTH_PASSWORD",
-    "SHIPROCKET_API_PASSWORD",
-    "SHIPROCKET_SECRET",
-    "SHIP_ROCKET_PASSWORD",
-    "SR_PASSWORD",
-    "SR_PASS",
-  ]);
+  const password = getEnvValue(
+    [
+      "SHIPROCKET_PASSWORD",
+      "SHIPROCKET_PASS",
+      "SHIPROCKET_AUTH_PASSWORD",
+      "SHIPROCKET_API_PASSWORD",
+      "SHIPROCKET_SECRET",
+      "SHIP_ROCKET_PASSWORD",
+      "SR_PASSWORD",
+      "SR_PASS",
+    ],
+    ["SHIPROCKETPASSWORD", "SHIPROCKETPASS", "SRPASSWORD", "SRPASS", "SHIPROCKETSECRET"]
+  );
 
   if (!email || !password) {
-    console.warn("[Shiprocket] Credentials (SHIPROCKET_EMAIL, SHIPROCKET_PASSWORD) not configured in environment.");
-    return null;
+    const missing = [];
+    if (!email) missing.push("SHIPROCKET_EMAIL");
+    if (!password) missing.push("SHIPROCKET_PASSWORD");
+    const errMsg = `Shiprocket credentials missing: ${missing.join(", ")} not found in environment or .env.production.`;
+    console.warn(`[Shiprocket] ${errMsg}`);
+    return { token: null, error: errMsg };
   }
 
   try {
@@ -169,6 +213,7 @@ export async function getShiprocketToken(forceRefresh = false): Promise<string |
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json",
+        "User-Agent": "SkillStore/1.0",
       },
       body: JSON.stringify({ email, password }),
     });
@@ -178,27 +223,36 @@ export async function getShiprocketToken(forceRefresh = false): Promise<string |
     try {
       data = JSON.parse(resText);
     } catch {
-      // not json
+      // ignore
     }
 
     if (!res.ok) {
-      console.error(`[Shiprocket] Auth failed with HTTP ${res.status}`);
-      return null;
+      const errMsg = data.message || `Shiprocket auth failed (HTTP ${res.status}): ${resText.slice(0, 150)}`;
+      console.error(`[Shiprocket] Auth failed:`, errMsg);
+      return { token: null, error: errMsg };
     }
 
     if (data.token && typeof data.token === "string" && data.token.trim().length > 0) {
       cachedToken = data.token.trim();
-      // Cache for 7 days (Shiprocket tokens expire in 10 days)
       tokenExpiresAt = Date.now() + 7 * 24 * 60 * 60 * 1000;
-      return cachedToken;
+      return { token: cachedToken };
     }
 
-    console.error("[Shiprocket] Login response missing token");
-    return null;
+    const errMsg = data.message || "Shiprocket login succeeded but token was not returned.";
+    return { token: null, error: errMsg };
   } catch (error) {
-    console.error("[Shiprocket] Network error during authentication:", error instanceof Error ? error.message : error);
-    return null;
+    const errMsg = error instanceof Error ? error.message : "Network error during Shiprocket login";
+    console.error("[Shiprocket] Network error:", errMsg);
+    return { token: null, error: errMsg };
   }
+}
+
+/**
+ * Generates or retrieves cached Shiprocket JWT authentication token
+ */
+export async function getShiprocketToken(forceRefresh = false): Promise<string | null> {
+  const result = await getShiprocketAuth(forceRefresh);
+  return result.token;
 }
 
 /**
@@ -214,7 +268,7 @@ export function estimatePackageSpecs(items: IOrderItem[]) {
     const title = (item.title || "").toLowerCase();
     const qty = Math.max(1, item.quantity || 1);
 
-    let unitWeight = 1.5; // Default baseline kg
+    let unitWeight = 1.5;
     let uLength = 25;
     let uBreadth = 20;
     let uHeight = 15;
@@ -273,11 +327,11 @@ export async function createShiprocketOrder(order: IOrder): Promise<{
   trackingUrl?: string;
   error?: string;
 }> {
-  let token = await getShiprocketToken();
-  if (!token) {
+  let authResult = await getShiprocketAuth();
+  if (!authResult.token) {
     return {
       success: false,
-      error: "Shiprocket credentials missing or failed to authenticate with Shiprocket API.",
+      error: authResult.error || "Shiprocket credentials missing or failed to authenticate with Shiprocket API.",
     };
   }
 
@@ -297,12 +351,10 @@ export async function createShiprocketOrder(order: IOrder): Promise<{
   const country = (shipping.country || "India").trim();
 
   const specs = estimatePackageSpecs(order.items);
-  const pickupLocation = getEnv([
-    "SHIPROCKET_PICKUP_LOCATION",
-    "SHIPROCKET_PICKUP",
-    "SHIPROCKET_LOCATION",
-    "SR_PICKUP_LOCATION",
-  ]) || "Primary";
+  const pickupLocation = getEnvValue(
+    ["SHIPROCKET_PICKUP_LOCATION", "SHIPROCKET_PICKUP", "SHIPROCKET_LOCATION", "SR_PICKUP_LOCATION"],
+    ["PICKUPLOCATION", "SHIPROCKETPICKUP"]
+  ) || "Primary";
 
   const orderDate = new Date(order.createdAt || Date.now())
     .toISOString()
@@ -376,14 +428,13 @@ export async function createShiprocketOrder(order: IOrder): Promise<{
   };
 
   try {
-    let res = await callOrderApi(token);
+    let res = await callOrderApi(authResult.token);
 
-    // If 401 Unauthorized, token might have expired on Shiprocket server - force refresh and retry once
     if (res.status === 401) {
-      console.warn("[Shiprocket] 401 Unauthorized on order create, refreshing token and retrying...");
-      token = await getShiprocketToken(true);
-      if (token) {
-        res = await callOrderApi(token);
+      console.warn("[Shiprocket] 401 Unauthorized on order create, refreshing token...");
+      authResult = await getShiprocketAuth(true);
+      if (authResult.token) {
+        res = await callOrderApi(authResult.token);
       }
     }
 
@@ -393,7 +444,7 @@ export async function createShiprocketOrder(order: IOrder): Promise<{
       console.error("[Shiprocket] Order creation error response:", data);
       const errMsg =
         data.message ||
-        (data.errors ? JSON.stringify(data.errors) : `HTTP ${res.status} error from Shiprocket`);
+        (data.errors ? (typeof data.errors === "string" ? data.errors : JSON.stringify(data.errors)) : `HTTP ${res.status} error from Shiprocket`);
       return {
         success: false,
         error: errMsg,
@@ -450,9 +501,9 @@ export async function trackShiprocketShipment({
   activities?: Array<{ date?: string; status?: string; activity?: string; location?: string }>;
   error?: string;
 }> {
-  let token = await getShiprocketToken();
-  if (!token) {
-    return { success: false, error: "Shiprocket credentials missing or failed to authenticate." };
+  let authResult = await getShiprocketAuth();
+  if (!authResult.token) {
+    return { success: false, error: authResult.error || "Shiprocket credentials missing or failed to authenticate." };
   }
 
   let endpoint = "";
@@ -478,12 +529,12 @@ export async function trackShiprocketShipment({
   };
 
   try {
-    let res = await callTrackApi(token);
+    let res = await callTrackApi(authResult.token);
 
     if (res.status === 401) {
-      token = await getShiprocketToken(true);
-      if (token) {
-        res = await callTrackApi(token);
+      authResult = await getShiprocketAuth(true);
+      if (authResult.token) {
+        res = await callTrackApi(authResult.token);
       }
     }
 

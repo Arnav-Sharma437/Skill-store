@@ -53,7 +53,7 @@ jobs:
             git reset --hard origin/main
             npm install
             npm run build
-            pm2 restart skill-store --update-env
+            pm2 restart skill-store --update-env || pm2 restart all --update-env
             pm2 save
             echo "✅ Skill Store deployment completed successfully!"
           EOF
