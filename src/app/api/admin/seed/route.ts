@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import mongoose from "mongoose";
 import { connectToDatabase } from "@/lib/db";
 import { Product, Category, Banner, Brand, HomeSettings, DEFAULT_HOME_SETTINGS } from "@/lib/schemas";
-import { HERO_SLIDES, BRAND_CATEGORIES, BRANDS, SUMMER_OFFERS } from "@/data/home";
+import { HERO_SLIDES, BRAND_CATEGORIES } from "@/data/home";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -310,33 +310,7 @@ export async function GET(req: Request) {
     if (!homeSettings || force) {
       await HomeSettings.findOneAndUpdate(
         { id: "default" } as any,
-        {
-          $set: {
-            id: "default",
-            announcement: { enabled: true, text: "🔥 SUMMER SALE: Up to 40% OFF on all High Pressure Washers & Machinery!" },
-            brandsSection: {
-              enabled: true,
-              title: "FEATURED BRANDS",
-              subtitle: "Top-tier engineering for heavy-duty industrial and home performance.",
-              brands: BRANDS,
-            },
-            trustMarquee: {
-              enabled: true,
-              items: [
-                "100% GENUINE MACHINERY",
-                "PAN-INDIA EXPRESS SHIPPING",
-                "OFFICIAL 1-YEAR WARRANTY",
-                "VERIFIED REPLACEMENT SPARES",
-                "DEDICATED TECHNICAL SUPPORT",
-              ],
-            },
-            summerOffer: {
-              enabled: true,
-              title: "SPECIAL OFFERS & DEALS",
-              offers: SUMMER_OFFERS,
-            },
-          },
-        },
+        { $set: DEFAULT_HOME_SETTINGS },
         { upsert: true, new: true }
       );
     }
