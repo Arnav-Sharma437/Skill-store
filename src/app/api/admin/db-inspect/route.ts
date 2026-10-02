@@ -33,18 +33,22 @@ export async function GET() {
 
     // Also inspect other databases on the same cluster if accessible
     const clusterDatabasesSummary: Record<string, Record<string, number>> = {};
-    for (const dbInfo of dbsList) {
-      if (["admin", "local", "config"].includes(dbInfo.name)) continue;
-      try {
-        const otherDb = conn.connection.client.db(dbInfo.name);
-        const cols = await otherDb.listCollections().toArray();
-        clusterDatabasesSummary[dbInfo.name] = {};
-        for (const col of cols) {
-          const count = await otherDb.collection(col.name).countDocuments();
-          clusterDatabasesSummary[dbInfo.name][col.name] = count;
+    const client = conn.connection.getClient ? conn.connection.getClient() : (conn.connection as unknown as { client?: { db: (name: string) => mongoose.mongo.Db } }).client;
+    
+    if (client) {
+      for (const dbInfo of dbsList) {
+        if (["admin", "local", "config"].includes(dbInfo.name)) continue;
+        try {
+          const otherDb = client.db(dbInfo.name);
+          const cols = await otherDb.listCollections().toArray();
+          clusterDatabasesSummary[dbInfo.name] = {};
+          for (const col of cols) {
+            const count = await otherDb.collection(col.name).countDocuments();
+            clusterDatabasesSummary[dbInfo.name][col.name] = count;
+          }
+        } catch {
+          // Skip inaccessible
         }
-      } catch {
-        // Skip inaccessible
       }
     }
 
