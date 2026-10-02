@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/db";
 import { Banner } from "@/lib/schemas";
-import { ensureDatabaseInitialized } from "@/lib/seedHelper";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -9,7 +8,6 @@ export const revalidate = 0;
 export async function GET() {
   try {
     await connectToDatabase();
-    await ensureDatabaseInitialized();
     const banners = await Banner.find().sort({ createdAt: -1 }).lean();
     return NextResponse.json(
       { success: true, data: banners },

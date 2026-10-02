@@ -14,65 +14,6 @@ interface CategoryItem {
   badge?: string;
 }
 
-const defaultCategories: CategoryItem[] = [
-  {
-    slug: "high-pressure-washer",
-    name: "High Pressure Washers",
-    count: "12+ Models",
-    imageUrl: "/images/products/hw2000.jpg",
-    badge: "Best Seller"
-  },
-  {
-    slug: "cordless-tools",
-    name: "Cordless Tools & Drills",
-    count: "8+ Models",
-    imageUrl: "/images/products/cdw400.jpg",
-    badge: "Wireless Power"
-  },
-  {
-    slug: "air-compressor",
-    name: "Air Compressors",
-    count: "6+ Models",
-    imageUrl: "/images/products/compressor.jpg",
-    badge: "Silent & Direct"
-  },
-  {
-    slug: "accessories-spares",
-    name: "Accessories & Spares",
-    count: "25+ Items",
-    imageUrl: "/images/products/nozzle_tips.jpg",
-    badge: "Genuine Brass"
-  },
-  {
-    slug: "vaccum-cleaner",
-    name: "Vacuum Cleaners",
-    count: "5+ Models",
-    imageUrl: "/images/products/cdw400.jpg",
-    badge: "Wet & Dry"
-  },
-  {
-    slug: "autocare-detailing",
-    name: "Autocare & Detailing",
-    count: "10+ Items",
-    imageUrl: "/images/products/trigger_gun.jpg",
-    badge: "Pro Finish"
-  },
-  {
-    slug: "power-tools",
-    name: "Heavy Power Tools",
-    count: "14+ Tools",
-    imageUrl: "/images/products/hw2000.jpg",
-    badge: "High Torque"
-  },
-  {
-    slug: "hand-tools",
-    name: "Precision Hand Tools",
-    count: "18+ Sets",
-    imageUrl: "/images/products/nozzle_tips.jpg",
-    badge: "CR-V Steel"
-  }
-];
-
 interface ApiCategory {
   slug?: string;
   id?: string;
@@ -83,7 +24,7 @@ interface ApiCategory {
 }
 
 export default function CategoryShowcase() {
-  const [categories, setCategories] = useState<CategoryItem[]>(defaultCategories);
+  const [categories, setCategories] = useState<CategoryItem[]>([]);
   const sliderRef = useRef<HTMLDivElement>(null);
 
   const scrollSlider = (direction: "left" | "right") => {

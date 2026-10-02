@@ -155,17 +155,6 @@ interface IAdminOrder {
   };
 }
 
-// Fallback all system categories
-const DEFAULT_SYSTEM_CATEGORIES: ICategory[] = Object.entries(BRAND_CATEGORIES).flatMap(([brandKey, brandObj]) =>
-  brandObj.categories.map((cat) => ({
-    id: cat.id,
-    name: `${cat.name} (${brandObj.name})`,
-    brand: brandKey,
-    imageUrl: cat.imageUrl,
-    link: cat.link,
-  }))
-);
-
 export default function AdminDashboard() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<"analytics" | "products" | "categories" | "brands" | "orders" | "banners" | "homepage" | "reviews">("analytics");
@@ -175,7 +164,7 @@ export default function AdminDashboard() {
 
   // Data States
   const [banners, setBanners] = useState<IBanner[]>([]);
-  const [categories, setCategories] = useState<ICategory[]>(DEFAULT_SYSTEM_CATEGORIES);
+  const [categories, setCategories] = useState<ICategory[]>([]);
   const [brands, setBrands] = useState<IBrand[]>([]);
   const [products, setProducts] = useState<IProduct[]>([]);
   const [enquiries, setEnquiries] = useState<IEnquiry[]>([]);
@@ -529,6 +518,8 @@ export default function AdminDashboard() {
 
   // Manual Database Sync & Populate Action
   const [isSeeding, setIsSeeding] = useState(false);
+  const [isClearing, setIsClearing] = useState(false);
+
   const handleSeedDatabase = async () => {
     if (!window.confirm("Populate & sync all standard Products, Categories, Subcategories, Brands and Banners into the backend database?")) return;
     setIsSeeding(true);
@@ -545,6 +536,25 @@ export default function AdminDashboard() {
       alert("Network error while syncing database.");
     } finally {
       setIsSeeding(false);
+    }
+  };
+
+  const handleClearDatabase = async () => {
+    if (!window.confirm("⚠️ ARE YOU SURE? This will permanently DELETE ALL Products, Categories, Brands, Banners, and Reviews from the database for a 100% fresh start!")) return;
+    setIsClearing(true);
+    try {
+      const res = await fetch("/api/admin/clear-all", { method: "POST" });
+      const json = await res.json();
+      if (json.success) {
+        alert("🗑️ Database successfully wiped! Everything is now completely empty and ready for fresh entries.");
+        await initializeData();
+      } else {
+        alert(`Error clearing database: ${json.error}`);
+      }
+    } catch {
+      alert("Network error while wiping database.");
+    } finally {
+      setIsClearing(false);
     }
   };
 
@@ -1550,6 +1560,33 @@ export default function AdminDashboard() {
               <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
             </svg>
             <span>{isSeeding ? "Syncing Data..." : "🔄 Sync / Populate All Data"}</span>
+          </button>
+
+          <button
+            onClick={handleClearDatabase}
+            disabled={isClearing}
+            style={{
+              background: isClearing ? "#94a3b8" : "#dc2626",
+              color: "#ffffff",
+              border: "none",
+              padding: "7px 14px",
+              borderRadius: "6px",
+              fontWeight: 600,
+              fontSize: "12px",
+              cursor: isClearing ? "not-allowed" : "pointer",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+              transition: "all 0.2s ease",
+            }}
+            title="Permanently wipe all data from MongoDB for a fresh start"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+            <span>{isClearing ? "Wiping Data..." : "🗑️ Wipe Database (Fresh Start)"}</span>
           </button>
 
           <div className={styles.adminMeta}>

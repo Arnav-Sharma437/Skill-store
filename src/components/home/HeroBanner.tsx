@@ -8,7 +8,7 @@ import { optimizeHeroBanner } from "@/lib/imageOptimization";
 import styles from "./HeroBanner.module.css";
 
 export default function HeroBanner() {
-  const [slides, setSlides] = useState<HeroSlide[]>(HERO_SLIDES);
+  const [slides, setSlides] = useState<HeroSlide[]>([]);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const slideInterval = useRef<NodeJS.Timeout | null>(null);
@@ -71,6 +71,10 @@ export default function HeroBanner() {
       }
     };
   }, [isPaused, nextSlide, slides.length]);
+
+  if (slides.length === 0) {
+    return null;
+  }
 
   return (
     <section 

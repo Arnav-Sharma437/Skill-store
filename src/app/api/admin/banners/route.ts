@@ -10,7 +10,6 @@ export const revalidate = 0;
 export async function GET() {
   try {
     await connectToDatabase();
-    await ensureDatabaseInitialized();
     const banners = await Banner.find({}).sort({ createdAt: -1 });
     return NextResponse.json(
       { success: true, data: banners },

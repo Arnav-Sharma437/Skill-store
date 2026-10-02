@@ -37,16 +37,7 @@ export default async function BrandPage({ params }: PageProps) {
       }
       brandName = (brandDoc as { name?: string }).name || normalizedBrand.toUpperCase();
     } else {
-      // If brand doesn't exist in MongoDB, check if database has any brands
-      const totalBrandsCount = await Brand.countDocuments();
-      if (totalBrandsCount > 0) {
-        // Brands collection is actively managed and this brand is not present (deleted)
-        notFound();
-      } else if (BRAND_CATEGORIES[normalizedBrand]) {
-        brandName = BRAND_CATEGORIES[normalizedBrand].name;
-      } else {
-        notFound();
-      }
+      notFound();
     }
 
     // Fetch DB categories for this brand
@@ -59,8 +50,6 @@ export default async function BrandPage({ params }: PageProps) {
         link: (c as { link?: string; id: string }).link || `/category/${(c as { id: string }).id}`,
         imageUrl: (c as { imageUrl: string }).imageUrl,
       }));
-    } else if (BRAND_CATEGORIES[normalizedBrand]) {
-      categoriesList = BRAND_CATEGORIES[normalizedBrand].categories;
     }
   } catch (error) {
     console.error("Error loading brand page data:", error);

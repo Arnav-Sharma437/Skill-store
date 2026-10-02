@@ -5,47 +5,8 @@ import styles from "./BestSellerSection.module.css";
 import ProductCard from "./ProductCard";
 import { Product } from "@/data/home";
 
-const DEFAULT_BEST_SELLERS: Product[] = [
-  {
-    id: "hpw-1",
-    title: "TUQO Cordless High Pressure Washer CDW400 / 24V Lithium",
-    price: 6299,
-    originalPrice: 8299,
-    imageUrl: "/images/products/cdw400.jpg",
-    rating: 5,
-    ratingCount: 320,
-  },
-  {
-    id: "hpw-2",
-    title: "TUQO High Pressure Washer HW2000 / 140 Bar Induction Motor",
-    price: 4999,
-    originalPrice: 6999,
-    imageUrl: "/images/products/hw2000.jpg",
-    rating: 5,
-    ratingCount: 450,
-  },
-  {
-    id: "pmp-1",
-    title: "PUMPKIN Heavy Duty Angle Grinder 850W",
-    price: 2499,
-    originalPrice: 3499,
-    imageUrl: "/images/products/hw2000.jpg",
-    rating: 5,
-    ratingCount: 180,
-  },
-  {
-    id: "msk-1",
-    title: "MITSUKI Rotary Hammer Drill 26mm",
-    price: 3999,
-    originalPrice: 5499,
-    imageUrl: "/images/products/cdw400.jpg",
-    rating: 5,
-    ratingCount: 210,
-  },
-];
-
 export default function BestSellerSection() {
-  const [products, setProducts] = useState<Product[]>(DEFAULT_BEST_SELLERS);
+  const [products, setProducts] = useState<Product[]>([]);
   const sliderRef = useRef<HTMLDivElement>(null);
 
   const scrollSlider = (direction: "left" | "right") => {
