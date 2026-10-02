@@ -10,31 +10,10 @@ export async function GET() {
   try {
     await connectToDatabase();
 
-    let brands = await Brand.find({}).sort({ order: 1, createdAt: 1 });
-
-    // Auto-seed default brands if none exist in the database yet
-    if (!brands || brands.length === 0) {
-      const defaultList = DEFAULT_HOME_SETTINGS.brandsSection.brands.map((b, idx) => ({
-        id: b.slug || b.id.toLowerCase(),
-        name: b.name,
-        logo: b.logo,
-        tagline: b.tagline || "",
-        description: "",
-        enabled: b.enabled !== false,
-        order: b.order !== undefined ? b.order : idx,
-      }));
-
-      try {
-        await Brand.insertMany(defaultList, { ordered: false });
-        brands = await Brand.find({}).sort({ order: 1, createdAt: 1 });
-      } catch {
-        // If insertMany had duplicate errors, fetch whatever exists
-        brands = await Brand.find({}).sort({ order: 1, createdAt: 1 });
-      }
-    }
+    const brands = await Brand.find({}).sort({ order: 1, createdAt: 1 });
 
     return NextResponse.json(
-      { success: true, data: brands },
+      { success: true, data: brands || [] },
       { headers: { "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate" } }
     );
   } catch (error: unknown) {
