@@ -527,6 +527,27 @@ export default function AdminDashboard() {
     router.push("/admin/login");
   };
 
+  // Manual Database Sync & Populate Action
+  const [isSeeding, setIsSeeding] = useState(false);
+  const handleSeedDatabase = async () => {
+    if (!window.confirm("Populate & sync all standard Products, Categories, Subcategories, Brands and Banners into the backend database?")) return;
+    setIsSeeding(true);
+    try {
+      const res = await fetch("/api/admin/seed?force=true");
+      const json = await res.json();
+      if (json.success) {
+        alert("✅ All Products, Categories, Brands and Banners successfully synchronized into the Backend Database!");
+        await initializeData();
+      } else {
+        alert(`Error syncing database: ${json.error}`);
+      }
+    } catch {
+      alert("Network error while syncing database.");
+    } finally {
+      setIsSeeding(false);
+    }
+  };
+
   // --- Upload Handlers ---
   const handleFileUpload = async (
     file: File,
@@ -1504,7 +1525,33 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        <div className={styles.headerRight}>
+        <div className={styles.headerRight} style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <button
+            onClick={handleSeedDatabase}
+            disabled={isSeeding}
+            style={{
+              background: isSeeding ? "#94a3b8" : "#0284c7",
+              color: "#ffffff",
+              border: "none",
+              padding: "7px 14px",
+              borderRadius: "6px",
+              fontWeight: 600,
+              fontSize: "12px",
+              cursor: isSeeding ? "not-allowed" : "pointer",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+              transition: "all 0.2s ease",
+            }}
+            title="Populate all initial products, categories, subcategories, brands, and banners into MongoDB"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+            </svg>
+            <span>{isSeeding ? "Syncing Data..." : "🔄 Sync / Populate All Data"}</span>
+          </button>
+
           <div className={styles.adminMeta}>
             <strong>Super Admin</strong>
             <span>Verified Session</span>

@@ -1,19 +1,15 @@
-import { NextResponse } from "next/server";
 import mongoose from "mongoose";
-import { connectToDatabase } from "@/lib/db";
 import { Product, Category, Banner, Brand, HomeSettings, DEFAULT_HOME_SETTINGS } from "@/lib/schemas";
 import { HERO_SLIDES, BRAND_CATEGORIES, BRANDS, SUMMER_OFFERS } from "@/data/home";
 
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
-
-export async function GET(req: Request) {
+/**
+ * Ensures that the MongoDB database has all default categories, subcategories,
+ * brands, products, banners, and homepage settings populated so that backend
+ * admin panel and frontend are 100% in sync.
+ */
+export async function ensureDatabaseInitialized(force: boolean = false) {
   try {
-    await connectToDatabase();
-    const { searchParams } = new URL(req.url);
-    const force = searchParams.get("force") === "true";
-
-    // 1. Seed Brands
+    // 1. Initialize Brands
     const brandCount = await Brand.countDocuments({});
     if (brandCount === 0 || force) {
       const defaultBrands = [
@@ -30,7 +26,7 @@ export async function GET(req: Request) {
       }
     }
 
-    // 2. Seed Hero Banners
+    // 2. Initialize Hero Banners
     const bannerCount = await Banner.countDocuments({});
     if (bannerCount === 0 || force) {
       for (const slide of HERO_SLIDES) {
@@ -49,7 +45,7 @@ export async function GET(req: Request) {
       }
     }
 
-    // 3. Seed Categories & Subcategories across all brands
+    // 3. Initialize Categories & Subcategories across all brands
     const categoryCount = await Category.countDocuments({});
     if (categoryCount === 0 || force) {
       let orderIndex = 1;
@@ -89,7 +85,7 @@ export async function GET(req: Request) {
       }
     }
 
-    // 4. Seed Products
+    // 4. Initialize Products
     const productCount = await Product.countDocuments({});
     if (productCount === 0 || force) {
       const allProducts: Array<Record<string, unknown>> = [
@@ -305,7 +301,7 @@ export async function GET(req: Request) {
       }
     }
 
-    // 5. Seed Home Settings
+    // 5. Initialize Home Settings
     const homeSettings = await HomeSettings.findOne({ id: "default" } as any);
     if (!homeSettings || force) {
       await HomeSettings.findOneAndUpdate(
@@ -340,22 +336,7 @@ export async function GET(req: Request) {
         { upsert: true, new: true }
       );
     }
-
-    const counts = {
-      brands: await Brand.countDocuments({}),
-      categories: await Category.countDocuments({}),
-      banners: await Banner.countDocuments({}),
-      products: await Product.countDocuments({}),
-      homeSettings: await HomeSettings.countDocuments({}),
-    };
-
-    return NextResponse.json({
-      success: true,
-      message: "Database successfully seeded and synchronized with all products, categories, brands, and banners!",
-      counts,
-    });
-  } catch (error: unknown) {
-    const errMessage = error instanceof Error ? error.message : "Unknown error";
-    return NextResponse.json({ success: false, error: errMessage }, { status: 500 });
+  } catch (err) {
+    console.error("Failed to auto-initialize database:", err);
   }
 }
