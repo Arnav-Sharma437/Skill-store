@@ -43,29 +43,50 @@ function AccountContent() {
   const [activeTab, setActiveTab] = useState("overview");
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoadingOrders, setIsLoadingOrders] = useState(false);
+  const [phoneSearch, setPhoneSearch] = useState("");
+  const [phoneSearchMessage, setPhoneSearchMessage] = useState<string | null>(null);
+
+  const fetchOrders = (phoneOverride?: string) => {
+    setIsLoadingOrders(true);
+    const query = phoneOverride ? `phone=${encodeURIComponent(phoneOverride)}&` : "";
+    fetch(`/api/user/orders?${query}_t=${Date.now()}`, { cache: "no-store" })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && Array.isArray(data.orders)) {
+          setOrders(data.orders);
+          if (phoneOverride) {
+            setPhoneSearchMessage(
+              data.orders.length > 0
+                ? `✅ Found ${data.orders.length} order(s) for ${phoneOverride}`
+                : `No orders found for mobile number: ${phoneOverride}`
+            );
+          }
+        } else if (data.error) {
+          if (phoneOverride) setPhoneSearchMessage(data.error);
+        }
+      })
+      .catch((err) => console.error("Error fetching orders:", err))
+      .finally(() => {
+        setIsLoadingOrders(false);
+      });
+  };
 
   useEffect(() => {
-    let isMounted = true;
     if (session?.user?.email) {
-      Promise.resolve().then(() => {
-        if (isMounted) setIsLoadingOrders(true);
-      });
-      fetch("/api/user/orders")
-        .then((res) => res.json())
-        .then((data) => {
-          if (isMounted && data.success && Array.isArray(data.orders)) {
-            setOrders(data.orders);
-          }
-        })
-        .catch((err) => console.error("Error fetching orders:", err))
-        .finally(() => {
-          if (isMounted) setIsLoadingOrders(false);
-        });
+      fetchOrders();
     }
-    return () => {
-      isMounted = false;
-    };
   }, [session]);
+
+  const handlePhoneSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const clean = phoneSearch.replace(/\D/g, "");
+    if (!clean || clean.length < 10) {
+      setPhoneSearchMessage("Please enter a valid 10-digit mobile number.");
+      return;
+    }
+    setPhoneSearchMessage(null);
+    fetchOrders(clean);
+  };
 
   const handleGoogleLogin = () => {
     signIn("google", { callbackUrl: "/account" });
@@ -128,6 +149,83 @@ function AccountContent() {
                 </svg>
                 <span>Sign In with Google</span>
               </button>
+
+              <div style={{ marginTop: "24px", paddingTop: "20px", borderTop: "1px solid #e2e8f0", textAlign: "left" }}>
+                <h3 style={{ fontSize: "14.5px", margin: "0 0 6px 0", color: "#0f172a" }}>Track Order by Mobile Number</h3>
+                <p style={{ fontSize: "12px", color: "#64748b", margin: "0 0 10px 0" }}>Placed an order without Google Login? Enter your mobile number to view details.</p>
+                <form onSubmit={handlePhoneSearchSubmit} style={{ display: "flex", gap: "8px" }}>
+                  <input
+                    type="tel"
+                    placeholder="10-digit Mobile No."
+                    value={phoneSearch}
+                    onChange={(e) => setPhoneSearch(e.target.value)}
+                    style={{
+                      flex: 1,
+                      padding: "8px 12px",
+                      borderRadius: "6px",
+                      border: "1px solid #cbd5e1",
+                      fontSize: "13px",
+                      outline: "none",
+                    }}
+                  />
+                  <button
+                    type="submit"
+                    disabled={isLoadingOrders}
+                    style={{
+                      background: "#132c66",
+                      color: "#ffffff",
+                      border: "none",
+                      padding: "8px 14px",
+                      borderRadius: "6px",
+                      fontSize: "12.5px",
+                      fontWeight: "600",
+                      cursor: "pointer",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {isLoadingOrders ? "Searching..." : "Track Order"}
+                  </button>
+                </form>
+                {phoneSearchMessage && (
+                  <div style={{ marginTop: "10px", padding: "8px 12px", borderRadius: "6px", background: "#f0f9ff", border: "1px solid #bae6fd", color: "#0369a1", fontSize: "12.5px" }}>
+                    {phoneSearchMessage}
+                  </div>
+                )}
+              </div>
+
+              {orders.length > 0 && (
+                <div style={{ marginTop: "20px", textAlign: "left" }}>
+                  <h4 style={{ margin: "0 0 10px 0", color: "#0f172a" }}>Your Orders ({orders.length})</h4>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                    {orders.map((ord) => (
+                      <div key={ord.id} style={{ padding: "12px", borderRadius: "8px", background: "#f8fafc", border: "1px solid #e2e8f0" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px", fontWeight: "700" }}>
+                          <span>{ord.orderNumber || ord.id}</span>
+                          <span style={{ color: "#0284c7" }}>₹{ord.total.toLocaleString("en-IN")}</span>
+                        </div>
+                        <div style={{ fontSize: "12px", color: "#64748b", marginTop: "4px" }}>
+                          {ord.date} • <strong style={{ color: "#16a34a" }}>{ord.status}</strong>
+                        </div>
+                        {ord.shiprocketAwbCode && (
+                          <div style={{ fontSize: "11.5px", color: "#0369a1", marginTop: "6px" }}>
+                            AWB: {ord.shiprocketAwbCode} ({ord.shiprocketCourierName || "Shiprocket"})
+                          </div>
+                        )}
+                        {ord.shiprocketTrackingUrl && (
+                          <a
+                            href={ord.shiprocketTrackingUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{ fontSize: "11.5px", color: "#0284c7", fontWeight: "700", textDecoration: "underline", display: "inline-block", marginTop: "4px" }}
+                          >
+                            Live Tracking Link →
+                          </a>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         ) : (
@@ -217,8 +315,52 @@ function AccountContent() {
               {/* 2. My Orders Tab */}
               {activeTab === "orders" && (
                 <div className={styles.tabContent}>
-                  <h2>Order History</h2>
-                  <p>Check the delivery status of your recent transactions.</p>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px", marginBottom: "16px" }}>
+                    <div>
+                      <h2 style={{ margin: 0 }}>Order History</h2>
+                      <p style={{ margin: "4px 0 0", color: "#64748b", fontSize: "13px" }}>Check the delivery status of your recent transactions.</p>
+                    </div>
+
+                    {/* Phone Number Order Finder */}
+                    <form onSubmit={handlePhoneSearchSubmit} style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                      <input
+                        type="tel"
+                        placeholder="Search by Mobile No."
+                        value={phoneSearch}
+                        onChange={(e) => setPhoneSearch(e.target.value)}
+                        style={{
+                          padding: "8px 12px",
+                          borderRadius: "6px",
+                          border: "1px solid #cbd5e1",
+                          fontSize: "13px",
+                          outline: "none",
+                          width: "180px",
+                        }}
+                      />
+                      <button
+                        type="submit"
+                        disabled={isLoadingOrders}
+                        style={{
+                          background: "#0284c7",
+                          color: "#ffffff",
+                          border: "none",
+                          padding: "8px 14px",
+                          borderRadius: "6px",
+                          fontSize: "12.5px",
+                          fontWeight: "600",
+                          cursor: "pointer",
+                        }}
+                      >
+                        Find Orders
+                      </button>
+                    </form>
+                  </div>
+
+                  {phoneSearchMessage && (
+                    <div style={{ padding: "8px 12px", borderRadius: "6px", background: "#f0f9ff", border: "1px solid #bae6fd", color: "#0369a1", fontSize: "13px", marginBottom: "14px" }}>
+                      {phoneSearchMessage}
+                    </div>
+                  )}
 
                   {isLoadingOrders ? (
                     <div className={styles.loadingContainer}>

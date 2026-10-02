@@ -46,6 +46,7 @@ export default function CartPage() {
   // Delivery & Shipping Address State
   const [shippingAddress, setShippingAddress] = useState({
     name: "",
+    email: "",
     phone: "",
     street: "",
     city: "",
@@ -69,6 +70,7 @@ export default function CartPage() {
 
           setShippingAddress((prev) => ({
             name: prev.name || defaultAddr?.name || session.user?.name || "",
+            email: prev.email || defaultAddr?.email || session.user?.email || "",
             phone: prev.phone || defaultAddr?.phone || "",
             street: prev.street || defaultAddr?.street || "",
             city: prev.city || defaultAddr?.city || "",
@@ -77,10 +79,11 @@ export default function CartPage() {
           }));
         })
         .catch(() => {
-          if (isMounted && session.user?.name) {
+          if (isMounted && session.user) {
             setShippingAddress((prev) => ({
               ...prev,
               name: prev.name || session.user?.name || "",
+              email: prev.email || session.user?.email || "",
             }));
           }
         });
@@ -131,6 +134,11 @@ export default function CartPage() {
       setCheckoutError("Please enter a valid 10-digit mobile Phone Number.");
       return;
     }
+    const cleanEmail = (shippingAddress.email.trim() || session?.user?.email || "").toLowerCase();
+    if (!cleanEmail || !/^\S+@\S+\.\S+$/.test(cleanEmail)) {
+      setCheckoutError("Please enter a valid Email Address for order confirmation & tracking.");
+      return;
+    }
     if (!shippingAddress.street.trim()) {
       setCheckoutError("Please enter Delivery Street Address (House / Flat / Area).");
       return;
@@ -171,11 +179,12 @@ export default function CartPage() {
         })),
         customerDetails: {
           name: shippingAddress.name.trim() || session?.user?.name || "",
-          email: session?.user?.email || "",
+          email: cleanEmail,
           phone: shippingAddress.phone.trim() || "",
         },
         shippingAddress: {
           name: shippingAddress.name.trim(),
+          email: cleanEmail,
           phone: shippingAddress.phone.trim(),
           street: shippingAddress.street.trim(),
           city: shippingAddress.city.trim(),
@@ -539,6 +548,16 @@ export default function CartPage() {
                         placeholder="10-digit Mobile Number"
                         value={shippingAddress.phone}
                         onChange={(e) => setShippingAddress({ ...shippingAddress, phone: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <div className={`${styles.formGroup} ${styles.fullWidthGroup}`}>
+                      <label>Email Address <span style={{ color: "#e11d48" }}>*</span></label>
+                      <input
+                        type="email"
+                        placeholder="name@example.com (For order confirmation & history tracking)"
+                        value={shippingAddress.email}
+                        onChange={(e) => setShippingAddress({ ...shippingAddress, email: e.target.value })}
                         required
                       />
                     </div>

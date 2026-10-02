@@ -1,29 +1,64 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import dbConnect from "@/lib/db/mongodb";
 import Order from "@/models/Order";
+import User from "@/models/User";
 
-export async function GET() {
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+export async function GET(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
+    const { searchParams } = new URL(req.url);
+    const queryPhone = searchParams.get("phone")?.replace(/\D/g, "") || "";
+    const queryEmail = searchParams.get("email")?.toLowerCase().trim() || "";
 
-    if (!session || !session.user?.email) {
+    if (!session?.user?.email && !queryPhone && !queryEmail) {
       return NextResponse.json(
-        { success: false, error: "Unauthorized. Please log in to view your orders." },
+        { success: false, error: "Unauthorized. Please log in or provide your registered phone number." },
         { status: 401 }
       );
     }
 
     await dbConnect();
 
-    const userEmail = session.user.email.toLowerCase().trim();
-    const userId = session.user.id;
+    const orConditions: Array<Record<string, unknown>> = [];
 
-    const query: Record<string, unknown> = {
-      $or: [{ userEmail }, ...(userId ? [{ userId }] : [])],
-    };
+    if (session?.user?.email) {
+      const userEmail = session.user.email.toLowerCase().trim();
+      const userId = session.user.id;
+      orConditions.push({ userEmail: { $regex: new RegExp(`^${userEmail}$`, "i") } });
+      if (userId) {
+        orConditions.push({ userId });
+      }
 
+      // Look up user's profile to extract known phone numbers
+      const dbUser = await User.findOne({ email: userEmail }).lean();
+      if (dbUser && Array.isArray((dbUser as { addresses?: Array<{ phone?: string }> }).addresses)) {
+        for (const addr of (dbUser as { addresses: Array<{ phone?: string }> }).addresses) {
+          const p = addr.phone?.replace(/\D/g, "");
+          if (p && p.length >= 10) {
+            const p10 = p.slice(-10);
+            orConditions.push({ userPhone: { $regex: p10 } });
+            orConditions.push({ "shippingAddress.phone": { $regex: p10 } });
+          }
+        }
+      }
+    }
+
+    if (queryEmail) {
+      orConditions.push({ userEmail: { $regex: new RegExp(`^${queryEmail}$`, "i") } });
+    }
+
+    if (queryPhone && queryPhone.length >= 10) {
+      const p10 = queryPhone.slice(-10);
+      orConditions.push({ userPhone: { $regex: p10 } });
+      orConditions.push({ "shippingAddress.phone": { $regex: p10 } });
+    }
+
+    const query = orConditions.length > 0 ? { $or: orConditions } : {};
     const orders = await Order.find(query).sort({ createdAt: -1 }).lean();
 
     return NextResponse.json({
