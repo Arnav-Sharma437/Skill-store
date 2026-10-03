@@ -69,7 +69,7 @@ export async function GET(req: NextRequest) {
       currentStatus: trackResult.currentStatus || dbOrder?.shiprocketStatus || "Processing",
       location: trackResult.location || "",
       etd: trackResult.etd || "",
-      courierName: trackResult.courierName || dbOrder?.shiprocketCourierName || "Shiprocket Express",
+      courierName: trackResult.courierName || dbOrder?.shiprocketCourierName || "",
       trackingUrl: trackResult.trackingUrl || dbOrder?.shiprocketTrackingUrl || "",
       activities: trackResult.activities || [],
       error: trackResult.error,

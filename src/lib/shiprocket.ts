@@ -526,33 +526,71 @@ export async function createShiprocketOrder(order: IOrder): Promise<{
   }
 
   const shipping = order.shippingAddress || {};
-  const fullName = (shipping.name || order.userName || "Customer").trim();
-  const nameParts = fullName.split(" ");
-  const firstName = nameParts[0] || "Valued";
-  const lastName = nameParts.slice(1).join(" ") || "Customer";
+  const fullName = (shipping.name || order.userName || "").trim();
+  if (!fullName) {
+    return {
+      success: false,
+      error: "Customer name is missing from the order.",
+    };
+  }
+  const nameParts = fullName.split(/\s+/);
+  const firstName = nameParts[0];
+  const lastName = nameParts.slice(1).join(" ") || firstName;
 
-  // Sanitize phone number: strip non-digits, leading zeros, +91/91 prefixes to get valid 10-digit mobile number
-  let rawPhone = (shipping.phone || order.userPhone || "9500694111").replace(/\D/g, "");
+  // Sanitize phone number: strip non-digits, leading zeros, +91/91 prefixes to extract genuine 10-digit mobile number
+  let rawPhone = (shipping.phone || order.userPhone || "").replace(/\D/g, "");
   if (rawPhone.length === 11 && rawPhone.startsWith("0")) rawPhone = rawPhone.slice(1);
   if (rawPhone.length === 12 && rawPhone.startsWith("91")) rawPhone = rawPhone.slice(2);
   if (rawPhone.length > 10) rawPhone = rawPhone.slice(-10);
-  const phone = rawPhone && rawPhone.length === 10 ? rawPhone : "9500694111";
 
-  const email = order.userEmail || "support.skillstore@gmail.com";
+  if (!rawPhone || rawPhone.length !== 10) {
+    return {
+      success: false,
+      error: "A valid 10-digit customer mobile phone number is required for shipping.",
+    };
+  }
+  const phone = rawPhone;
 
-  const street = (shipping.street || "Main Market / Commercial Address").trim();
-  const city = (shipping.city || "New Delhi").trim();
-  const state = (shipping.state || "Delhi").trim();
-  const pincode = (shipping.pincode || "110001").trim();
+  const email = (order.userEmail || "").trim();
+  if (!email) {
+    return {
+      success: false,
+      error: "Customer email address is required for shipping.",
+    };
+  }
+
+  const street = (shipping.street || "").trim();
+  const city = (shipping.city || "").trim();
+  const state = (shipping.state || "").trim();
+  const pincode = (shipping.pincode || "").trim();
   const country = (shipping.country || "India").trim();
 
-  const specs = estimatePackageSpecs(order.items);
+  if (!street || !city || !state || !pincode) {
+    return {
+      success: false,
+      error: "Complete shipping address (street, city, state, pincode) is required.",
+    };
+  }
+
+  if (!order.items || order.items.length === 0) {
+    return {
+      success: false,
+      error: "Order contains no items to ship.",
+    };
+  }
+
+  const estimatedSpecs = estimatePackageSpecs(order.items);
+  const pkgWeight = order.weight && order.weight > 0 ? order.weight : estimatedSpecs.weightKg;
+  const pkgLength = order.dimensions?.length && order.dimensions.length > 0 ? order.dimensions.length : estimatedSpecs.lengthCm;
+  const pkgBreadth = order.dimensions?.breadth && order.dimensions.breadth > 0 ? order.dimensions.breadth : estimatedSpecs.breadthCm;
+  const pkgHeight = order.dimensions?.height && order.dimensions.height > 0 ? order.dimensions.height : estimatedSpecs.heightCm;
+
   const preferredPickup = getEnvValue(
     ["SHIPROCKET_PICKUP_LOCATION", "SHIPROCKET_PICKUP", "SHIPROCKET_LOCATION", "SR_PICKUP_LOCATION"],
     ["PICKUPLOCATION", "SHIPROCKETPICKUP"]
   ) || undefined;
 
-  // Dynamically resolve valid registered pickup location from Shiprocket account
+  // Dynamically resolve active registered pickup location from Shiprocket account
   const pickupLocation = await getValidPickupLocation(authResult.token, preferredPickup);
 
   const orderDate = new Date(order.createdAt || Date.now())
@@ -560,9 +598,9 @@ export async function createShiprocketOrder(order: IOrder): Promise<{
     .slice(0, 16)
     .replace("T", " ");
 
-  const orderItems = (order.items || []).map((item, idx) => ({
-    name: (item.title || `Item ${idx + 1}`).slice(0, 50),
-    sku: item.productId || `SKU-${idx + 1}`,
+  const orderItems = order.items.map((item, idx) => ({
+    name: (item.title || `Item ${idx + 1}`).trim().slice(0, 50),
+    sku: (item.productId || `SKU-${idx + 1}`).trim(),
     units: Math.max(1, item.quantity || 1),
     selling_price: Math.max(1, Math.round(item.price || 1)),
     discount: 0,
@@ -579,7 +617,7 @@ export async function createShiprocketOrder(order: IOrder): Promise<{
     order_date: orderDate,
     pickup_location: pickupLocation,
     channel_id: "",
-    comment: "Skill Store Tools & Machinery Order",
+    comment: `Skill Store Order #${order.orderNumber}`,
     billing_customer_name: firstName,
     billing_last_name: lastName,
     billing_address: street,
@@ -608,10 +646,10 @@ export async function createShiprocketOrder(order: IOrder): Promise<{
     transaction_charges: 0,
     total_discount: 0,
     sub_total: Math.max(1, order.grandTotal || 1),
-    length: specs.lengthCm,
-    breadth: specs.breadthCm,
-    height: specs.heightCm,
-    weight: specs.weightKg,
+    length: pkgLength,
+    breadth: pkgBreadth,
+    height: pkgHeight,
+    weight: pkgWeight,
   };
 
   const callOrderApi = async (authToken: string) => {
