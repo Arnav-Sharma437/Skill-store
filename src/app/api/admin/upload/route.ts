@@ -123,23 +123,31 @@ export async function POST(req: NextRequest) {
       ];
     }
 
-    // Upload to Cloudinary using upload_stream
-    const result = await new Promise<UploadApiResponse>((resolve, reject) => {
-      const uploadStream = cloudinary.uploader.upload_stream(
-        uploadOptions,
-        (error, uploadResult) => {
-          if (error) {
-            reject(error);
-          } else if (uploadResult) {
-            resolve(uploadResult);
-          } else {
-            reject(new Error("Cloudinary upload failed with empty response"));
+    // Upload to Cloudinary using upload_stream with automatic direct buffer fallback
+    let result: UploadApiResponse;
+    try {
+      result = await new Promise<UploadApiResponse>((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+          uploadOptions,
+          (error, uploadResult) => {
+            if (error) {
+              reject(error);
+            } else if (uploadResult) {
+              resolve(uploadResult);
+            } else {
+              reject(new Error("Cloudinary upload stream returned empty response"));
+            }
           }
-        }
-      );
+        );
 
-      uploadStream.end(buffer);
-    });
+        uploadStream.end(buffer);
+      });
+    } catch (streamErr) {
+      console.warn("Cloudinary upload_stream failed, attempting direct buffer upload fallback:", streamErr);
+      // Fallback: Direct base64 data URI upload
+      const base64Data = `data:${mimeType || "image/jpeg"};base64,${buffer.toString("base64")}`;
+      result = await cloudinary.uploader.upload(base64Data, uploadOptions);
+    }
 
     const secureUrl = result.secure_url || result.url;
 

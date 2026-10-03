@@ -1,8 +1,8 @@
 /**
  * Client-Side Image Pre-Compression & Compatibility Utility
  *
- * Automatically compresses large raster images (>500KB) down to high-quality WebP/JPEG
- * before uploading, ensuring instantaneous uploads and preventing HTTP 413 payload limits.
+ * Automatically optimizes and pre-compresses large raster images (>400KB) down to high-quality WebP
+ * before uploading, with automatic timeout and instant fallback to the native file.
  */
 
 export interface CompressionOptions {
@@ -17,8 +17,13 @@ export async function compressImageBeforeUpload(
 ): Promise<File> {
   const { maxWidth = 1920, maxHeight = 1920, quality = 0.88 } = options;
 
-  // Don't touch videos, SVGs, GIFs, or already tiny files (< 400KB)
-  if (!file.type.startsWith("image/") || file.type.includes("svg") || file.type.includes("gif") || file.size < 400 * 1024) {
+  // Don't touch videos, SVGs, GIFs, or already small files (< 400KB)
+  if (
+    !file.type.startsWith("image/") ||
+    file.type.includes("svg") ||
+    file.type.includes("gif") ||
+    file.size < 400 * 1024
+  ) {
     return file;
   }
 
@@ -28,53 +33,85 @@ export async function compressImageBeforeUpload(
   }
 
   try {
-    const bitmap = await createImageBitmap(file).catch(async () => {
-      // Fallback for older browsers
-      return new Promise<HTMLImageElement>((resolve, reject) => {
-        const img = new Image();
-        img.onload = () => resolve(img);
-        img.onerror = reject;
-        img.src = URL.createObjectURL(file);
-      });
-    });
+    return await new Promise<File>((resolve) => {
+      let isSettled = false;
+      const objectUrl = URL.createObjectURL(file);
+      const img = new Image();
 
-    const origWidth = bitmap.width;
-    const origHeight = bitmap.height;
+      const safeResolve = (resultFile: File) => {
+        if (!isSettled) {
+          isSettled = true;
+          try {
+            URL.revokeObjectURL(objectUrl);
+          } catch {}
+          resolve(resultFile);
+        }
+      };
 
-    let targetWidth = origWidth;
-    let targetHeight = origHeight;
+      // Safety timeout: if decoding/compression takes longer than 2.5s, upload original file immediately
+      const timeoutId = setTimeout(() => {
+        safeResolve(file);
+      }, 2500);
 
-    if (origWidth > maxWidth || origHeight > maxHeight) {
-      const ratio = Math.min(maxWidth / origWidth, maxHeight / origHeight);
-      targetWidth = Math.round(origWidth * ratio);
-      targetHeight = Math.round(origHeight * ratio);
-    }
+      img.onload = () => {
+        clearTimeout(timeoutId);
+        try {
+          const origWidth = img.naturalWidth || img.width;
+          const origHeight = img.naturalHeight || img.height;
 
-    const canvas = document.createElement("canvas");
-    canvas.width = targetWidth;
-    canvas.height = targetHeight;
-    const ctx = canvas.getContext("2d");
+          if (!origWidth || !origHeight) {
+            safeResolve(file);
+            return;
+          }
 
-    if (!ctx) {
-      if ("close" in bitmap && typeof bitmap.close === "function") bitmap.close();
-      return file;
-    }
+          let targetWidth = origWidth;
+          let targetHeight = origHeight;
 
-    ctx.drawImage(bitmap, 0, 0, targetWidth, targetHeight);
-    if ("close" in bitmap && typeof bitmap.close === "function") bitmap.close();
+          if (origWidth > maxWidth || origHeight > maxHeight) {
+            const ratio = Math.min(maxWidth / origWidth, maxHeight / origHeight);
+            targetWidth = Math.round(origWidth * ratio);
+            targetHeight = Math.round(origHeight * ratio);
+          }
 
-    const blob = await new Promise<Blob | null>((resolve) => {
-      canvas.toBlob((b) => resolve(b), "image/webp", quality);
-    });
+          const canvas = document.createElement("canvas");
+          canvas.width = targetWidth;
+          canvas.height = targetHeight;
+          const ctx = canvas.getContext("2d");
 
-    if (!blob || blob.size >= file.size) {
-      return file;
-    }
+          if (!ctx) {
+            safeResolve(file);
+            return;
+          }
 
-    const baseName = file.name.replace(/\.[^/.]+$/, "");
-    return new File([blob], `${baseName}.webp`, {
-      type: "image/webp",
-      lastModified: Date.now(),
+          ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
+
+          canvas.toBlob(
+            (blob) => {
+              if (blob && blob.size < file.size) {
+                const baseName = file.name.replace(/\.[^/.]+$/, "");
+                const newFile = new File([blob], `${baseName}.webp`, {
+                  type: "image/webp",
+                  lastModified: Date.now(),
+                });
+                safeResolve(newFile);
+              } else {
+                safeResolve(file);
+              }
+            },
+            "image/webp",
+            quality
+          );
+        } catch {
+          safeResolve(file);
+        }
+      };
+
+      img.onerror = () => {
+        clearTimeout(timeoutId);
+        safeResolve(file);
+      };
+
+      img.src = objectUrl;
     });
   } catch (err) {
     console.warn("Client-side image compression fallback to original:", err);

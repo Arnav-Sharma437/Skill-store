@@ -440,27 +440,54 @@ export default function AdminDashboard() {
     }
   };
 
+  const performUploadWithAutoRetry = async (file: File, folder: string): Promise<string> => {
+    const processedFile = await compressImageBeforeUpload(file);
+    let lastError: Error | null = null;
+
+    // Automatically retry up to 2 attempts in case of cold-start socket or transient delay
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        const formData = new FormData();
+        formData.append("file", processedFile);
+        formData.append("folder", folder);
+
+        const res = await fetch("/api/admin/upload", {
+          method: "POST",
+          body: formData,
+        });
+
+        const text = await res.text();
+        let data: { success?: boolean; error?: string; url?: string };
+        try {
+          data = JSON.parse(text);
+        } catch {
+          if (res.status === 413) {
+            throw new Error("File size is too large for server limits. Maximum allowed size is 50MB.");
+          }
+          throw new Error(`Server returned HTTP ${res.status}: Upload failed.`);
+        }
+
+        if (!res.ok || !data.success || !data.url) {
+          throw new Error(data?.error || "File upload failed");
+        }
+
+        return data.url;
+      } catch (err) {
+        lastError = err instanceof Error ? err : new Error(String(err));
+        if (attempt < 2) {
+          // Pause 300ms before automatic retry
+          await new Promise((r) => setTimeout(r, 300));
+        }
+      }
+    }
+
+    throw lastError || new Error("File upload failed after retrying");
+  };
+
   const uploadCustomMedia = async (file: File, folder: string = "skill-store/homepage"): Promise<string | null> => {
     try {
-      const processedFile = await compressImageBeforeUpload(file);
-      const formData = new FormData();
-      formData.append("file", processedFile);
-      formData.append("folder", folder);
-      const res = await fetch("/api/admin/upload", { method: "POST", body: formData });
-      const text = await res.text();
-      let data: { success?: boolean; error?: string; url?: string };
-      try {
-        data = JSON.parse(text);
-      } catch {
-        if (res.status === 413) {
-          throw new Error("File size is too large for server limits. Maximum allowed size is 50MB.");
-        }
-        throw new Error(`Server returned HTTP ${res.status}: Upload failed.`);
-      }
-      if (!res.ok || !data.success) {
-        throw new Error(data.error || "Upload failed");
-      }
-      return data.url || null;
+      const url = await performUploadWithAutoRetry(file, folder);
+      return url;
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Error uploading file";
       alert(`Upload error: ${msg}`);
@@ -576,32 +603,7 @@ export default function AdminDashboard() {
       if (targetType === "category") uploadFolder = "skill-store/categories";
       if (targetType === "brand") uploadFolder = "skill-store/brands";
 
-      const processedFile = await compressImageBeforeUpload(file);
-      const formData = new FormData();
-      formData.append("file", processedFile);
-      formData.append("folder", uploadFolder);
-
-      const res = await fetch("/api/admin/upload", {
-        method: "POST",
-        body: formData,
-      });
-
-      const text = await res.text();
-      let data: { success?: boolean; error?: string; url?: string };
-      try {
-        data = JSON.parse(text);
-      } catch {
-        if (res.status === 413) {
-          throw new Error("File size is too large for server limits. Maximum allowed size is 50MB.");
-        }
-        throw new Error(`Server returned HTTP ${res.status}: Upload failed.`);
-      }
-
-      if (!res.ok || !data.success) {
-        throw new Error(data.error || "File upload failed");
-      }
-
-      const uploadedUrl = data.url || "";
+      const uploadedUrl = await performUploadWithAutoRetry(file, uploadFolder);
 
       if (targetType === "main_image") {
         setProductForm((prev) => ({ ...prev, imageUrl: uploadedUrl }));
@@ -2610,6 +2612,7 @@ export default function AdminDashboard() {
                                 onChange={(e) => {
                                   const file = e.target.files?.[0];
                                   if (file) handleFileUpload(file, "banner");
+                                  e.target.value = "";
                                 }}
                               />
                             </label>
@@ -2649,6 +2652,7 @@ export default function AdminDashboard() {
                                 onChange={(e) => {
                                   const file = e.target.files?.[0];
                                   if (file) handleFileUpload(file, "banner_mobile");
+                                  e.target.value = "";
                                 }}
                               />
                             </label>
@@ -2982,6 +2986,7 @@ export default function AdminDashboard() {
                                   style={{ display: "none" }}
                                   onChange={async (e) => {
                                     const file = e.target.files?.[0];
+                                    e.target.value = "";
                                     if (!file) return;
                                     const url = await uploadCustomMedia(file, "skill-store/brands");
                                     if (url) {
@@ -3117,6 +3122,7 @@ export default function AdminDashboard() {
                               style={{ display: "none" }}
                               onChange={async (e) => {
                                 const file = e.target.files?.[0];
+                                e.target.value = "";
                                 if (!file) return;
                                 setIsUploadingBrandLogo(true);
                                 const url = await uploadCustomMedia(file, "skill-store/brands");
@@ -4091,6 +4097,7 @@ export default function AdminDashboard() {
                           onChange={(e) => {
                             const file = e.target.files?.[0];
                             if (file) handleFileUpload(file, "main_image");
+                            e.target.value = "";
                           }}
                         />
                       </label>
@@ -4129,6 +4136,7 @@ export default function AdminDashboard() {
                           onChange={(e) => {
                             const file = e.target.files?.[0];
                             if (file) handleFileUpload(file, "video");
+                            e.target.value = "";
                           }}
                         />
                       </label>
@@ -4154,6 +4162,7 @@ export default function AdminDashboard() {
                         onChange={(e) => {
                           const file = e.target.files?.[0];
                           if (file) handleFileUpload(file, "gallery");
+                          e.target.value = "";
                         }}
                       />
                     </label>
@@ -4390,6 +4399,7 @@ export default function AdminDashboard() {
                                 onChange={(e) => {
                                   const file = e.target.files?.[0];
                                   if (file) handleVariantImageUpload(file, index);
+                                  e.target.value = "";
                                 }}
                               />
                             </label>
@@ -4846,6 +4856,7 @@ export default function AdminDashboard() {
                       onChange={(e) => {
                         const file = e.target.files?.[0];
                         if (file) handleFileUpload(file, "category");
+                        e.target.value = "";
                       }}
                     />
                   </label>
@@ -5126,6 +5137,7 @@ export default function AdminDashboard() {
                       onChange={(e) => {
                         const file = e.target.files?.[0];
                         if (file) handleFileUpload(file, "brand");
+                        e.target.value = "";
                       }}
                     />
                   </label>
