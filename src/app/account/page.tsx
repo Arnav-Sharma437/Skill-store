@@ -289,7 +289,7 @@ function AccountContent() {
                       <input
                         type="tel"
                         maxLength={10}
-                        placeholder="e.g. 7876650437"
+                        placeholder="Enter 10-digit mobile number"
                         value={phoneInput}
                         onChange={(e) => setPhoneInput(e.target.value)}
                         className={styles.authInput}
@@ -303,7 +303,7 @@ function AccountContent() {
                     <label>Your Name (Optional)</label>
                     <input
                       type="text"
-                      placeholder="e.g. Arnav Sharma"
+                      placeholder="Enter your name"
                       value={nameInput}
                       onChange={(e) => setNameInput(e.target.value)}
                       className={styles.authInput}
@@ -323,7 +323,7 @@ function AccountContent() {
                     <label>Email Address</label>
                     <input
                       type="email"
-                      placeholder="name@example.com"
+                      placeholder="Enter your email address"
                       value={emailInput}
                       onChange={(e) => setEmailInput(e.target.value)}
                       className={styles.authInput}
@@ -336,7 +336,7 @@ function AccountContent() {
                     <label>Your Name (Optional)</label>
                     <input
                       type="text"
-                      placeholder="e.g. Arnav Sharma"
+                      placeholder="Enter your name"
                       value={nameInput}
                       onChange={(e) => setNameInput(e.target.value)}
                       className={styles.authInput}
@@ -607,7 +607,7 @@ function AccountContent() {
                               </button>
 
                               <a
-                                href={`https://wa.me/917876650437?text=${encodeURIComponent(`Hi Skill Store Support, I need help with my Order ${orderNum}`)}`}
+                                href={`https://wa.me/919500694111?text=${encodeURIComponent(`Hi Skill Store Support, I need help with my Order ${orderNum}`)}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className={styles.amazonSupportBtn}
