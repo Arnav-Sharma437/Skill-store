@@ -314,6 +314,119 @@ export function estimatePackageSpecs(items: IOrderItem[]) {
   };
 }
 
+// Helper to recursively/flexibly extract order, shipment, and awb data from any Shiprocket payload
+function parseShiprocketOrderData(rawData: any): {
+  orderId?: string;
+  shipmentId?: string;
+  awbCode?: string;
+  courierName?: string;
+  status?: string;
+} {
+  if (!rawData || typeof rawData !== "object") return {};
+
+  let target = rawData;
+  if (Array.isArray(rawData)) {
+    target = rawData[0] || {};
+  } else if (Array.isArray(rawData.data)) {
+    target = rawData.data[0] || {};
+  } else if (rawData.data && typeof rawData.data === "object") {
+    if (Array.isArray(rawData.data.data)) {
+      target = rawData.data.data[0] || {};
+    } else {
+      target = rawData.data;
+    }
+  } else if (rawData.response?.data) {
+    if (Array.isArray(rawData.response.data)) {
+      target = rawData.response.data[0] || {};
+    } else {
+      target = rawData.response.data;
+    }
+  } else if (rawData.response && typeof rawData.response === "object") {
+    target = rawData.response;
+  }
+
+  const rawOrderId = target.order_id ?? target.id ?? rawData.order_id ?? rawData.id ?? "";
+  const orderId = rawOrderId !== "" && rawOrderId !== null && rawOrderId !== undefined ? String(rawOrderId).trim() : undefined;
+
+  const shipmentsList = Array.isArray(target.shipments)
+    ? target.shipments
+    : Array.isArray(rawData.shipments)
+    ? rawData.shipments
+    : [];
+  const firstShipment = shipmentsList[0] || {};
+
+  const rawShipmentId =
+    target.shipment_id ??
+    firstShipment.id ??
+    firstShipment.shipment_id ??
+    rawData.shipment_id ??
+    "";
+  const shipmentId = rawShipmentId !== "" && rawShipmentId !== null && rawShipmentId !== undefined ? String(rawShipmentId).trim() : undefined;
+
+  const rawAwb =
+    target.awb_code ??
+    target.awb ??
+    firstShipment.awb_code ??
+    firstShipment.awb ??
+    rawData.awb_code ??
+    rawData.awb ??
+    "";
+  const awbCode = rawAwb !== "" && rawAwb !== null && rawAwb !== undefined ? String(rawAwb).trim() : undefined;
+
+  const courierName =
+    target.courier_name ??
+    target.courier ??
+    firstShipment.courier_name ??
+    firstShipment.courier ??
+    rawData.courier_name ??
+    undefined;
+
+  const status = target.status ?? firstShipment.status ?? rawData.status ?? "NEW";
+
+  return {
+    orderId,
+    shipmentId,
+    awbCode,
+    courierName,
+    status: String(status),
+  };
+}
+
+async function searchExistingShiprocketOrder(
+  orderNumber: string,
+  token: string
+): Promise<{ orderId?: string; shipmentId?: string; awbCode?: string; courierName?: string; status?: string } | null> {
+  const queryUrls = [
+    `https://apiv2.shiprocket.in/v1/external/orders?search=${encodeURIComponent(orderNumber)}`,
+    `https://apiv2.shiprocket.in/v1/external/orders/show/by/order_id?order_id=${encodeURIComponent(orderNumber)}`,
+  ];
+
+  for (const url of queryUrls) {
+    try {
+      const resp = await fetch(url, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (resp.ok) {
+        const json = await resp.json().catch(() => null);
+        if (json) {
+          const parsed = parseShiprocketOrderData(json);
+          if (parsed.orderId || parsed.shipmentId) {
+            return parsed;
+          }
+        }
+      }
+    } catch {
+      // try next search format
+    }
+  }
+  return null;
+}
+
 /**
  * Automatically create a Shiprocket order after successful payment confirmation or manual dispatch
  */
@@ -439,35 +552,21 @@ export async function createShiprocketOrder(order: IOrder): Promise<{
     }
 
     let data = await res.json().catch(() => ({}));
+    let parsed = parseShiprocketOrderData(data);
 
-    // If order already exists in Shiprocket, look up existing order details
-    if (!res.ok) {
+    // If order already exists in Shiprocket or creation returned 422/error, look up existing order details
+    if (!res.ok || (!parsed.orderId && !parsed.shipmentId)) {
       const errMsg = (data.message || (data.errors ? (typeof data.errors === "string" ? data.errors : JSON.stringify(data.errors)) : "")).toLowerCase();
-      if (errMsg.includes("already exist") || errMsg.includes("duplicate") || res.status === 422) {
-        try {
-          const showRes = await fetch(`https://apiv2.shiprocket.in/v1/external/orders?search=${encodeURIComponent(order.orderNumber)}`, {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              Accept: "application/json",
-              Authorization: `Bearer ${authResult.token}`,
-            },
-          });
-          if (showRes.ok) {
-            const showData = await showRes.json();
-            const existing = showData.data?.[0];
-            if (existing) {
-              data = existing;
-              res = { ok: true, status: 200 } as Response;
-            }
-          }
-        } catch {
-          // continue with original error
+      if (errMsg.includes("already exist") || errMsg.includes("duplicate") || res.status === 422 || !res.ok) {
+        const found = await searchExistingShiprocketOrder(order.orderNumber, authResult.token!);
+        if (found && (found.orderId || found.shipmentId)) {
+          parsed = { ...parsed, ...found };
+          res = { ok: true, status: 200 } as Response;
         }
       }
     }
 
-    if (!res.ok) {
+    if (!res.ok && !parsed.orderId && !parsed.shipmentId) {
       console.error("[Shiprocket] Order creation error response:", data);
       const errMsg =
         data.message ||
@@ -478,11 +577,11 @@ export async function createShiprocketOrder(order: IOrder): Promise<{
       };
     }
 
-    let shiprocketOrderId = String(data.order_id || data.id || data.data?.id || data.data?.order_id || "");
-    let shipmentId = String(data.shipment_id || data.shipments?.[0]?.id || data.data?.shipments?.[0]?.id || "");
-    let awbCode = String(data.awb_code || data.awb || data.shipments?.[0]?.awb || data.data?.shipments?.[0]?.awb || "");
-    let courierName = data.courier_name || data.shipments?.[0]?.courier_name || data.data?.shipments?.[0]?.courier_name || "";
-    let status = data.status || data.data?.status || "NEW";
+    let shiprocketOrderId = parsed.orderId;
+    let shipmentId = parsed.shipmentId;
+    let awbCode = parsed.awbCode;
+    let courierName = parsed.courierName;
+    let status = parsed.status || "NEW";
 
     // If shipmentId is present but AWB is not yet assigned, attempt automatic AWB assignment
     if (shipmentId && !awbCode && authResult.token) {
@@ -497,11 +596,11 @@ export async function createShiprocketOrder(order: IOrder): Promise<{
           body: JSON.stringify({ shipment_id: Number(shipmentId) || shipmentId }),
         });
         if (awbRes.ok) {
-          const awbData = await awbRes.json();
-          const awbObj = awbData.response?.data || awbData.data || awbData;
-          if (awbObj?.awb_code) {
-            awbCode = String(awbObj.awb_code);
-            courierName = awbObj.courier_name || courierName;
+          const awbData = await awbRes.json().catch(() => ({}));
+          const awbParsed = parseShiprocketOrderData(awbData);
+          if (awbParsed.awbCode) {
+            awbCode = awbParsed.awbCode;
+            courierName = awbParsed.courierName || courierName;
             status = "AWB_ASSIGNED";
           }
         }
@@ -518,11 +617,11 @@ export async function createShiprocketOrder(order: IOrder): Promise<{
 
     return {
       success: true,
-      shiprocketOrderId: shiprocketOrderId || undefined,
-      shipmentId: shipmentId || undefined,
-      awbCode: awbCode || undefined,
-      courierName: courierName || undefined,
-      status: status || "NEW",
+      shiprocketOrderId,
+      shipmentId,
+      awbCode,
+      courierName,
+      status,
       trackingUrl: trackingUrl || undefined,
     };
   } catch (error) {
