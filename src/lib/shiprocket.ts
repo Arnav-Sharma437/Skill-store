@@ -346,6 +346,39 @@ function normalizeShiprocketStatus(status: unknown): string {
   }
 }
 
+/**
+ * Dynamically fetch active registered pickup location nicknames from Shiprocket
+ */
+export async function getValidPickupLocation(token: string, preferred?: string): Promise<string> {
+  try {
+    const res = await fetch("https://apiv2.shiprocket.in/v1/external/settings/company/pickup", {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    if (res.ok) {
+      const data = await res.json().catch(() => null);
+      const addresses = data?.data?.shipping_address || data?.shipping_address || [];
+      if (Array.isArray(addresses) && addresses.length > 0) {
+        if (preferred) {
+          const match = addresses.find((a: any) =>
+            String(a.pickup_location || "").toLowerCase() === preferred.toLowerCase()
+          );
+          if (match?.pickup_location) return match.pickup_location;
+        }
+        const active = addresses.find((a: any) => String(a.status) === "1") || addresses[0];
+        if (active?.pickup_location) return active.pickup_location;
+      }
+    }
+  } catch (e) {
+    console.warn("[Shiprocket] Could not fetch pickup locations:", e);
+  }
+  return preferred || "Primary";
+}
+
 // Helper to extract order, shipment, and awb data from any Shiprocket payload
 function parseShiprocketOrderData(rawData: any, targetOrderNumber?: string): {
   orderId?: string;
@@ -368,10 +401,15 @@ function parseShiprocketOrderData(rawData: any, targetOrderNumber?: string): {
 
   if (searchList && searchList.length > 0) {
     if (targetOrderNumber) {
-      const match = searchList.find((o: any) =>
-        String(o.channel_order_id || o.order_id || o.id || "").toLowerCase() === targetOrderNumber.toLowerCase()
-      );
-      target = match || searchList[0];
+      const match = searchList.find((o: any) => {
+        const chan = String(o.channel_order_id || "").trim().toLowerCase();
+        const oId = String(o.order_id || "").trim().toLowerCase();
+        const id = String(o.id || "").trim().toLowerCase();
+        const target = targetOrderNumber.trim().toLowerCase();
+        return chan === target || oId === target || id === target;
+      });
+      if (!match) return {}; // Do NOT blindly fall back to first item if searching for a specific order
+      target = match;
     } else {
       target = searchList[0];
     }
@@ -424,7 +462,7 @@ function parseShiprocketOrderData(rawData: any, targetOrderNumber?: string): {
 
   return {
     orderId,
-    shipmentId: shipmentId || orderId, // If shipment_id is not isolated, Shiprocket order_id is the primary dispatch reference
+    shipmentId: shipmentId || orderId,
     awbCode,
     courierName,
     status,
@@ -493,7 +531,13 @@ export async function createShiprocketOrder(order: IOrder): Promise<{
   const firstName = nameParts[0] || "Valued";
   const lastName = nameParts.slice(1).join(" ") || "Customer";
 
-  const phone = (shipping.phone || order.userPhone || "9500694111").replace(/\D/g, "") || "9500694111";
+  // Sanitize phone number: strip non-digits, leading zeros, +91/91 prefixes to get valid 10-digit mobile number
+  let rawPhone = (shipping.phone || order.userPhone || "9500694111").replace(/\D/g, "");
+  if (rawPhone.length === 11 && rawPhone.startsWith("0")) rawPhone = rawPhone.slice(1);
+  if (rawPhone.length === 12 && rawPhone.startsWith("91")) rawPhone = rawPhone.slice(2);
+  if (rawPhone.length > 10) rawPhone = rawPhone.slice(-10);
+  const phone = rawPhone && rawPhone.length === 10 ? rawPhone : "9500694111";
+
   const email = order.userEmail || "support.skillstore@gmail.com";
 
   const street = (shipping.street || "Main Market / Commercial Address").trim();
@@ -503,10 +547,13 @@ export async function createShiprocketOrder(order: IOrder): Promise<{
   const country = (shipping.country || "India").trim();
 
   const specs = estimatePackageSpecs(order.items);
-  const pickupLocation = getEnvValue(
+  const preferredPickup = getEnvValue(
     ["SHIPROCKET_PICKUP_LOCATION", "SHIPROCKET_PICKUP", "SHIPROCKET_LOCATION", "SR_PICKUP_LOCATION"],
     ["PICKUPLOCATION", "SHIPROCKETPICKUP"]
-  ) || "Primary";
+  ) || undefined;
+
+  // Dynamically resolve valid registered pickup location from Shiprocket account
+  const pickupLocation = await getValidPickupLocation(authResult.token, preferredPickup);
 
   const orderDate = new Date(order.createdAt || Date.now())
     .toISOString()
@@ -514,7 +561,7 @@ export async function createShiprocketOrder(order: IOrder): Promise<{
     .replace("T", " ");
 
   const orderItems = (order.items || []).map((item, idx) => ({
-    name: item.title || `Item ${idx + 1}`,
+    name: (item.title || `Item ${idx + 1}`).slice(0, 50),
     sku: item.productId || `SKU-${idx + 1}`,
     units: Math.max(1, item.quantity || 1),
     selling_price: Math.max(1, Math.round(item.price || 1)),
@@ -591,12 +638,16 @@ export async function createShiprocketOrder(order: IOrder): Promise<{
     }
 
     let data = await res.json().catch(() => ({}));
-    let parsed = parseShiprocketOrderData(data);
+    let parsed = parseShiprocketOrderData(data, order.orderNumber);
 
-    // If order already exists in Shiprocket or creation returned 422/error, look up existing order details
-    if (!res.ok || (!parsed.orderId && !parsed.shipmentId)) {
-      const errMsg = (data.message || (data.errors ? (typeof data.errors === "string" ? data.errors : JSON.stringify(data.errors)) : "")).toLowerCase();
-      if (errMsg.includes("already exist") || errMsg.includes("duplicate") || res.status === 422 || !res.ok) {
+    // If order already exists in Shiprocket (422 Unprocessable Entity or duplicate), look up existing order details
+    if (!res.ok) {
+      const errMsg = (
+        data.message ||
+        (data.errors ? (typeof data.errors === "string" ? data.errors : JSON.stringify(data.errors)) : "")
+      ).toLowerCase();
+
+      if (errMsg.includes("already exist") || errMsg.includes("duplicate") || res.status === 422) {
         const found = await searchExistingShiprocketOrder(order.orderNumber, authResult.token!);
         if (found && (found.orderId || found.shipmentId)) {
           parsed = { ...parsed, ...found };
@@ -605,11 +656,18 @@ export async function createShiprocketOrder(order: IOrder): Promise<{
       }
     }
 
-    if (!res.ok && !parsed.orderId && !parsed.shipmentId) {
+    if (!res.ok || (!parsed.orderId && !parsed.shipmentId)) {
       console.error("[Shiprocket] Order creation error response:", data);
-      const errMsg =
-        data.message ||
-        (data.errors ? (typeof data.errors === "string" ? data.errors : JSON.stringify(data.errors)) : `HTTP ${res.status} error from Shiprocket`);
+      let errMsg = "Failed to create order on Shiprocket";
+      if (data.message && typeof data.message === "string") {
+        errMsg = data.message;
+      } else if (data.errors) {
+        errMsg = typeof data.errors === "string" ? data.errors : JSON.stringify(data.errors);
+      } else if (data.status_code) {
+        errMsg = `Shiprocket returned status code ${data.status_code}`;
+      } else {
+        errMsg = `HTTP ${res.status} error from Shiprocket`;
+      }
       return {
         success: false,
         error: errMsg,
