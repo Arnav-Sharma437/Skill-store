@@ -442,15 +442,25 @@ export default function AdminDashboard() {
 
   const uploadCustomMedia = async (file: File, folder: string = "skill-store/homepage"): Promise<string | null> => {
     try {
+      const processedFile = await compressImageBeforeUpload(file);
       const formData = new FormData();
-      formData.append("file", file);
+      formData.append("file", processedFile);
       formData.append("folder", folder);
       const res = await fetch("/api/admin/upload", { method: "POST", body: formData });
-      const data = await res.json();
+      const text = await res.text();
+      let data: { success?: boolean; error?: string; url?: string };
+      try {
+        data = JSON.parse(text);
+      } catch {
+        if (res.status === 413) {
+          throw new Error("File size is too large for server limits. Maximum allowed size is 50MB.");
+        }
+        throw new Error(`Server returned HTTP ${res.status}: Upload failed.`);
+      }
       if (!res.ok || !data.success) {
         throw new Error(data.error || "Upload failed");
       }
-      return data.url;
+      return data.url || null;
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Error uploading file";
       alert(`Upload error: ${msg}`);
@@ -566,8 +576,9 @@ export default function AdminDashboard() {
       if (targetType === "category") uploadFolder = "skill-store/categories";
       if (targetType === "brand") uploadFolder = "skill-store/brands";
 
+      const processedFile = await compressImageBeforeUpload(file);
       const formData = new FormData();
-      formData.append("file", file);
+      formData.append("file", processedFile);
       formData.append("folder", uploadFolder);
 
       const res = await fetch("/api/admin/upload", {
@@ -575,28 +586,40 @@ export default function AdminDashboard() {
         body: formData,
       });
 
-      const data = await res.json();
+      const text = await res.text();
+      let data: { success?: boolean; error?: string; url?: string };
+      try {
+        data = JSON.parse(text);
+      } catch {
+        if (res.status === 413) {
+          throw new Error("File size is too large for server limits. Maximum allowed size is 50MB.");
+        }
+        throw new Error(`Server returned HTTP ${res.status}: Upload failed.`);
+      }
+
       if (!res.ok || !data.success) {
         throw new Error(data.error || "File upload failed");
       }
 
+      const uploadedUrl = data.url || "";
+
       if (targetType === "main_image") {
-        setProductForm((prev) => ({ ...prev, imageUrl: data.url }));
+        setProductForm((prev) => ({ ...prev, imageUrl: uploadedUrl }));
       } else if (targetType === "video") {
-        setProductForm((prev) => ({ ...prev, videoUrl: data.url }));
+        setProductForm((prev) => ({ ...prev, videoUrl: uploadedUrl }));
       } else if (targetType === "gallery") {
         setProductForm((prev) => ({
           ...prev,
-          gallery: [...prev.gallery, data.url],
+          gallery: [...prev.gallery, uploadedUrl],
         }));
       } else if (targetType === "banner") {
-        setBannerForm((prev) => ({ ...prev, imageUrl: data.url }));
+        setBannerForm((prev) => ({ ...prev, imageUrl: uploadedUrl }));
       } else if (targetType === "banner_mobile") {
-        setBannerForm((prev) => ({ ...prev, mobileImageUrl: data.url }));
+        setBannerForm((prev) => ({ ...prev, mobileImageUrl: uploadedUrl }));
       } else if (targetType === "category") {
-        setCategoryForm((prev) => ({ ...prev, imageUrl: data.url }));
+        setCategoryForm((prev) => ({ ...prev, imageUrl: uploadedUrl }));
       } else if (targetType === "brand") {
-        setBrandForm((prev) => ({ ...prev, logo: data.url }));
+        setBrandForm((prev) => ({ ...prev, logo: uploadedUrl }));
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Error uploading file";

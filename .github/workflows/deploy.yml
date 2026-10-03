@@ -48,6 +48,13 @@ jobs:
           ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=30 -i ~/.ssh/id_rsa -p 22 ${VPS_USER}@${VPS_HOST} << 'EOF'
             set -e
             echo "🚀 Starting Skill Store deployment on VPS..."
+
+            # Guarantee Nginx allows up to 100MB file uploads
+            echo "🔧 Configuring Nginx client_max_body_size..."
+            sudo sed -i '/client_max_body_size/d' /etc/nginx/nginx.conf 2>/dev/null || true
+            sudo sed -i '/http {/a \    client_max_body_size 100M;' /etc/nginx/nginx.conf 2>/dev/null || true
+            sudo nginx -t 2>/dev/null && (sudo systemctl reload nginx 2>/dev/null || sudo nginx -s reload 2>/dev/null || true) || true
+
             cd /var/www/skill-store
             git fetch origin main
             git reset --hard origin/main

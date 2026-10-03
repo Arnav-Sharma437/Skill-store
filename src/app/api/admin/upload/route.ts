@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { v2 as cloudinary, UploadApiResponse } from "cloudinary";
 
+export const dynamic = "force-dynamic";
+export const maxDuration = 60;
+
 // Configure Cloudinary with environment variables
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME || process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
