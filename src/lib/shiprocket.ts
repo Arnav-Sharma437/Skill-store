@@ -314,8 +314,40 @@ export function estimatePackageSpecs(items: IOrderItem[]) {
   };
 }
 
-// Helper to recursively/flexibly extract order, shipment, and awb data from any Shiprocket payload
-function parseShiprocketOrderData(rawData: any): {
+// Map Shiprocket numeric or raw status codes to clean human-readable statuses
+function normalizeShiprocketStatus(status: unknown): string {
+  if (status === undefined || status === null) return "NEW";
+  const s = String(status).trim();
+  switch (s) {
+    case "1":
+      return "AWB_ASSIGNED";
+    case "2":
+      return "CONFIRMED";
+    case "3":
+      return "PICKUP_SCHEDULED";
+    case "4":
+      return "PICKED_UP";
+    case "5":
+      return "IN_TRANSIT";
+    case "6":
+      return "IN_TRANSIT";
+    case "7":
+      return "OUT_FOR_DELIVERY";
+    case "8":
+      return "DELIVERED";
+    case "9":
+      return "CANCELLED";
+    case "10":
+      return "RTO_INITIATED";
+    case "11":
+      return "RTO_DELIVERED";
+    default:
+      return s || "NEW";
+  }
+}
+
+// Helper to extract order, shipment, and awb data from any Shiprocket payload
+function parseShiprocketOrderData(rawData: any, targetOrderNumber?: string): {
   orderId?: string;
   shipmentId?: string;
   awbCode?: string;
@@ -325,22 +357,28 @@ function parseShiprocketOrderData(rawData: any): {
   if (!rawData || typeof rawData !== "object") return {};
 
   let target = rawData;
-  if (Array.isArray(rawData)) {
-    target = rawData[0] || {};
-  } else if (Array.isArray(rawData.data)) {
-    target = rawData.data[0] || {};
-  } else if (rawData.data && typeof rawData.data === "object") {
-    if (Array.isArray(rawData.data.data)) {
-      target = rawData.data.data[0] || {};
+
+  const searchList = Array.isArray(rawData)
+    ? rawData
+    : Array.isArray(rawData.data)
+    ? rawData.data
+    : Array.isArray(rawData.data?.data)
+    ? rawData.data.data
+    : null;
+
+  if (searchList && searchList.length > 0) {
+    if (targetOrderNumber) {
+      const match = searchList.find((o: any) =>
+        String(o.channel_order_id || o.order_id || o.id || "").toLowerCase() === targetOrderNumber.toLowerCase()
+      );
+      target = match || searchList[0];
     } else {
-      target = rawData.data;
+      target = searchList[0];
     }
   } else if (rawData.response?.data) {
-    if (Array.isArray(rawData.response.data)) {
-      target = rawData.response.data[0] || {};
-    } else {
-      target = rawData.response.data;
-    }
+    target = Array.isArray(rawData.response.data) ? rawData.response.data[0] : rawData.response.data;
+  } else if (rawData.data && typeof rawData.data === "object" && !Array.isArray(rawData.data)) {
+    target = rawData.data;
   } else if (rawData.response && typeof rawData.response === "object") {
     target = rawData.response;
   }
@@ -360,7 +398,7 @@ function parseShiprocketOrderData(rawData: any): {
     firstShipment.id ??
     firstShipment.shipment_id ??
     rawData.shipment_id ??
-    "";
+    (shipmentsList.length > 0 ? String(firstShipment.id || "") : "");
   const shipmentId = rawShipmentId !== "" && rawShipmentId !== null && rawShipmentId !== undefined ? String(rawShipmentId).trim() : undefined;
 
   const rawAwb =
@@ -381,14 +419,15 @@ function parseShiprocketOrderData(rawData: any): {
     rawData.courier_name ??
     undefined;
 
-  const status = target.status ?? firstShipment.status ?? rawData.status ?? "NEW";
+  const rawStatus = target.status ?? firstShipment.status ?? rawData.status ?? target.status_code ?? rawData.status_code;
+  const status = normalizeShiprocketStatus(rawStatus);
 
   return {
     orderId,
-    shipmentId,
+    shipmentId: shipmentId || orderId, // If shipment_id is not isolated, Shiprocket order_id is the primary dispatch reference
     awbCode,
     courierName,
-    status: String(status),
+    status,
   };
 }
 
@@ -414,7 +453,7 @@ async function searchExistingShiprocketOrder(
       if (resp.ok) {
         const json = await resp.json().catch(() => null);
         if (json) {
-          const parsed = parseShiprocketOrderData(json);
+          const parsed = parseShiprocketOrderData(json, orderNumber);
           if (parsed.orderId || parsed.shipmentId) {
             return parsed;
           }
