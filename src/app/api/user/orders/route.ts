@@ -14,10 +14,11 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const queryPhone = searchParams.get("phone")?.replace(/\D/g, "") || "";
     const queryEmail = searchParams.get("email")?.toLowerCase().trim() || "";
+    const queryOrder = (searchParams.get("orderNumber") || searchParams.get("order") || searchParams.get("orderId"))?.trim() || "";
 
-    if (!session?.user?.email && !queryPhone && !queryEmail) {
+    if (!session?.user?.email && !queryPhone && !queryEmail && !queryOrder) {
       return NextResponse.json(
-        { success: false, error: "Unauthorized. Please log in or provide your registered phone number." },
+        { success: false, error: "Please log in or provide an order number / registered mobile number." },
         { status: 401 }
       );
     }
@@ -25,6 +26,13 @@ export async function GET(req: NextRequest) {
     await dbConnect();
 
     const orConditions: Array<Record<string, unknown>> = [];
+
+    if (queryOrder) {
+      orConditions.push({ orderNumber: { $regex: new RegExp(`^${queryOrder}$`, "i") } });
+      if (queryOrder.match(/^[0-9a-fA-F]{24}$/)) {
+        orConditions.push({ _id: queryOrder });
+      }
+    }
 
     if (session?.user?.email) {
       const userEmail = session.user.email.toLowerCase().trim();
@@ -72,12 +80,18 @@ export async function GET(req: NextRequest) {
           month: "short",
           year: "numeric",
         }),
+        createdAt: ord.createdAt,
+        userName: ord.userName,
+        userEmail: ord.userEmail,
+        userPhone: ord.userPhone,
+        shippingAddress: ord.shippingAddress,
         total: ord.grandTotal,
         subtotal: ord.subtotal,
         gst: ord.gst,
         status: ord.paymentStatus === "paid" ? (ord.orderStatus || "Confirmed") : ord.paymentStatus,
         paymentStatus: ord.paymentStatus,
         orderStatus: ord.orderStatus,
+        paymentMethod: ord.paymentMethod,
         items: (ord.items || []).map((item) => ({
           name: item.title,
           qty: item.quantity,
@@ -90,12 +104,74 @@ export async function GET(req: NextRequest) {
         shiprocketAwbCode: ord.shiprocketAwbCode,
         shiprocketCourierName: ord.shiprocketCourierName,
         shiprocketStatus: ord.shiprocketStatus,
-        shiprocketTrackingUrl: ord.shiprocketTrackingUrl,
+        shiprocketTrackingUrl: ord.shiprocketAwbCode
+          ? `https://shiprocket.co/tracking/${ord.shiprocketAwbCode}`
+          : `/track-order?order=${encodeURIComponent(ord.orderNumber)}`,
       })),
     });
   } catch (error: unknown) {
     console.error("Error fetching user orders:", error);
     const errorMessage = error instanceof Error ? error.message : "Failed to fetch orders";
     return NextResponse.json({ success: false, error: errorMessage }, { status: 500 });
+  }
+}
+
+export async function POST(req: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) {
+      return NextResponse.json({ success: false, error: "Please log in to link your mobile number." }, { status: 401 });
+    }
+
+    await dbConnect();
+    const body = await req.json().catch(() => ({}));
+    const rawPhone = (body.phone || "").replace(/\D/g, "");
+    if (!rawPhone || rawPhone.length < 10) {
+      return NextResponse.json({ success: false, error: "Please provide a valid 10-digit mobile number." }, { status: 400 });
+    }
+
+    const p10 = rawPhone.slice(-10);
+    const userEmail = session.user.email.toLowerCase().trim();
+
+    // Link address entry with phone in User profile
+    await User.findOneAndUpdate(
+      { email: userEmail },
+      {
+        $addToSet: {
+          addresses: {
+            id: `link_${Date.now()}`,
+            type: "Linked Mobile",
+            name: session.user.name || "Customer",
+            phone: p10,
+            street: "Primary Account Mobile",
+            city: "India",
+            pincode: "000000",
+          },
+        },
+      },
+      { upsert: true }
+    );
+
+    // Sync all matching past orders with this user account
+    if (session.user.id) {
+      await Order.updateMany(
+        {
+          $or: [
+            { userPhone: { $regex: p10 } },
+            { "shippingAddress.phone": { $regex: p10 } },
+          ],
+        },
+        { $set: { userId: session.user.id } }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: `Mobile number ${p10} linked and order history synchronized!`,
+    });
+  } catch (error: unknown) {
+    console.error("Error linking mobile to user profile:", error);
+    const errMsg = error instanceof Error ? error.message : "Error linking mobile number";
+    return NextResponse.json({ success: false, error: errMsg }, { status: 500 });
   }
 }

@@ -56,8 +56,9 @@ export async function GET(req: NextRequest) {
         shiprocketShipmentId: o.shiprocketShipmentId,
         shiprocketAwbCode: o.shiprocketAwbCode,
         shiprocketCourierName: o.shiprocketCourierName,
-        shiprocketStatus: o.shiprocketStatus,
-        shiprocketTrackingUrl: o.shiprocketTrackingUrl,
+        shiprocketTrackingUrl: o.shiprocketAwbCode
+          ? `https://shiprocket.co/tracking/${o.shiprocketAwbCode}`
+          : `/track-order?order=${encodeURIComponent(o.orderNumber)}`,
         shipmentError: o.shipmentError,
         weight: o.weight,
         dimensions: o.dimensions,

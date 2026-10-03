@@ -746,9 +746,7 @@ export async function createShiprocketOrder(order: IOrder): Promise<{
 
     const trackingUrl = awbCode
       ? `https://shiprocket.co/tracking/${awbCode}`
-      : shipmentId
-      ? `https://shiprocket.co/tracking/shipment/${shipmentId}`
-      : "";
+      : `/track-order?order=${encodeURIComponent(order.orderNumber)}`;
 
     return {
       success: true,

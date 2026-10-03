@@ -88,6 +88,34 @@ function AccountContent() {
     fetchOrders(clean);
   };
 
+  const handleLinkPhone = async () => {
+    const clean = phoneSearch.replace(/\D/g, "");
+    if (!clean || clean.length < 10) {
+      setPhoneSearchMessage("Please enter a valid 10-digit mobile number.");
+      return;
+    }
+    setIsLoadingOrders(true);
+    setPhoneSearchMessage(null);
+    try {
+      const res = await fetch("/api/user/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: clean }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setPhoneSearchMessage(`✅ ${data.message || "Mobile number linked! Orders synchronized."}`);
+        fetchOrders(clean);
+      } else {
+        setPhoneSearchMessage(`⚠️ ${data.error || "Failed to link mobile number"}`);
+      }
+    } catch {
+      setPhoneSearchMessage("⚠️ Network error linking mobile number.");
+    } finally {
+      setIsLoadingOrders(false);
+    }
+  };
+
   const handleGoogleLogin = () => {
     signIn("google", { callbackUrl: "/account" });
   };
@@ -112,7 +140,7 @@ function AccountContent() {
         <div className="container">
           <h1 className={styles.bannerTitle}>My Account</h1>
           <p className={styles.bannerSubtitle}>
-            {session?.user ? `Welcome back, ${session.user.name}!` : "Sign in to track orders and manage your profile."}
+            {session?.user ? `Welcome back, ${session.user.name}!` : "Sign in or track your orders by mobile number."}
           </p>
         </div>
       </div>
@@ -127,13 +155,13 @@ function AccountContent() {
                 <span className={styles.logoStore}>STORE</span>
               </div>
               <h2>Access Your Dashboard</h2>
-              <p>Track order shipments, view order history, and sync your favorite items instantly.</p>
+              <p>Track order shipments, view order history, and manage your account.</p>
               
               {authError && (
                 <div className={styles.authErrorBox}>
                   <strong>Authentication Notice:</strong>{" "}
                   {authError === "Configuration"
-                    ? "Google OAuth environment variables (GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET) or callback URL may be misconfigured in Google Cloud Console."
+                    ? "Google OAuth environment variables or callback URL may be misconfigured."
                     : authError === "AccessDenied"
                     ? "Access was denied or canceled during Google Sign-In. Please try again."
                     : `Authentication issue encountered: ${authError}. Please try again.`}
@@ -151,12 +179,12 @@ function AccountContent() {
               </button>
 
               <div style={{ marginTop: "24px", paddingTop: "20px", borderTop: "1px solid #e2e8f0", textAlign: "left" }}>
-                <h3 style={{ fontSize: "14.5px", margin: "0 0 6px 0", color: "#0f172a" }}>Track Order by Mobile Number</h3>
-                <p style={{ fontSize: "12px", color: "#64748b", margin: "0 0 10px 0" }}>Placed an order without Google Login? Enter your mobile number to view details.</p>
+                <h3 style={{ fontSize: "14.5px", margin: "0 0 6px 0", color: "#0f172a" }}>Instant Track by Mobile Number or Order ID</h3>
+                <p style={{ fontSize: "12px", color: "#64748b", margin: "0 0 10px 0" }}>Placed an order using your phone number? Enter it below to see live delivery status.</p>
                 <form onSubmit={handlePhoneSearchSubmit} style={{ display: "flex", gap: "8px" }}>
                   <input
-                    type="tel"
-                    placeholder="10-digit Mobile No."
+                    type="text"
+                    placeholder="Mobile No. or Order ID"
                     value={phoneSearch}
                     onChange={(e) => setPhoneSearch(e.target.value)}
                     style={{
@@ -183,7 +211,7 @@ function AccountContent() {
                       whiteSpace: "nowrap",
                     }}
                   >
-                    {isLoadingOrders ? "Searching..." : "Track Order"}
+                    {isLoadingOrders ? "Searching..." : "Track Orders"}
                   </button>
                 </form>
                 {phoneSearchMessage && (
@@ -195,7 +223,7 @@ function AccountContent() {
 
               {orders.length > 0 && (
                 <div style={{ marginTop: "20px", textAlign: "left" }}>
-                  <h4 style={{ margin: "0 0 10px 0", color: "#0f172a" }}>Your Orders ({orders.length})</h4>
+                  <h4 style={{ margin: "0 0 10px 0", color: "#0f172a" }}>Found Orders ({orders.length})</h4>
                   <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                     {orders.map((ord) => (
                       <div key={ord.id} style={{ padding: "12px", borderRadius: "8px", background: "#f8fafc", border: "1px solid #e2e8f0" }}>
@@ -211,16 +239,13 @@ function AccountContent() {
                             AWB: {ord.shiprocketAwbCode} ({ord.shiprocketCourierName || "Shiprocket"})
                           </div>
                         )}
-                        {ord.shiprocketTrackingUrl && (
-                          <a
-                            href={ord.shiprocketTrackingUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            style={{ fontSize: "11.5px", color: "#0284c7", fontWeight: "700", textDecoration: "underline", display: "inline-block", marginTop: "4px" }}
-                          >
-                            Live Tracking Link →
-                          </a>
-                        )}
+                        <Link
+                          href={ord.shiprocketAwbCode ? `https://shiprocket.co/tracking/${ord.shiprocketAwbCode}` : `/track-order?order=${encodeURIComponent(ord.orderNumber || ord.id)}`}
+                          target={ord.shiprocketAwbCode ? "_blank" : "_self"}
+                          style={{ fontSize: "11.5px", color: "#0284c7", fontWeight: "700", textDecoration: "underline", display: "inline-block", marginTop: "6px" }}
+                        >
+                          Live Tracking Link →
+                        </Link>
                       </div>
                     ))}
                   </div>
@@ -293,7 +318,7 @@ function AccountContent() {
                   </div>
 
                   <div className={styles.profileSummary}>
-                    <h3>Personal Information</h3>
+                    <h3>Personal Information & Order Synchronization</h3>
                     <div className={styles.profileDetailsRow}>
                       <div className={styles.profileDetail}>
                         <strong>Name:</strong>
@@ -307,6 +332,54 @@ function AccountContent() {
                         <strong>Registered Platform:</strong>
                         <span>Google Sign-In</span>
                       </div>
+                    </div>
+
+                    {/* Mobile Number Order Sync Card */}
+                    <div style={{ marginTop: "18px", padding: "16px", borderRadius: "10px", background: "#f0f9ff", border: "1.5px solid #bae6fd" }}>
+                      <h4 style={{ margin: "0 0 6px 0", color: "#0369a1", fontSize: "14px" }}>📱 Synchronize Orders Placed by Mobile Number</h4>
+                      <p style={{ margin: "0 0 12px 0", fontSize: "12.5px", color: "#334155" }}>
+                        Placed an order using your phone number during checkout? Enter your 10-digit mobile number below to link and display all your orders here automatically.
+                      </p>
+                      <div style={{ display: "flex", gap: "8px", maxWidth: "420px" }}>
+                        <input
+                          type="tel"
+                          placeholder="Enter 10-digit Mobile No."
+                          value={phoneSearch}
+                          onChange={(e) => setPhoneSearch(e.target.value)}
+                          style={{
+                            flex: 1,
+                            padding: "8px 12px",
+                            borderRadius: "6px",
+                            border: "1px solid #cbd5e1",
+                            fontSize: "13px",
+                            outline: "none",
+                            background: "#ffffff",
+                          }}
+                        />
+                        <button
+                          type="button"
+                          onClick={handleLinkPhone}
+                          disabled={isLoadingOrders}
+                          style={{
+                            background: "#0284c7",
+                            color: "#ffffff",
+                            border: "none",
+                            padding: "8px 16px",
+                            borderRadius: "6px",
+                            fontSize: "12.5px",
+                            fontWeight: "700",
+                            cursor: "pointer",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {isLoadingOrders ? "Syncing..." : "Sync Orders"}
+                        </button>
+                      </div>
+                      {phoneSearchMessage && (
+                        <div style={{ marginTop: "10px", fontSize: "12.5px", fontWeight: "600", color: phoneSearchMessage.startsWith("✅") ? "#15803d" : "#b91c1c" }}>
+                          {phoneSearchMessage}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -409,39 +482,28 @@ function AccountContent() {
                               </td>
                               <td className={styles.orderTotal}>₹{order.total.toLocaleString("en-IN")}</td>
                               <td>
-                                {order.shiprocketAwbCode || order.shiprocketTrackingUrl ? (
-                                  <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                                    <span style={{ fontSize: "12px", color: "#0f172a", fontWeight: "700" }}>
-                                      {order.shiprocketCourierName || "Shiprocket Express"}
-                                    </span>
-                                    {order.shiprocketAwbCode && (
-                                      <span style={{ fontSize: "11px", color: "#64748b" }}>
-                                        AWB: {order.shiprocketAwbCode}
-                                      </span>
-                                    )}
-                                    {order.shiprocketTrackingUrl && (
-                                      <a
-                                        href={order.shiprocketTrackingUrl}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        style={{
-                                          fontSize: "11.5px",
-                                          color: "#0284c7",
-                                          fontWeight: "750",
-                                          textDecoration: "underline",
-                                        }}
-                                      >
-                                        Track Package ↗
-                                      </a>
-                                    )}
-                                  </div>
-                                ) : (
-                                  <span style={{ fontSize: "12px", color: "#94a3b8" }}>
-                                    {order.shiprocketStatus === "pending_shipment"
-                                      ? "In Logistics Queue"
-                                      : order.shiprocketStatus || "Processing"}
+                                <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                                  <span style={{ fontSize: "12px", color: "#0f172a", fontWeight: "700" }}>
+                                    {order.shiprocketCourierName || (order.shiprocketStatus ? "Shiprocket Logistics" : "Processing")}
                                   </span>
-                                )}
+                                  {order.shiprocketAwbCode && (
+                                    <span style={{ fontSize: "11px", color: "#64748b" }}>
+                                      AWB: {order.shiprocketAwbCode}
+                                    </span>
+                                  )}
+                                  <Link
+                                    href={order.shiprocketAwbCode ? `https://shiprocket.co/tracking/${order.shiprocketAwbCode}` : `/track-order?order=${encodeURIComponent(order.orderNumber || order.id)}`}
+                                    target={order.shiprocketAwbCode ? "_blank" : "_self"}
+                                    style={{
+                                      fontSize: "11.5px",
+                                      color: "#0284c7",
+                                      fontWeight: "750",
+                                      textDecoration: "underline",
+                                    }}
+                                  >
+                                    Track Package ↗
+                                  </Link>
+                                </div>
                               </td>
                               <td>
                                 <span className={`${styles.statusBadge} ${order.status === "Delivered" ? styles.statusDelivered : styles.statusShipped}`}>
