@@ -63,8 +63,10 @@ function TrackOrderContent() {
     setError(null);
     try {
       // 1. Fetch order details from user/orders
-      const isPhone = /^\d{10,12}$/.test(q.replace(/\D/g, ""));
-      const param = isPhone ? `phone=${encodeURIComponent(q)}` : `orderNumber=${encodeURIComponent(q)}`;
+      const hasLetters = /[a-zA-Z]/.test(q);
+      const cleanDigits = q.replace(/\D/g, "");
+      const isPhone = !hasLetters && cleanDigits.length >= 10 && cleanDigits.length <= 13;
+      const param = isPhone ? `phone=${encodeURIComponent(cleanDigits)}` : `orderNumber=${encodeURIComponent(q)}`;
       const orderRes = await fetch(`/api/user/orders?${param}&_t=${Date.now()}`);
       const orderJson = await orderRes.json();
 
