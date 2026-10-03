@@ -438,7 +438,34 @@ export async function createShiprocketOrder(order: IOrder): Promise<{
       }
     }
 
-    const data: ShiprocketOrderResponse = await res.json();
+    let data = await res.json().catch(() => ({}));
+
+    // If order already exists in Shiprocket, look up existing order details
+    if (!res.ok) {
+      const errMsg = (data.message || (data.errors ? (typeof data.errors === "string" ? data.errors : JSON.stringify(data.errors)) : "")).toLowerCase();
+      if (errMsg.includes("already exist") || errMsg.includes("duplicate") || res.status === 422) {
+        try {
+          const showRes = await fetch(`https://apiv2.shiprocket.in/v1/external/orders?search=${encodeURIComponent(order.orderNumber)}`, {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Accept: "application/json",
+              Authorization: `Bearer ${authResult.token}`,
+            },
+          });
+          if (showRes.ok) {
+            const showData = await showRes.json();
+            const existing = showData.data?.[0];
+            if (existing) {
+              data = existing;
+              res = { ok: true, status: 200 } as Response;
+            }
+          }
+        } catch {
+          // continue with original error
+        }
+      }
+    }
 
     if (!res.ok) {
       console.error("[Shiprocket] Order creation error response:", data);
@@ -451,11 +478,38 @@ export async function createShiprocketOrder(order: IOrder): Promise<{
       };
     }
 
-    const shiprocketOrderId = data.order_id ? String(data.order_id) : undefined;
-    const shipmentId = data.shipment_id ? String(data.shipment_id) : undefined;
-    const awbCode = data.awb_code ? String(data.awb_code) : undefined;
-    const courierName = data.courier_name || undefined;
-    const status = data.status || "NEW";
+    let shiprocketOrderId = String(data.order_id || data.id || data.data?.id || data.data?.order_id || "");
+    let shipmentId = String(data.shipment_id || data.shipments?.[0]?.id || data.data?.shipments?.[0]?.id || "");
+    let awbCode = String(data.awb_code || data.awb || data.shipments?.[0]?.awb || data.data?.shipments?.[0]?.awb || "");
+    let courierName = data.courier_name || data.shipments?.[0]?.courier_name || data.data?.shipments?.[0]?.courier_name || "";
+    let status = data.status || data.data?.status || "NEW";
+
+    // If shipmentId is present but AWB is not yet assigned, attempt automatic AWB assignment
+    if (shipmentId && !awbCode && authResult.token) {
+      try {
+        const awbRes = await fetch("https://apiv2.shiprocket.in/v1/external/courier/assign/awb", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            Authorization: `Bearer ${authResult.token}`,
+          },
+          body: JSON.stringify({ shipment_id: Number(shipmentId) || shipmentId }),
+        });
+        if (awbRes.ok) {
+          const awbData = await awbRes.json();
+          const awbObj = awbData.response?.data || awbData.data || awbData;
+          if (awbObj?.awb_code) {
+            awbCode = String(awbObj.awb_code);
+            courierName = awbObj.courier_name || courierName;
+            status = "AWB_ASSIGNED";
+          }
+        }
+      } catch {
+        // AWB assignment can be completed later by admin in Shiprocket dashboard
+      }
+    }
+
     const trackingUrl = awbCode
       ? `https://shiprocket.co/tracking/${awbCode}`
       : shipmentId
@@ -464,12 +518,12 @@ export async function createShiprocketOrder(order: IOrder): Promise<{
 
     return {
       success: true,
-      shiprocketOrderId,
-      shipmentId,
-      awbCode,
-      courierName,
-      status,
-      trackingUrl,
+      shiprocketOrderId: shiprocketOrderId || undefined,
+      shipmentId: shipmentId || undefined,
+      awbCode: awbCode || undefined,
+      courierName: courierName || undefined,
+      status: status || "NEW",
+      trackingUrl: trackingUrl || undefined,
     };
   } catch (error) {
     console.error("[Shiprocket] Network or parsing error during order creation:", error);
