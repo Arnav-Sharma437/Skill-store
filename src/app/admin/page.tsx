@@ -83,6 +83,12 @@ export interface IProduct {
   sizes?: string[];
   styles?: string[];
   variants?: IAdminVariant[];
+  sku?: string;
+  couponCode?: string;
+  couponDiscountType?: "percentage" | "flat";
+  couponDiscountValue?: number;
+  couponMinOrderAmount?: number;
+  couponIsActive?: boolean;
 }
 
 interface IEnquiry {
@@ -275,6 +281,11 @@ export default function AdminDashboard() {
     sizesText: "",
     stylesText: "",
     variants: [] as IAdminVariant[],
+    couponCode: "",
+    couponDiscountType: "flat" as "percentage" | "flat",
+    couponDiscountValue: "",
+    couponMinOrderAmount: "",
+    couponIsActive: true,
   });
 
 
@@ -802,6 +813,18 @@ export default function AdminDashboard() {
   };
 
   // --- Product CRUD Modals & Actions ---
+  const generateRandomCouponCode = () => {
+    const sku = (productForm.id || "PROD").replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
+    const randomSuffix = Math.random().toString(36).substring(2, 6).toUpperCase();
+    const generated = `${sku}_${randomSuffix}`;
+    setProductForm((prev) => ({
+      ...prev,
+      couponCode: generated,
+      couponDiscountValue: prev.couponDiscountValue || "100",
+      couponIsActive: true,
+    }));
+  };
+
   const openAddProductModal = () => {
     setEditingProduct(null);
     setUploadError(null);
@@ -826,6 +849,11 @@ export default function AdminDashboard() {
       sizesText: "",
       stylesText: "",
       variants: [],
+      couponCode: "",
+      couponDiscountType: "flat",
+      couponDiscountValue: "",
+      couponMinOrderAmount: "",
+      couponIsActive: true,
     });
     setIsProductModalOpen(true);
   };
@@ -866,6 +894,11 @@ export default function AdminDashboard() {
         inStock: v.inStock !== false,
         imageUrl: v.imageUrl || "",
       })) : [],
+      couponCode: prod.couponCode || "",
+      couponDiscountType: prod.couponDiscountType || "flat",
+      couponDiscountValue: prod.couponDiscountValue !== undefined && prod.couponDiscountValue > 0 ? prod.couponDiscountValue.toString() : "",
+      couponMinOrderAmount: prod.couponMinOrderAmount !== undefined && prod.couponMinOrderAmount > 0 ? prod.couponMinOrderAmount.toString() : "",
+      couponIsActive: prod.couponIsActive !== false,
     });
     setIsProductModalOpen(true);
   };
@@ -907,6 +940,11 @@ export default function AdminDashboard() {
         inStock: v.inStock !== false,
         imageUrl: (v.imageUrl || "").trim(),
       })).filter((v) => v.name || v.imageUrl || v.sku),
+      couponCode: productForm.couponCode.trim().toUpperCase(),
+      couponDiscountType: productForm.couponDiscountType,
+      couponDiscountValue: productForm.couponDiscountValue ? Number(productForm.couponDiscountValue) : 0,
+      couponMinOrderAmount: productForm.couponMinOrderAmount ? Number(productForm.couponMinOrderAmount) : 0,
+      couponIsActive: productForm.couponIsActive,
     };
 
     try {
@@ -2146,6 +2184,24 @@ export default function AdminDashboard() {
                                   <code style={{ background: "#f1f5f9", padding: "2px 6px", borderRadius: "4px", fontWeight: "700", color: "#1e293b" }}>
                                     {p.id}
                                   </code>
+                                  {p.couponCode && (
+                                    <div style={{ marginTop: "4px" }}>
+                                      <span style={{
+                                        fontSize: "10.5px",
+                                        background: p.couponIsActive !== false ? "#ecfdf5" : "#f1f5f9",
+                                        color: p.couponIsActive !== false ? "#065f46" : "#64748b",
+                                        border: `1px solid ${p.couponIsActive !== false ? "#a7f3d0" : "#cbd5e1"}`,
+                                        padding: "2px 6px",
+                                        borderRadius: "4px",
+                                        fontWeight: "750",
+                                        display: "inline-flex",
+                                        alignItems: "center",
+                                        gap: "3px"
+                                      }}>
+                                        🎟️ {p.couponCode} ({p.couponDiscountType === "percentage" ? `${p.couponDiscountValue}%` : `₹${p.couponDiscountValue}`})
+                                      </span>
+                                    </div>
+                                  )}
                                   {p.variants && p.variants.length > 0 && (
                                     <div style={{ marginTop: "4px" }}>
                                       <span style={{ fontSize: "10.5px", background: "#e0f2fe", color: "#0369a1", padding: "1px 6px", borderRadius: "4px", fontWeight: "750" }}>
@@ -3883,9 +3939,9 @@ export default function AdminDashboard() {
             )}
 
             <form onSubmit={handleProductSubmit} className={styles.form} style={{ gap: "14px" }}>
-              {/* 1. Essential Product Info */}
+              {/* 1. Essential Product Info & SKU Coupon */}
               <div className={styles.formSection}>
-                <div className={styles.sectionHeader}>1. Basic Details &amp; Categorization</div>
+                <div className={styles.sectionHeader}>1. Basic Details, SKU &amp; SKU-Locked Coupon</div>
                 <div className={styles.inputGrid3}>
                   <div className={styles.inputField}>
                     <label htmlFor="form-prod-id">Product SKU *</label>
@@ -3910,6 +3966,105 @@ export default function AdminDashboard() {
                       onChange={(e) => setProductForm({ ...productForm, title: e.target.value })}
                       required
                     />
+                  </div>
+                </div>
+
+                {/* SKU-Locked Product Coupon Management Sub-Panel */}
+                <div style={{
+                  marginTop: "12px",
+                  marginBottom: "12px",
+                  padding: "14px",
+                  background: "#f0fdf4",
+                  border: "1.5px dashed #86efac",
+                  borderRadius: "10px",
+                }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px", flexWrap: "wrap", gap: "8px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                      <span style={{ fontSize: "16px" }}>🎟️</span>
+                      <strong style={{ fontSize: "13.5px", color: "#166534" }}>SKU-Locked Discount Coupon (Admin Managed)</strong>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={generateRandomCouponCode}
+                      style={{
+                        background: "#16a34a",
+                        color: "#ffffff",
+                        border: "none",
+                        padding: "5px 12px",
+                        borderRadius: "6px",
+                        fontSize: "11.5px",
+                        fontWeight: "750",
+                        cursor: "pointer",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "4px",
+                      }}
+                    >
+                      ⚡ Auto-Generate Coupon Code
+                    </button>
+                  </div>
+                  
+                  <div style={{ fontSize: "12px", color: "#15803d", marginBottom: "12px", lineHeight: "1.4" }}>
+                    💡 <em>Coupons configured here apply <strong>strictly &amp; exclusively</strong> to this product SKU (<code>{productForm.id || "this product"}</code>). During checkout, the discount is calculated only on this product&apos;s quantity/price even with multiple items in the cart.</em>
+                  </div>
+
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "12px" }}>
+                    <div className={styles.inputField}>
+                      <label htmlFor="form-coupon-code" style={{ color: "#166534", fontWeight: "700" }}>Coupon Code</label>
+                      <input
+                        id="form-coupon-code"
+                        type="text"
+                        placeholder="e.g. HW2000_OFF"
+                        value={productForm.couponCode}
+                        onChange={(e) => setProductForm({ ...productForm, couponCode: e.target.value.toUpperCase() })}
+                        style={{ textTransform: "uppercase", fontWeight: "750", letterSpacing: "0.5px", background: "#ffffff" }}
+                      />
+                    </div>
+
+                    <div className={styles.inputField}>
+                      <label htmlFor="form-coupon-type" style={{ color: "#166534", fontWeight: "700" }}>Discount Type</label>
+                      <select
+                        id="form-coupon-type"
+                        value={productForm.couponDiscountType}
+                        onChange={(e) => setProductForm({ ...productForm, couponDiscountType: e.target.value as "percentage" | "flat" })}
+                        style={{ background: "#ffffff" }}
+                      >
+                        <option value="flat">Flat Discount (₹ Amount)</option>
+                        <option value="percentage">Percentage Discount (%)</option>
+                      </select>
+                    </div>
+
+                    <div className={styles.inputField}>
+                      <label htmlFor="form-coupon-val" style={{ color: "#166534", fontWeight: "700" }}>
+                        {productForm.couponDiscountType === "percentage" ? "Discount (%)" : "Discount Amount (₹)"}
+                      </label>
+                      <input
+                        id="form-coupon-val"
+                        type="number"
+                        placeholder={productForm.couponDiscountType === "percentage" ? "10" : "500"}
+                        value={productForm.couponDiscountValue}
+                        onChange={(e) => setProductForm({ ...productForm, couponDiscountValue: e.target.value })}
+                        min={0}
+                        max={productForm.couponDiscountType === "percentage" ? 100 : undefined}
+                        style={{ background: "#ffffff" }}
+                      />
+                    </div>
+
+                    <div className={styles.inputField}>
+                      <label htmlFor="form-coupon-active" style={{ color: "#166534", fontWeight: "700" }}>Coupon Status</label>
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px", height: "40px" }}>
+                        <input
+                          id="form-coupon-active"
+                          type="checkbox"
+                          checked={productForm.couponIsActive}
+                          onChange={(e) => setProductForm({ ...productForm, couponIsActive: e.target.checked })}
+                          style={{ width: "18px", height: "18px", accentColor: "#16a34a", cursor: "pointer" }}
+                        />
+                        <label htmlFor="form-coupon-active" style={{ fontSize: "13px", fontWeight: "700", color: productForm.couponIsActive ? "#16a34a" : "#94a3b8", cursor: "pointer" }}>
+                          {productForm.couponIsActive ? "Active & Redeemable" : "Disabled"}
+                        </label>
+                      </div>
+                    </div>
                   </div>
                 </div>
 

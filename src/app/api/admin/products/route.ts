@@ -109,7 +109,12 @@ export async function POST(req: NextRequest) {
       degrees,
       sizes,
       styles,
-      variants
+      variants,
+      couponCode,
+      couponDiscountType,
+      couponDiscountValue,
+      couponMinOrderAmount,
+      couponIsActive,
     } = body;
 
     if (!id || !title || !price || !imageUrl || !brand || !category) {
@@ -126,6 +131,7 @@ export async function POST(req: NextRequest) {
 
     const newProduct = await Product.create({
       id: id.trim(),
+      sku: id.trim(),
       title: title.trim(),
       price: Number(price),
       originalPrice: Number(originalPrice || price),
@@ -146,7 +152,12 @@ export async function POST(req: NextRequest) {
       degrees: Array.isArray(degrees) ? degrees.map((d: string) => String(d).trim()).filter(Boolean) : (typeof degrees === "string" ? degrees.split(",").map((d: string) => d.trim()).filter(Boolean) : []),
       sizes: Array.isArray(sizes) ? sizes.map((s: string) => String(s).trim()).filter(Boolean) : (typeof sizes === "string" ? sizes.split(",").map((s: string) => s.trim()).filter(Boolean) : []),
       styles: Array.isArray(styles) ? styles.map((st: string) => String(st).trim()).filter(Boolean) : (typeof styles === "string" ? styles.split(",").map((st: string) => st.trim()).filter(Boolean) : []),
-      variants: sanitizeVariants(variants)
+      variants: sanitizeVariants(variants),
+      couponCode: couponCode ? String(couponCode).trim().toUpperCase() : "",
+      couponDiscountType: couponDiscountType === "percentage" ? "percentage" : "flat",
+      couponDiscountValue: Number(couponDiscountValue || 0),
+      couponMinOrderAmount: Number(couponMinOrderAmount || 0),
+      couponIsActive: couponIsActive !== undefined ? Boolean(couponIsActive) : true,
     });
 
     return NextResponse.json({ success: true, data: newProduct });
@@ -182,7 +193,12 @@ export async function PUT(req: NextRequest) {
       degrees,
       sizes,
       styles,
-      variants
+      variants,
+      couponCode,
+      couponDiscountType,
+      couponDiscountValue,
+      couponMinOrderAmount,
+      couponIsActive,
     } = body;
 
     if (!id) {
@@ -228,6 +244,21 @@ export async function PUT(req: NextRequest) {
     }
     if (variants !== undefined) {
       updateFields.variants = sanitizeVariants(variants);
+    }
+    if (couponCode !== undefined) {
+      updateFields.couponCode = couponCode ? String(couponCode).trim().toUpperCase() : "";
+    }
+    if (couponDiscountType !== undefined) {
+      updateFields.couponDiscountType = couponDiscountType === "percentage" ? "percentage" : "flat";
+    }
+    if (couponDiscountValue !== undefined) {
+      updateFields.couponDiscountValue = Number(couponDiscountValue || 0);
+    }
+    if (couponMinOrderAmount !== undefined) {
+      updateFields.couponMinOrderAmount = Number(couponMinOrderAmount || 0);
+    }
+    if (couponIsActive !== undefined) {
+      updateFields.couponIsActive = Boolean(couponIsActive);
     }
 
 

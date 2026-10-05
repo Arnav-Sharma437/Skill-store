@@ -17,6 +17,7 @@ export async function POST(req: NextRequest) {
       customerDetails,
       shippingAddress,
       receipt,
+      couponCode,
     } = body;
 
     if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
@@ -64,8 +65,8 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // 3. Recalculate verified items & totals securely
-    const verifiedOrder = await calculateVerifiedOrder(items);
+    // 3. Recalculate verified items & totals securely with coupon
+    const verifiedOrder = await calculateVerifiedOrder(items, couponCode);
 
     // 4. Resolve session & user details
     const session = await getServerSession(authOptions);
@@ -104,6 +105,9 @@ export async function POST(req: NextRequest) {
       subtotal: verifiedOrder.subtotal,
       gst: verifiedOrder.gst,
       shipping: verifiedOrder.shipping,
+      couponCode: verifiedOrder.couponCode || undefined,
+      couponDiscount: verifiedOrder.couponDiscount || 0,
+      couponAppliedProductId: verifiedOrder.couponAppliedProductId || undefined,
       grandTotal: verifiedOrder.grandTotal,
       currency: "INR",
       paymentStatus: "paid",

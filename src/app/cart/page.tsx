@@ -43,6 +43,20 @@ export default function CartPage() {
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [orderSuccess, setOrderSuccess] = useState<OrderSuccessDetails | null>(null);
 
+  // Coupon State
+  const [couponInput, setCouponInput] = useState("");
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [couponError, setCouponError] = useState<string | null>(null);
+  const [couponSuccess, setCouponSuccess] = useState<string | null>(null);
+  const [appliedCoupon, setAppliedCoupon] = useState<{
+    code: string;
+    discount: number;
+    discountType: "percentage" | "flat";
+    discountValue: number;
+    matchingProductId: string;
+    matchingProductTitle: string;
+  } | null>(null);
+
   // Delivery & Shipping Address State
   const [shippingAddress, setShippingAddress] = useState({
     name: "",
@@ -93,9 +107,100 @@ export default function CartPage() {
     };
   }, [session]);
 
+  // Recalculate or invalidate applied coupon when cart items change
+  useEffect(() => {
+    if (!appliedCoupon) return;
+
+    const matchingItem = cart.find(
+      (item) => (item.productId || item.id).toLowerCase() === appliedCoupon.matchingProductId.toLowerCase()
+    );
+
+    if (!matchingItem) {
+      setAppliedCoupon(null);
+      setCouponSuccess(null);
+      setCouponError(
+        `Coupon "${appliedCoupon.code}" was removed because "${appliedCoupon.matchingProductTitle}" is no longer in the cart.`
+      );
+      return;
+    }
+
+    // Recalculate discount based on updated quantity
+    const itemSubtotal = matchingItem.price * matchingItem.quantity;
+    let newDiscount = 0;
+    if (appliedCoupon.discountType === "percentage") {
+      newDiscount = Math.round(itemSubtotal * (appliedCoupon.discountValue / 100));
+    } else {
+      newDiscount = Math.min(appliedCoupon.discountValue, itemSubtotal);
+    }
+    newDiscount = Math.max(0, Math.min(newDiscount, itemSubtotal));
+
+    if (newDiscount !== appliedCoupon.discount) {
+      setAppliedCoupon((prev) => (prev ? { ...prev, discount: newDiscount } : null));
+    }
+  }, [cart, appliedCoupon]);
+
+  const handleApplyCoupon = async () => {
+    const code = couponInput.trim().toUpperCase();
+    if (!code) {
+      setCouponError("Please enter a coupon code.");
+      return;
+    }
+    if (cart.length === 0) {
+      setCouponError("Your cart is empty.");
+      return;
+    }
+
+    setCouponLoading(true);
+    setCouponError(null);
+    setCouponSuccess(null);
+
+    try {
+      const res = await fetch("/api/coupon/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          couponCode: code,
+          items: cart.map((item) => ({
+            id: item.productId || item.id,
+            quantity: item.quantity,
+            price: item.price,
+            title: item.title,
+          })),
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setAppliedCoupon({
+          code: data.couponCode,
+          discount: data.discountAmount,
+          discountType: data.discountType,
+          discountValue: data.discountValue,
+          matchingProductId: data.appliedProductId,
+          matchingProductTitle: data.appliedProductTitle,
+        });
+        setCouponSuccess(data.message || `Coupon "${data.couponCode}" applied successfully!`);
+        setCouponInput("");
+      } else {
+        setCouponError(data.error || "Invalid or inactive coupon code.");
+      }
+    } catch {
+      setCouponError("Network error while validating coupon. Please try again.");
+    } finally {
+      setCouponLoading(false);
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponSuccess(null);
+    setCouponError(null);
+  };
+
   const subtotal = cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
+  const discountAmount = appliedCoupon ? appliedCoupon.discount : 0;
   const gst = 0; // Tax is already included in all product prices
-  const grandTotal = subtotal;
+  const grandTotal = Math.max(0, subtotal - discountAmount);
 
   // Load Razorpay Standard Checkout SDK
   const loadRazorpayScript = () => {
@@ -177,6 +282,7 @@ export default function CartPage() {
           price: item.price,
           selectedVariant: item.selectedVariant,
         })),
+        couponCode: appliedCoupon?.code || undefined,
         customerDetails: {
           name: shippingAddress.name.trim() || session?.user?.name || "",
           email: cleanEmail,
@@ -234,6 +340,7 @@ export default function CartPage() {
                 razorpay_order_id: response.razorpay_order_id,
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature: response.razorpay_signature,
+                couponCode: appliedCoupon?.code || undefined,
                 items: cart.map((item) => ({
                   id: item.id,
                   quantity: item.quantity,
@@ -616,6 +723,13 @@ export default function CartPage() {
                     <span>Rs. {subtotal.toLocaleString("en-IN")}.00</span>
                   </div>
 
+                  {appliedCoupon && appliedCoupon.discount > 0 && (
+                    <div className={styles.summaryRow} style={{ color: "#16a34a" }}>
+                      <span>Coupon Discount ({appliedCoupon.code})</span>
+                      <span style={{ fontWeight: "700" }}>- Rs. {appliedCoupon.discount.toLocaleString("en-IN")}.00</span>
+                    </div>
+                  )}
+
                   <div className={styles.summaryRow}>
                     <span>Taxes &amp; GST</span>
                     <span style={{ color: "#16a34a", fontWeight: "700" }}>Included (₹0.00 extra)</span>
@@ -624,6 +738,66 @@ export default function CartPage() {
                   <div className={styles.summaryRow}>
                     <span>Express Shipping</span>
                     <span className={styles.freeShipping}>FREE</span>
+                  </div>
+
+                  {/* Coupon Code Section */}
+                  <div className={styles.couponBox}>
+                    <div className={styles.couponTitle}>
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+                        <line x1="7" y1="7" x2="7.01" y2="7"></line>
+                      </svg>
+                      <span>HAVE A PRODUCT COUPON?</span>
+                    </div>
+
+                    {appliedCoupon ? (
+                      <div className={styles.appliedCouponTag}>
+                        <div className={styles.appliedCouponInfo}>
+                          <div className={styles.appliedCouponCode}>
+                            <span>🎟️ {appliedCoupon.code}</span>
+                            <span>(-₹{appliedCoupon.discount.toLocaleString("en-IN")})</span>
+                          </div>
+                          <div className={styles.appliedCouponDesc}>
+                            Applied on {appliedCoupon.matchingProductTitle}
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleRemoveCoupon}
+                          className={styles.removeCouponBtn}
+                          title="Remove Coupon"
+                        >
+                          ✕ Remove
+                        </button>
+                      </div>
+                    ) : (
+                      <div className={styles.couponInputRow}>
+                        <input
+                          type="text"
+                          placeholder="ENTER COUPON CODE"
+                          value={couponInput}
+                          onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              handleApplyCoupon();
+                            }
+                          }}
+                          className={styles.couponInput}
+                        />
+                        <button
+                          type="button"
+                          onClick={handleApplyCoupon}
+                          disabled={couponLoading || !couponInput.trim()}
+                          className={styles.couponApplyBtn}
+                        >
+                          {couponLoading ? "..." : "APPLY"}
+                        </button>
+                      </div>
+                    )}
+
+                    {couponSuccess && <div className={styles.couponSuccessMsg}>✓ {couponSuccess}</div>}
+                    {couponError && <div className={styles.couponErrorMsg}>⚠️ {couponError}</div>}
                   </div>
 
                   <div className={styles.summaryDivider}></div>

@@ -23,6 +23,9 @@ export interface VerifiedOrderCalculation {
   subtotal: number;
   gst: number;
   shipping: number;
+  couponCode?: string;
+  couponDiscount: number;
+  couponAppliedProductId?: string;
   grandTotal: number;
   amountInPaise: number;
 }
@@ -45,10 +48,11 @@ export function getRazorpayClient() {
 
 /**
  * Validates and recalculates product prices strictly on the server-side.
- * Never trusts prices provided by the client-side cart.
+ * Accurately applies SKU-locked coupon discounts to matching products.
  */
 export async function calculateVerifiedOrder(
-  cartItems: CheckoutItemInput[]
+  cartItems: CheckoutItemInput[],
+  couponCode?: string
 ): Promise<VerifiedOrderCalculation> {
   if (!cartItems || !Array.isArray(cartItems) || cartItems.length === 0) {
     throw new Error("Cart is empty or invalid items provided.");
@@ -122,11 +126,50 @@ export async function calculateVerifiedOrder(
     });
   }
 
+  // 4. Validate and calculate SKU-locked Coupon Discount
+  let couponDiscount = 0;
+  let cleanCouponCode = "";
+  let couponAppliedProductId = "";
+
+  if (couponCode && typeof couponCode === "string" && couponCode.trim()) {
+    cleanCouponCode = couponCode.trim().toUpperCase();
+    try {
+      const dbCouponProduct = (await Product.findOne({
+        couponCode: { $regex: new RegExp(`^${cleanCouponCode}$`, "i") },
+        couponIsActive: { $ne: false },
+      }).lean()) as {
+        id?: string;
+        title?: string;
+        couponDiscountType?: "percentage" | "flat";
+        couponDiscountValue?: number;
+      } | null;
+
+      if (dbCouponProduct && dbCouponProduct.id) {
+        // Find matching item in cart
+        const matchingItem = verifiedItems.find(
+          (it) => it.productId.toLowerCase() === dbCouponProduct.id?.toLowerCase()
+        );
+
+        if (matchingItem) {
+          couponAppliedProductId = dbCouponProduct.id;
+          const discVal = Number(dbCouponProduct.couponDiscountValue) || 0;
+          if (dbCouponProduct.couponDiscountType === "percentage") {
+            couponDiscount = Math.round((matchingItem.price * matchingItem.quantity) * (discVal / 100));
+          } else {
+            couponDiscount = Math.min(discVal, matchingItem.price * matchingItem.quantity);
+          }
+        }
+      }
+    } catch (couponErr) {
+      console.warn("Coupon verification error:", couponErr);
+    }
+  }
+
   // Consistent tax & grand total calculation
   // All product prices are already inclusive of GST/taxes and shipping is Free
   const gst = 0;
   const shipping = 0;
-  const grandTotal = subtotal + shipping;
+  const grandTotal = Math.max(1, subtotal - couponDiscount + shipping);
   const amountInPaise = Math.round(grandTotal * 100);
 
   return {
@@ -134,6 +177,9 @@ export async function calculateVerifiedOrder(
     subtotal,
     gst,
     shipping,
+    couponCode: couponDiscount > 0 ? cleanCouponCode : undefined,
+    couponDiscount,
+    couponAppliedProductId: couponDiscount > 0 ? couponAppliedProductId : undefined,
     grandTotal,
     amountInPaise,
   };

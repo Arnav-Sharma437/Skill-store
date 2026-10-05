@@ -37,6 +37,9 @@ export interface IOrder extends Document {
   shipping: number;
   grandTotal: number;
   currency: string;
+  couponCode?: string;
+  couponDiscount?: number;
+  couponAppliedProductId?: string;
   paymentStatus: "paid" | "failed" | "pending";
   orderStatus: "processing" | "confirmed" | "shipped" | "delivered" | "cancelled";
   paymentMethod: string;
@@ -148,6 +151,18 @@ const OrderSchema = new Schema<IOrder>(
     currency: {
       type: String,
       default: "INR",
+    },
+    couponCode: {
+      type: String,
+      default: "",
+    },
+    couponDiscount: {
+      type: Number,
+      default: 0,
+    },
+    couponAppliedProductId: {
+      type: String,
+      default: "",
     },
     paymentStatus: {
       type: String,

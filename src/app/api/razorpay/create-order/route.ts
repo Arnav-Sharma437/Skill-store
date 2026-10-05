@@ -6,7 +6,7 @@ import { getRazorpayClient, calculateVerifiedOrder } from "@/lib/razorpay";
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { items, customerDetails, shippingAddress } = body;
+    const { items, customerDetails, shippingAddress, couponCode } = body;
 
     if (!items || !Array.isArray(items) || items.length === 0) {
       return NextResponse.json(
@@ -18,13 +18,13 @@ export async function POST(req: NextRequest) {
     // Authenticate session if user is logged in
     const session = await getServerSession(authOptions);
     const userId = session?.user?.id || null;
-    const userEmail = (session?.user?.email || customerDetails?.email || "support.skillstore@gmail.com")
+    const userEmail = (session?.user?.email || customerDetails?.email || "customer@skillstore.in")
       .toLowerCase()
       .trim();
     const userName = session?.user?.name || customerDetails?.name || "Skill Store Customer";
 
-    // 1. Calculate strictly verified prices on server-side (never trusts client price)
-    const verifiedOrder = await calculateVerifiedOrder(items);
+    // 1. Calculate strictly verified prices on server-side (never trusts client price) with coupon
+    const verifiedOrder = await calculateVerifiedOrder(items, couponCode);
 
     if (verifiedOrder.amountInPaise <= 0) {
       return NextResponse.json(
@@ -46,6 +46,8 @@ export async function POST(req: NextRequest) {
         userId: userId || "guest",
         userEmail,
         userName,
+        couponCode: verifiedOrder.couponCode || "",
+        couponDiscount: String(verifiedOrder.couponDiscount || 0),
         itemCount: String(verifiedOrder.items.length),
         city: shippingAddress?.city || "",
         pincode: shippingAddress?.pincode || "",
@@ -63,6 +65,9 @@ export async function POST(req: NextRequest) {
       keyId,
       subtotal: verifiedOrder.subtotal,
       gst: verifiedOrder.gst,
+      couponCode: verifiedOrder.couponCode,
+      couponDiscount: verifiedOrder.couponDiscount,
+      couponAppliedProductId: verifiedOrder.couponAppliedProductId,
       grandTotal: verifiedOrder.grandTotal,
       customer: {
         name: userName,

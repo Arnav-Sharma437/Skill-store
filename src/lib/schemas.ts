@@ -39,6 +39,12 @@ export interface IProduct extends Document {
   sizes?: string[];
   styles?: string[];
   variants?: IProductVariant[];
+  sku?: string;
+  couponCode?: string;
+  couponDiscountType?: "percentage" | "flat";
+  couponDiscountValue?: number;
+  couponMinOrderAmount?: number;
+  couponIsActive?: boolean;
 }
 
 const ProductVariantSchema: Schema = new Schema(
@@ -61,6 +67,7 @@ const ProductVariantSchema: Schema = new Schema(
 const ProductSchema: Schema = new Schema(
   {
     id: { type: String, required: true, unique: true },
+    sku: { type: String, default: "" },
     title: { type: String, required: true },
     price: { type: Number, required: true },
     originalPrice: { type: Number, required: true },
@@ -82,6 +89,11 @@ const ProductSchema: Schema = new Schema(
     sizes: { type: [String], default: [] },
     styles: { type: [String], default: [] },
     variants: { type: [ProductVariantSchema], default: [] },
+    couponCode: { type: String, default: "" },
+    couponDiscountType: { type: String, enum: ["percentage", "flat"], default: "flat" },
+    couponDiscountValue: { type: Number, default: 0 },
+    couponMinOrderAmount: { type: Number, default: 0 },
+    couponIsActive: { type: Boolean, default: true },
   },
   { timestamps: true }
 );
