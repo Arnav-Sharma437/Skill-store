@@ -9,6 +9,8 @@ import Header from "@/components/home/Header";
 import Footer from "@/components/home/Footer";
 import { useApp } from "@/context/AppContext";
 import { optimizeProductDetail, optimizeGalleryThumbnail, optimizeProductCard } from "@/lib/imageOptimization";
+import { getProductById, getAllCatalogProducts } from "@/data/categories";
+import { HOME_PRODUCTS } from "@/data/home";
 import styles from "./ProductPage.module.css";
 
 interface ReviewItem {
@@ -141,92 +143,24 @@ export default function ProductPage({ params }: PageProps) {
     comment: "",
   });
 
-  // Fetch live product & reviews from MongoDB
+  // Fetch live product & reviews from MongoDB with static catalog fallback
   useEffect(() => {
     let isMounted = true;
     async function loadData() {
+      const cleanId = decodeURIComponent(id || "").trim();
+      let foundData: Record<string, unknown> | null = null;
+
       try {
         const [prodRes, revRes] = await Promise.all([
-          fetch(`/api/products/${encodeURIComponent(id)}`),
-          fetch(`/api/reviews?productId=${encodeURIComponent(id)}`),
+          fetch(`/api/products/${encodeURIComponent(cleanId)}`),
+          fetch(`/api/reviews?productId=${encodeURIComponent(cleanId)}`),
         ]);
 
         if (prodRes.ok) {
           const json = await prodRes.json();
           if (json.success && json.data) {
-            const d = json.data;
-            const normalized: ProductData = {
-              id: d.id,
-              title: d.title,
-              price: d.price,
-              originalPrice: d.originalPrice || d.price,
-              imageUrl: d.imageUrl,
-              videoUrl: d.videoUrl || "",
-              gallery: Array.isArray(d.gallery) ? d.gallery : [],
-              rating: d.rating || 5,
-              ratingCount: d.ratingCount || 0,
-              brand: d.brand ? d.brand.toUpperCase() : "TUQO",
-              category: d.category || "high-pressure-washer",
-              categorySlug: d.category ? d.category.toLowerCase().replace(/\s+/g, "-") : "high-pressure-washer",
-              categoryName: d.category ? d.category.toUpperCase() : "MACHINERY",
-              subCategory: d.subCategory || "domestic",
-              description: d.description || [],
-              specifications: d.specifications || [],
-              whatsInBox: d.whatsInBox || [],
-              inStock: d.inStock !== false,
-              degrees: Array.isArray(d.degrees) ? d.degrees : [],
-              sizes: Array.isArray(d.sizes) ? d.sizes : [],
-              styles: Array.isArray(d.styles) ? d.styles : [],
-              variants: Array.isArray(d.variants) ? d.variants : [],
-            };
-
-            if (isMounted) {
-              setProduct(normalized);
-              let initialImage = normalized.imageUrl;
-
-              if (normalized.degrees && normalized.degrees.length > 0) {
-                const d0 = normalized.degrees[0];
-                setSelectedDegree(d0);
-                const matchedV = normalized.variants?.find((v) => (v.name && v.name.toLowerCase() === d0.toLowerCase()) || (v.degree && v.degree.toLowerCase() === d0.toLowerCase()));
-                if (matchedV?.imageUrl) initialImage = matchedV.imageUrl;
-              }
-              if (normalized.sizes && normalized.sizes.length > 0) {
-                const s0 = normalized.sizes[0];
-                setSelectedSize(s0);
-                const matchedV = normalized.variants?.find((v) => (v.name && v.name.toLowerCase() === s0.toLowerCase()) || (v.size && v.size.toLowerCase() === s0.toLowerCase()));
-                if (matchedV?.imageUrl) initialImage = matchedV.imageUrl;
-              }
-              if (normalized.styles && normalized.styles.length > 0) {
-                const st0 = normalized.styles[0];
-                setSelectedStyle(st0);
-                const matchedV = normalized.variants?.find((v) => (v.name && v.name.toLowerCase() === st0.toLowerCase()) || (v.style && v.style.toLowerCase() === st0.toLowerCase()));
-                if (matchedV?.imageUrl) initialImage = matchedV.imageUrl;
-              }
-              if (normalized.variants && normalized.variants.length > 0) {
-                const generalV = normalized.variants.find((v) => v.type === "general" || (!v.degree && !v.size && !v.style));
-                if (generalV && generalV.name) {
-                  setSelectedCustomVariant(generalV.name);
-                  if (generalV.imageUrl) initialImage = generalV.imageUrl;
-                }
-              }
-
-              setSelectedImage(initialImage);
-              setNotFound(false);
-              addRecentlyViewed({
-                id: normalized.id,
-                title: normalized.title,
-                price: normalized.price,
-                originalPrice: normalized.originalPrice,
-                imageUrl: normalized.imageUrl,
-                rating: normalized.rating,
-                ratingCount: normalized.ratingCount,
-              });
-            }
-          } else {
-            if (isMounted) setNotFound(true);
+            foundData = json.data;
           }
-        } else {
-          if (isMounted) setNotFound(true);
         }
 
         if (revRes.ok) {
@@ -235,10 +169,134 @@ export default function ProductPage({ params }: PageProps) {
             setReviews(revJson.reviews);
           }
         }
-      } catch {
-        if (isMounted) setNotFound(true);
-      } finally {
-        if (isMounted) setLoading(false);
+      } catch (err) {
+        console.warn("API product fetch error, checking client fallback:", err);
+      }
+
+      // If not retrieved from API, check local static catalog
+      if (!foundData) {
+        const staticProd = getProductById(cleanId);
+        if (staticProd) {
+          foundData = {
+            id: staticProd.id,
+            title: staticProd.title,
+            price: staticProd.price,
+            originalPrice: staticProd.originalPrice,
+            imageUrl: staticProd.imageUrl,
+            rating: staticProd.rating,
+            ratingCount: staticProd.ratingCount,
+            brand: staticProd.brand || "TUQO",
+            category: staticProd.categorySlug || "high-pressure-washer",
+            categoryName: staticProd.categoryName || "High Pressure Washer",
+            subCategory: staticProd.subType || "domestic",
+            inStock: staticProd.inStock !== false,
+            stockQuantity: staticProd.stockQuantity ?? 10,
+          };
+        } else {
+          const allStatic = [...getAllCatalogProducts(), ...HOME_PRODUCTS];
+          const normTarget = cleanId.replace(/[-_\s]+/g, "").toLowerCase();
+          const matched = allStatic.find((p) => {
+            const pNorm = (p.id || "").replace(/[-_\s]+/g, "").toLowerCase();
+            return (
+              pNorm === normTarget ||
+              p.id.toLowerCase() === cleanId.toLowerCase() ||
+              p.title.toLowerCase().includes(cleanId.toLowerCase())
+            );
+          });
+          if (matched) {
+            foundData = {
+              id: matched.id,
+              title: matched.title,
+              price: matched.price,
+              originalPrice: matched.originalPrice || matched.price,
+              imageUrl: matched.imageUrl,
+              rating: matched.rating || 5,
+              ratingCount: matched.ratingCount || 0,
+              brand: matched.brand || "TUQO",
+              category: "high-pressure-washer",
+              categoryName: "High Pressure Washer",
+              subCategory: matched.subType || "domestic",
+              inStock: matched.inStock !== false,
+              stockQuantity: matched.stockQuantity ?? 10,
+            };
+          }
+        }
+      }
+
+      if (foundData && isMounted) {
+        const d = foundData;
+        const normalized: ProductData = {
+          id: String(d.id || cleanId),
+          title: String(d.title || ""),
+          price: Number(d.price) || 0,
+          originalPrice: Number(d.originalPrice) || Number(d.price) || 0,
+          imageUrl: String(d.imageUrl || "/images/products/cdw400.jpg"),
+          videoUrl: String(d.videoUrl || ""),
+          gallery: Array.isArray(d.gallery) ? d.gallery : [],
+          rating: Number(d.rating) || 5,
+          ratingCount: Number(d.ratingCount) || 0,
+          brand: d.brand ? String(d.brand).toUpperCase() : "TUQO",
+          category: String(d.category || "high-pressure-washer"),
+          categorySlug: d.category ? String(d.category).toLowerCase().replace(/\s+/g, "-") : "high-pressure-washer",
+          categoryName: d.categoryName ? String(d.categoryName).toUpperCase() : (d.category ? String(d.category).toUpperCase() : "MACHINERY"),
+          subCategory: String(d.subCategory || "domestic"),
+          description: d.description ? (Array.isArray(d.description) ? d.description : [String(d.description)]) : [],
+          specifications: d.specifications ? (Array.isArray(d.specifications) ? d.specifications : [String(d.specifications)]) : [],
+          whatsInBox: d.whatsInBox ? (Array.isArray(d.whatsInBox) ? d.whatsInBox : [String(d.whatsInBox)]) : [],
+          inStock: d.inStock !== false,
+          stockQuantity: typeof d.stockQuantity === "number" ? d.stockQuantity : 10,
+          degrees: Array.isArray(d.degrees) ? d.degrees : [],
+          sizes: Array.isArray(d.sizes) ? d.sizes : [],
+          styles: Array.isArray(d.styles) ? d.styles : [],
+          variants: Array.isArray(d.variants) ? d.variants : [],
+        };
+
+        setProduct(normalized);
+        let initialImage = normalized.imageUrl;
+
+        if (normalized.degrees && normalized.degrees.length > 0) {
+          const d0 = normalized.degrees[0];
+          setSelectedDegree(d0);
+          const matchedV = normalized.variants?.find((v) => (v.name && v.name.toLowerCase() === d0.toLowerCase()) || (v.degree && v.degree.toLowerCase() === d0.toLowerCase()));
+          if (matchedV?.imageUrl) initialImage = matchedV.imageUrl;
+        }
+        if (normalized.sizes && normalized.sizes.length > 0) {
+          const s0 = normalized.sizes[0];
+          setSelectedSize(s0);
+          const matchedV = normalized.variants?.find((v) => (v.name && v.name.toLowerCase() === s0.toLowerCase()) || (v.size && v.size.toLowerCase() === s0.toLowerCase()));
+          if (matchedV?.imageUrl) initialImage = matchedV.imageUrl;
+        }
+        if (normalized.styles && normalized.styles.length > 0) {
+          const st0 = normalized.styles[0];
+          setSelectedStyle(st0);
+          const matchedV = normalized.variants?.find((v) => (v.name && v.name.toLowerCase() === st0.toLowerCase()) || (v.style && v.style.toLowerCase() === st0.toLowerCase()));
+          if (matchedV?.imageUrl) initialImage = matchedV.imageUrl;
+        }
+        if (normalized.variants && normalized.variants.length > 0) {
+          const generalV = normalized.variants.find((v) => v.type === "general" || (!v.degree && !v.size && !v.style));
+          if (generalV && generalV.name) {
+            setSelectedCustomVariant(generalV.name);
+            if (generalV.imageUrl) initialImage = generalV.imageUrl;
+          }
+        }
+
+        setSelectedImage(initialImage);
+        setNotFound(false);
+        addRecentlyViewed({
+          id: normalized.id,
+          title: normalized.title,
+          price: normalized.price,
+          originalPrice: normalized.originalPrice,
+          imageUrl: normalized.imageUrl,
+          rating: normalized.rating,
+          ratingCount: normalized.ratingCount,
+        });
+      } else if (isMounted) {
+        setNotFound(true);
+      }
+
+      if (isMounted) {
+        setLoading(false);
       }
     }
 
@@ -247,7 +305,7 @@ export default function ProductPage({ params }: PageProps) {
     return () => {
       isMounted = false;
     };
-  }, [id]);
+  }, [id, addRecentlyViewed]);
 
 
   // Submit review handler

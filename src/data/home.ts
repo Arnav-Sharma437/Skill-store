@@ -15,6 +15,8 @@ export interface Product {
   originalPrice?: number;
   inStock?: boolean;
   stockQuantity?: number;
+  brand?: string;
+  subType?: "domestic" | "commercial" | "accessory" | "general";
 }
 
 export interface SummerOfferBanner {
@@ -107,6 +109,8 @@ export const BEST_SELLERS: Product[] = [
     originalPrice: 18500,
   },
 ];
+
+export const HOME_PRODUCTS: Product[] = BEST_SELLERS;
 
 export const SUMMER_OFFERS: SummerOfferBanner[] = [
   {

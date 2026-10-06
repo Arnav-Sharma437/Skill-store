@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
+import mongoose from "mongoose";
 import { connectToDatabase } from "@/lib/db";
 import { Product } from "@/lib/schemas";
+import { getProductById, getAllCatalogProducts } from "@/data/categories";
+import { HOME_PRODUCTS } from "@/data/home";
 
 type Params = {
   params: Promise<{ id: string }>;
@@ -9,33 +12,132 @@ type Params = {
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
+function escapeRegex(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function buildFuzzyRegex(input: string): RegExp {
+  const chars = input.replace(/[-_\s]+/g, "").split("");
+  if (chars.length === 0) return new RegExp(escapeRegex(input), "i");
+  const pattern = chars.map((c) => escapeRegex(c)).join("[-_\\s]*");
+  return new RegExp(`^${pattern}$`, "i");
+}
+
 export async function GET(req: NextRequest, { params }: Params) {
   try {
-    await connectToDatabase();
     const { id } = await params;
 
     if (!id) {
       return NextResponse.json({ success: false, error: "Product ID is required" }, { status: 400 });
     }
 
-    const cleanId = id.trim();
-    const product = await Product.findOne({
-      $or: [
-        { id: cleanId },
-        { id: { $regex: new RegExp(`^${cleanId.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i") } }
-      ]
-    }).lean();
+    const cleanId = decodeURIComponent(id).trim();
+    const cleanEscaped = escapeRegex(cleanId);
+    const fuzzyRegex = buildFuzzyRegex(cleanId);
+    const titleRegex = new RegExp(cleanEscaped, "i");
 
-    if (!product) {
+    let productDoc = null;
+
+    try {
+      await connectToDatabase();
+
+      const orConditions: Record<string, unknown>[] = [
+        { id: cleanId },
+        { id: { $regex: new RegExp(`^${cleanEscaped}$`, "i") } },
+        { id: { $regex: fuzzyRegex } },
+        { sku: cleanId },
+        { sku: { $regex: new RegExp(`^${cleanEscaped}$`, "i") } },
+        { sku: { $regex: fuzzyRegex } },
+        { "variants.sku": { $regex: new RegExp(`^${cleanEscaped}$`, "i") } },
+        { "variants.sku": { $regex: fuzzyRegex } },
+        { "variants.id": { $regex: new RegExp(`^${cleanEscaped}$`, "i") } },
+        { "variants.name": { $regex: new RegExp(`^${cleanEscaped}$`, "i") } },
+        { title: { $regex: titleRegex } }
+      ];
+
+      if (mongoose.isValidObjectId(cleanId)) {
+        orConditions.push({ _id: new mongoose.Types.ObjectId(cleanId) });
+      }
+
+      productDoc = await Product.findOne({ $or: orConditions }).lean();
+    } catch (dbErr) {
+      console.warn("MongoDB lookup error or disconnected, falling back to static catalog:", dbErr);
+    }
+
+    if (productDoc) {
       return NextResponse.json(
-        { success: false, error: "Product not found" },
-        { status: 404, headers: { "Cache-Control": "no-store, no-cache, must-revalidate" } }
+        { success: true, data: productDoc },
+        { headers: { "Cache-Control": "no-store, no-cache, must-revalidate" } }
+      );
+    }
+
+    // Static catalog fallback lookup
+    const staticProd = getProductById(cleanId);
+    if (staticProd) {
+      return NextResponse.json(
+        {
+          success: true,
+          data: {
+            id: staticProd.id,
+            title: staticProd.title,
+            price: staticProd.price,
+            originalPrice: staticProd.originalPrice,
+            imageUrl: staticProd.imageUrl,
+            rating: staticProd.rating,
+            ratingCount: staticProd.ratingCount,
+            brand: staticProd.brand || "TUQO",
+            category: staticProd.categorySlug || "high-pressure-washer",
+            categoryName: staticProd.categoryName || "High Pressure Washer",
+            subCategory: staticProd.subType || "domestic",
+            inStock: staticProd.inStock !== false,
+            stockQuantity: staticProd.stockQuantity ?? 10,
+          },
+        },
+        { headers: { "Cache-Control": "no-store, no-cache, must-revalidate" } }
+      );
+    }
+
+    // Search across all catalog products and home products
+    const allStatic = [...getAllCatalogProducts(), ...HOME_PRODUCTS];
+    const normalizedTarget = cleanId.replace(/[-_\s]+/g, "").toLowerCase();
+
+    const matchedStatic = allStatic.find((p) => {
+      const pIdNorm = (p.id || "").replace(/[-_\s]+/g, "").toLowerCase();
+      const pTitle = (p.title || "").toLowerCase();
+      return (
+        pIdNorm === normalizedTarget ||
+        p.id.toLowerCase() === cleanId.toLowerCase() ||
+        pTitle.includes(cleanId.toLowerCase())
+      );
+    });
+
+    if (matchedStatic) {
+      return NextResponse.json(
+        {
+          success: true,
+          data: {
+            id: matchedStatic.id,
+            title: matchedStatic.title,
+            price: matchedStatic.price,
+            originalPrice: matchedStatic.originalPrice || matchedStatic.price,
+            imageUrl: matchedStatic.imageUrl,
+            rating: matchedStatic.rating || 5,
+            ratingCount: matchedStatic.ratingCount || 0,
+            brand: matchedStatic.brand || "TUQO",
+            category: "high-pressure-washer",
+            categoryName: "High Pressure Washer",
+            subCategory: matchedStatic.subType || "domestic",
+            inStock: matchedStatic.inStock !== false,
+            stockQuantity: matchedStatic.stockQuantity ?? 10,
+          },
+        },
+        { headers: { "Cache-Control": "no-store, no-cache, must-revalidate" } }
       );
     }
 
     return NextResponse.json(
-      { success: true, data: product },
-      { headers: { "Cache-Control": "no-store, no-cache, must-revalidate" } }
+      { success: false, error: `Product with ID/SKU "${cleanId}" not found.` },
+      { status: 404, headers: { "Cache-Control": "no-store, no-cache, must-revalidate" } }
     );
   } catch (error: unknown) {
     const errMessage = error instanceof Error ? error.message : "Unknown error";
