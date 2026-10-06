@@ -527,6 +527,20 @@ export default function ProductDetailClient({ initialId }: { initialId?: string 
     return product?.ratingCount || 0;
   }, [reviews, product]);
 
+  const availableStock = useMemo(() => {
+    if (!product) return 0;
+    if (activeMatchedVariant && typeof activeMatchedVariant.stockQuantity === "number") {
+      return activeMatchedVariant.inStock !== false ? activeMatchedVariant.stockQuantity : 0;
+    }
+    if (typeof product.stockQuantity === "number") {
+      return product.inStock !== false ? product.stockQuantity : 0;
+    }
+    return product.inStock !== false ? 10 : 0;
+  }, [product, activeMatchedVariant]);
+
+  const isInStock = Boolean(product?.inStock !== false && availableStock > 0);
+  const maxAllowedQty = Math.max(1, availableStock);
+
   // Loading state
   if (loading) {
     return (
@@ -567,20 +581,6 @@ export default function ProductDetailClient({ initialId }: { initialId?: string 
       </>
     );
   }
-
-  const availableStock = useMemo(() => {
-    if (!product) return 0;
-    if (activeMatchedVariant && typeof activeMatchedVariant.stockQuantity === "number") {
-      return activeMatchedVariant.inStock !== false ? activeMatchedVariant.stockQuantity : 0;
-    }
-    if (typeof product.stockQuantity === "number") {
-      return product.inStock !== false ? product.stockQuantity : 0;
-    }
-    return product.inStock !== false ? 10 : 0;
-  }, [product, activeMatchedVariant]);
-
-  const isInStock = Boolean(product.inStock !== false && availableStock > 0);
-  const maxAllowedQty = Math.max(1, availableStock);
 
   return (
     <>
