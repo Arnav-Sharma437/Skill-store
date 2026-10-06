@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import dbConnect from "@/lib/db/mongodb";
 import Order from "@/models/Order";
+import { Product } from "@/lib/schemas";
 import { verifyPaymentSignature, calculateVerifiedOrder } from "@/lib/razorpay";
 import { createShiprocketOrder, estimatePackageSpecs } from "@/lib/shiprocket";
 
@@ -128,6 +129,51 @@ export async function POST(req: NextRequest) {
     });
 
     const createdOrder = await newOrder.save();
+
+    // 6b. Automatically reduce product & variant inventory quantities
+    if (verifiedOrder.items && Array.isArray(verifiedOrder.items)) {
+      for (const orderItem of verifiedOrder.items) {
+        try {
+          const rawId = (orderItem.productId || "").trim();
+          if (!rawId) continue;
+
+          const isObjectId = /^[0-9a-fA-F]{24}$/.test(rawId);
+          const dbProd = await Product.findOne(
+            isObjectId ? { $or: [{ _id: rawId }, { id: rawId }] } : { id: rawId }
+          );
+
+          if (dbProd) {
+            const reduceQty = Math.max(1, Math.floor(Number(orderItem.quantity) || 1));
+            const currentStock = typeof dbProd.stockQuantity === "number" ? dbProd.stockQuantity : 10;
+            const updatedStock = Math.max(0, currentStock - reduceQty);
+            dbProd.stockQuantity = updatedStock;
+            if (updatedStock <= 0) {
+              dbProd.inStock = false;
+            }
+
+            // Also check and decrement matching variant stock if product has variants
+            if (dbProd.variants && Array.isArray(dbProd.variants)) {
+              dbProd.variants.forEach((v: { sku?: string; name?: string; stockQuantity?: number; inStock?: boolean }) => {
+                const skuMatch = Boolean(v.sku && v.sku.toLowerCase() === rawId.toLowerCase());
+                const titleMatch = Boolean(v.name && orderItem.title && orderItem.title.toLowerCase().includes(v.name.toLowerCase()));
+                if (skuMatch || titleMatch) {
+                  const currentVarStock = typeof v.stockQuantity === "number" ? v.stockQuantity : 10;
+                  const updatedVarStock = Math.max(0, currentVarStock - reduceQty);
+                  v.stockQuantity = updatedVarStock;
+                  if (updatedVarStock <= 0) {
+                    v.inStock = false;
+                  }
+                }
+              });
+            }
+
+            await dbProd.save();
+          }
+        } catch (stockErr) {
+          console.error("Auto stock reduction error for item:", orderItem.productId, stockErr);
+        }
+      }
+    }
 
     // 7. Automatic Shiprocket Order Creation (Safe & resilient)
     try {
