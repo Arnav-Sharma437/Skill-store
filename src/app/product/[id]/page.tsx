@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState, useMemo, use, useEffect, useRef } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import AnnouncementBar from "@/components/home/AnnouncementBar";
 import Header from "@/components/home/Header";
 import Footer from "@/components/home/Footer";
@@ -25,10 +25,6 @@ interface ReviewItem {
   status: "pending" | "approved" | "rejected";
   createdAt: string;
 }
-
-type PageProps = {
-  params: Promise<{ id: string }>;
-};
 
 interface ProductVariant {
   id?: string;
@@ -72,8 +68,10 @@ interface ProductData {
   variants?: ProductVariant[];
 }
 
-export default function ProductPage({ params }: PageProps) {
-  const { id } = use(params);
+export default function ProductPage() {
+  const urlParams = useParams();
+  const rawId = urlParams?.id ? (Array.isArray(urlParams.id) ? urlParams.id[0] : urlParams.id) : "";
+  const id = decodeURIComponent(rawId || "").trim();
   const router = useRouter();
   const { addToCart, toggleWishlist, isInWishlist, recentlyViewed, addRecentlyViewed } = useApp();
 
@@ -148,6 +146,8 @@ export default function ProductPage({ params }: PageProps) {
     let isMounted = true;
     async function loadData() {
       const cleanId = decodeURIComponent(id || "").trim();
+      if (!cleanId) return;
+
       let foundData: Record<string, unknown> | null = null;
 
       try {
@@ -195,12 +195,27 @@ export default function ProductPage({ params }: PageProps) {
         } else {
           const allStatic = [...getAllCatalogProducts(), ...HOME_PRODUCTS];
           const normTarget = cleanId.replace(/[-_\s]+/g, "").toLowerCase();
+          const targetSlug = cleanId
+            .toLowerCase()
+            .replace(/[^\w\s-]/g, "")
+            .trim()
+            .replace(/[-\s]+/g, "-");
+
           const matched = allStatic.find((p) => {
+            const pId = (p.id || "").toLowerCase();
             const pNorm = (p.id || "").replace(/[-_\s]+/g, "").toLowerCase();
+            const pTitle = (p.title || "").toLowerCase();
+            const pSlug = pTitle
+              .replace(/[^\w\s-]/g, "")
+              .trim()
+              .replace(/[-\s]+/g, "-");
+
             return (
+              pId === cleanId.toLowerCase() ||
               pNorm === normTarget ||
-              p.id.toLowerCase() === cleanId.toLowerCase() ||
-              p.title.toLowerCase().includes(cleanId.toLowerCase())
+              pSlug === targetSlug ||
+              pTitle.includes(cleanId.toLowerCase()) ||
+              cleanId.toLowerCase().includes(pNorm)
             );
           });
           if (matched) {

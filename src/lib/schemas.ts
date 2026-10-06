@@ -19,6 +19,8 @@ export interface IProductVariant {
 // Product Interface
 export interface IProduct extends Document {
   id: string;
+  slug?: string;
+  sku?: string;
   title: string;
   price: number;
   originalPrice: number;
@@ -41,7 +43,6 @@ export interface IProduct extends Document {
   sizes?: string[];
   styles?: string[];
   variants?: IProductVariant[];
-  sku?: string;
   couponCode?: string;
   couponDiscountType?: "percentage" | "flat";
   couponDiscountValue?: number;
@@ -70,6 +71,7 @@ const ProductVariantSchema: Schema = new Schema(
 const ProductSchema: Schema = new Schema(
   {
     id: { type: String, required: true, unique: true },
+    slug: { type: String, default: "" },
     sku: { type: String, default: "" },
     title: { type: String, required: true },
     price: { type: Number, required: true },

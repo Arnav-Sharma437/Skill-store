@@ -6,7 +6,7 @@ import { getProductById, getAllCatalogProducts } from "@/data/categories";
 import { HOME_PRODUCTS } from "@/data/home";
 
 type Params = {
-  params: Promise<{ id: string }>;
+  params: Promise<{ id: string }> | { id: string };
 };
 
 export const dynamic = "force-dynamic";
@@ -23,20 +23,30 @@ function buildFuzzyRegex(input: string): RegExp {
   return new RegExp(`^${pattern}$`, "i");
 }
 
+function slugify(text: string): string {
+  return (text || "")
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, "")
+    .trim()
+    .replace(/[-\s]+/g, "-");
+}
+
 export async function GET(req: NextRequest, { params }: Params) {
   try {
-    const { id } = await params;
+    const resolvedParams = await Promise.resolve(params);
+    const rawId = resolvedParams?.id || "";
 
-    if (!id) {
-      return NextResponse.json({ success: false, error: "Product ID is required" }, { status: 400 });
+    if (!rawId) {
+      return NextResponse.json({ success: false, error: "Product identifier is required" }, { status: 400 });
     }
 
-    const cleanId = decodeURIComponent(id).trim();
+    const cleanId = decodeURIComponent(rawId).trim();
     const cleanEscaped = escapeRegex(cleanId);
     const fuzzyRegex = buildFuzzyRegex(cleanId);
+    const targetSlug = slugify(cleanId);
     const titleRegex = new RegExp(cleanEscaped, "i");
 
-    let productDoc = null;
+    let productDoc: Record<string, unknown> | null = null;
 
     try {
       await connectToDatabase();
@@ -48,6 +58,8 @@ export async function GET(req: NextRequest, { params }: Params) {
         { sku: cleanId },
         { sku: { $regex: new RegExp(`^${cleanEscaped}$`, "i") } },
         { sku: { $regex: fuzzyRegex } },
+        { slug: cleanId },
+        { slug: targetSlug },
         { "variants.sku": { $regex: new RegExp(`^${cleanEscaped}$`, "i") } },
         { "variants.sku": { $regex: fuzzyRegex } },
         { "variants.id": { $regex: new RegExp(`^${cleanEscaped}$`, "i") } },
@@ -59,9 +71,32 @@ export async function GET(req: NextRequest, { params }: Params) {
         orConditions.push({ _id: new mongoose.Types.ObjectId(cleanId) });
       }
 
-      productDoc = await Product.findOne({ $or: orConditions }).lean();
+      productDoc = (await Product.findOne({ $or: orConditions }).lean()) as unknown as Record<string, unknown> | null;
+
+      // If still not found by direct conditions, check across all docs by slugified title
+      if (!productDoc && targetSlug) {
+        const allDocs = (await Product.find({}).lean()) as unknown as Record<string, unknown>[];
+        const matched = allDocs.find((doc) => {
+          const docTitle = String(doc.title || "");
+          const docSlug = slugify(docTitle);
+          const docId = String(doc.id || "").toLowerCase();
+          const docSku = String(doc.sku || "").toLowerCase();
+          const cleanLower = cleanId.toLowerCase();
+          return (
+            docSlug === targetSlug ||
+            docSlug.includes(targetSlug) ||
+            targetSlug.includes(docSlug) ||
+            docId === cleanLower ||
+            docSku === cleanLower ||
+            docTitle.toLowerCase().includes(cleanLower)
+          );
+        });
+        if (matched) {
+          productDoc = matched;
+        }
+      }
     } catch (dbErr) {
-      console.warn("MongoDB lookup error or disconnected, falling back to static catalog:", dbErr);
+      console.warn("MongoDB lookup error, falling back to static catalog:", dbErr);
     }
 
     if (productDoc) {
@@ -104,10 +139,14 @@ export async function GET(req: NextRequest, { params }: Params) {
     const matchedStatic = allStatic.find((p) => {
       const pIdNorm = (p.id || "").replace(/[-_\s]+/g, "").toLowerCase();
       const pTitle = (p.title || "").toLowerCase();
+      const pSlug = slugify(p.title);
+      const cleanLower = cleanId.toLowerCase();
       return (
         pIdNorm === normalizedTarget ||
-        p.id.toLowerCase() === cleanId.toLowerCase() ||
-        pTitle.includes(cleanId.toLowerCase())
+        p.id.toLowerCase() === cleanLower ||
+        pSlug === targetSlug ||
+        pTitle.includes(cleanLower) ||
+        cleanLower.includes(pIdNorm)
       );
     });
 
@@ -136,7 +175,7 @@ export async function GET(req: NextRequest, { params }: Params) {
     }
 
     return NextResponse.json(
-      { success: false, error: `Product with ID/SKU "${cleanId}" not found.` },
+      { success: false, error: `Product "${cleanId}" not found.` },
       { status: 404, headers: { "Cache-Control": "no-store, no-cache, must-revalidate" } }
     );
   } catch (error: unknown) {
