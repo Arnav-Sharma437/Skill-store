@@ -10,6 +10,7 @@ export interface CartItem {
   price: number;
   imageUrl: string;
   quantity: number;
+  stockQuantity?: number;
   selectedVariant?: {
     name?: string;
     degree?: string;
@@ -46,6 +47,7 @@ interface AppContextType {
       title: string;
       price: number;
       imageUrl: string;
+      stockQuantity?: number;
       selectedVariant?: { name?: string; degree?: string; size?: string; style?: string };
     },
     quantity?: number
@@ -94,6 +96,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       title: string;
       price: number;
       imageUrl: string;
+      stockQuantity?: number;
       selectedVariant?: { name?: string; degree?: string; size?: string; style?: string };
     },
     quantity = 1
@@ -116,13 +119,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setCart((prev) => {
       const existing = prev.find((item) => item.id === uniqueCartId);
       if (existing) {
+        const maxStock = typeof product.stockQuantity === "number" ? product.stockQuantity : (typeof existing.stockQuantity === "number" ? existing.stockQuantity : 99);
+        const newQty = Math.min(maxStock, existing.quantity + quantity);
         return prev.map((item) =>
           item.id === uniqueCartId
             ? {
                 ...item,
-                quantity: item.quantity + quantity,
+                quantity: newQty,
                 price: product.price || item.price,
                 imageUrl: product.imageUrl || item.imageUrl,
+                stockQuantity: typeof product.stockQuantity === "number" ? product.stockQuantity : item.stockQuantity,
               }
             : item
         );
@@ -136,6 +142,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           price: product.price,
           imageUrl: product.imageUrl,
           quantity,
+          stockQuantity: product.stockQuantity,
           selectedVariant: product.selectedVariant,
         },
       ];

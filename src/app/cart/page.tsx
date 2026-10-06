@@ -573,7 +573,22 @@ export default function CartPage() {
                         </div>
                       )}
 
-                      <span className={styles.itemPrice}>Rs. {item.price.toLocaleString("en-IN")}.00</span>
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "4px" }}>
+                        <span className={styles.itemPrice}>Rs. {item.price.toLocaleString("en-IN")}.00</span>
+                        {typeof item.stockQuantity === "number" && (
+                          <span style={{
+                            fontSize: "11px",
+                            fontWeight: 700,
+                            color: item.stockQuantity <= 5 ? "#b45309" : "#166534",
+                            background: item.stockQuantity <= 5 ? "#fef3c7" : "#f0fdf4",
+                            border: `1px solid ${item.stockQuantity <= 5 ? "#fde68a" : "#bbf7d0"}`,
+                            padding: "1px 6px",
+                            borderRadius: "4px"
+                          }}>
+                            {item.stockQuantity <= 5 ? `⚡ ${item.stockQuantity} left` : `📦 ${item.stockQuantity} in stock`}
+                          </span>
+                        )}
+                      </div>
                     </div>
 
                     {/* Quantity selectors */}
@@ -593,9 +608,17 @@ export default function CartPage() {
                         aria-label="Product quantity"
                       />
                       <button 
-                        onClick={() => updateCartQuantity(item.id, item.quantity + 1)}
+                        onClick={() => {
+                          const maxStock = typeof item.stockQuantity === "number" ? item.stockQuantity : 99;
+                          if (item.quantity < maxStock) {
+                            updateCartQuantity(item.id, item.quantity + 1);
+                          }
+                        }}
+                        disabled={typeof item.stockQuantity === "number" && item.quantity >= item.stockQuantity}
                         className={styles.qtyBtn}
                         aria-label="Increase quantity"
+                        title={typeof item.stockQuantity === "number" && item.quantity >= item.stockQuantity ? `Maximum ${item.stockQuantity} pieces available in stock` : "Increase quantity"}
+                        style={typeof item.stockQuantity === "number" && item.quantity >= item.stockQuantity ? { opacity: 0.5, cursor: "not-allowed" } : undefined}
                       >
                         +
                       </button>

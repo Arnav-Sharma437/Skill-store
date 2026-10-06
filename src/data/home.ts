@@ -13,6 +13,8 @@ export interface Product {
   ratingCount: number;
   price?: number;
   originalPrice?: number;
+  inStock?: boolean;
+  stockQuantity?: number;
 }
 
 export interface SummerOfferBanner {

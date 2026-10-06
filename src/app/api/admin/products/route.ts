@@ -63,6 +63,7 @@ interface RawVariant {
   price?: number | string;
   originalPrice?: number | string;
   inStock?: boolean;
+  stockQuantity?: number | string;
   imageUrl?: string;
 }
 
@@ -78,7 +79,8 @@ function sanitizeVariants(variants: unknown) {
     style: v.style ? String(v.style).trim() : "",
     price: v.price !== undefined && v.price !== "" ? Number(v.price) : undefined,
     originalPrice: v.originalPrice !== undefined && v.originalPrice !== "" ? Number(v.originalPrice) : undefined,
-    inStock: v.inStock !== undefined ? Boolean(v.inStock) : true,
+    inStock: v.inStock !== undefined ? Boolean(v.inStock) : (v.stockQuantity !== undefined ? Number(v.stockQuantity) > 0 : true),
+    stockQuantity: v.stockQuantity !== undefined && v.stockQuantity !== "" ? Math.max(0, Number(v.stockQuantity)) : 10,
     imageUrl: v.imageUrl ? String(v.imageUrl).trim() : "",
   })).filter(v => v.name || v.degree || v.size || v.style || v.imageUrl || v.sku);
 }
@@ -104,6 +106,7 @@ export async function POST(req: NextRequest) {
       specifications,
       whatsInBox,
       inStock,
+      stockQuantity,
       isBestSeller,
       order,
       degrees,
@@ -128,6 +131,8 @@ export async function POST(req: NextRequest) {
     }
 
     const parsedOrder = typeof order === "number" && !isNaN(order) && order > 0 ? order : (Number(order) > 0 ? Number(order) : 0);
+    const parsedStockQty = stockQuantity !== undefined && stockQuantity !== "" ? Math.max(0, Number(stockQuantity)) : 10;
+    const finalInStock = inStock !== undefined ? Boolean(inStock) : parsedStockQty > 0;
 
     const newProduct = await Product.create({
       id: id.trim(),
@@ -146,7 +151,8 @@ export async function POST(req: NextRequest) {
       description: Array.isArray(description) ? description : (typeof description === "string" ? description.split("\n").filter(Boolean) : []),
       specifications: Array.isArray(specifications) ? specifications : (typeof specifications === "string" ? specifications.split("\n").filter(Boolean) : []),
       whatsInBox: Array.isArray(whatsInBox) ? whatsInBox : (typeof whatsInBox === "string" ? whatsInBox.split("\n").filter(Boolean) : []),
-      inStock: inStock !== undefined ? inStock : true,
+      inStock: finalInStock,
+      stockQuantity: parsedStockQty,
       isBestSeller: Boolean(isBestSeller),
       order: parsedOrder,
       degrees: Array.isArray(degrees) ? degrees.map((d: string) => String(d).trim()).filter(Boolean) : (typeof degrees === "string" ? degrees.split(",").map((d: string) => d.trim()).filter(Boolean) : []),
@@ -188,6 +194,7 @@ export async function PUT(req: NextRequest) {
       specifications,
       whatsInBox,
       inStock,
+      stockQuantity,
       isBestSeller,
       order,
       degrees,
@@ -226,6 +233,13 @@ export async function PUT(req: NextRequest) {
     }
     if (whatsInBox !== undefined) {
       updateFields.whatsInBox = Array.isArray(whatsInBox) ? whatsInBox : (typeof whatsInBox === "string" ? whatsInBox.split("\n").filter(Boolean) : []);
+    }
+    if (stockQuantity !== undefined) {
+      const parsedStock = Math.max(0, Number(stockQuantity));
+      updateFields.stockQuantity = parsedStock;
+      if (inStock === undefined) {
+        updateFields.inStock = parsedStock > 0;
+      }
     }
     if (inStock !== undefined) updateFields.inStock = Boolean(inStock);
     if (isBestSeller !== undefined) updateFields.isBestSeller = Boolean(isBestSeller);

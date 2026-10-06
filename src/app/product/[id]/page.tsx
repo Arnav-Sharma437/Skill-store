@@ -39,6 +39,7 @@ interface ProductVariant {
   price?: number;
   originalPrice?: number;
   inStock?: boolean;
+  stockQuantity?: number;
   imageUrl?: string;
 }
 
@@ -62,6 +63,7 @@ interface ProductData {
   specifications?: string[] | string;
   whatsInBox?: string[] | string;
   inStock?: boolean;
+  stockQuantity?: number;
   degrees?: string[];
   sizes?: string[];
   styles?: string[];
@@ -493,7 +495,19 @@ export default function ProductPage({ params }: PageProps) {
     );
   }
 
-  const isInStock = product.inStock !== false;
+  const availableStock = useMemo(() => {
+    if (!product) return 0;
+    if (activeMatchedVariant && typeof activeMatchedVariant.stockQuantity === "number") {
+      return activeMatchedVariant.inStock !== false ? activeMatchedVariant.stockQuantity : 0;
+    }
+    if (typeof product.stockQuantity === "number") {
+      return product.inStock !== false ? product.stockQuantity : 0;
+    }
+    return product.inStock !== false ? 10 : 0;
+  }, [product, activeMatchedVariant]);
+
+  const isInStock = Boolean(product.inStock !== false && availableStock > 0);
+  const maxAllowedQty = Math.max(1, availableStock);
 
   return (
     <>
@@ -608,17 +622,33 @@ export default function ProductPage({ params }: PageProps) {
                 </button>
               </div>
 
-              {/* In Stock / Out of Stock status & Dynamic SKU */}
+              {/* In Stock / Out of Stock status & Available Pieces & Dynamic SKU */}
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "8px", marginBottom: "12px" }}>
                 {isInStock ? (
-                  <span style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "13px", fontWeight: 700, color: "#16a34a" }}>
-                    <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#16a34a" }}></span>
-                    In Stock &bull; Ready to Dispatch
-                  </span>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "13px", fontWeight: 700, color: "#16a34a" }}>
+                      <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#16a34a" }}></span>
+                      In Stock &bull; Ready to Dispatch
+                    </span>
+                    <span style={{
+                      fontSize: "12px",
+                      fontWeight: 750,
+                      color: availableStock <= 5 ? "#b45309" : "#065f46",
+                      background: availableStock <= 5 ? "#fef3c7" : "#ecfdf5",
+                      border: `1px solid ${availableStock <= 5 ? "#fde68a" : "#a7f3d0"}`,
+                      padding: "2px 8px",
+                      borderRadius: "6px",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "4px"
+                    }}>
+                      {availableStock <= 5 ? `⚡ Hurry, only ${availableStock} ${availableStock === 1 ? 'piece' : 'pieces'} left!` : `📦 ${availableStock} pieces available`}
+                    </span>
+                  </div>
                 ) : (
                   <span style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "13px", fontWeight: 700, color: "#dc2626" }}>
                     <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#dc2626" }}></span>
-                    Currently Out of Stock
+                    Currently Out of Stock (0 pieces available)
                   </span>
                 )}
 
@@ -802,16 +832,22 @@ export default function ProductPage({ params }: PageProps) {
                   <input
                     type="number"
                     min="1"
+                    max={maxAllowedQty}
                     value={quantity}
-                    onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value) || 1;
+                      setQuantity(Math.min(maxAllowedQty, Math.max(1, val)));
+                    }}
                     className={styles.qtyInput}
                     aria-label="Product quantity"
                   />
                   <button
                     type="button"
-                    onClick={() => setQuantity((q) => q + 1)}
+                    onClick={() => setQuantity((q) => Math.min(maxAllowedQty, q + 1))}
+                    disabled={quantity >= maxAllowedQty}
                     className={styles.qtyBtn}
                     aria-label="Increase quantity"
+                    title={quantity >= maxAllowedQty ? `Maximum available quantity (${maxAllowedQty}) reached` : "Increase quantity"}
                   >
                     +
                   </button>
@@ -832,6 +868,7 @@ export default function ProductPage({ params }: PageProps) {
                             title: product.title,
                             price: activePrice,
                             imageUrl: variantImg,
+                            stockQuantity: availableStock,
                             selectedVariant: currentVariant,
                           },
                           quantity
@@ -852,6 +889,7 @@ export default function ProductPage({ params }: PageProps) {
                             title: product.title,
                             price: activePrice,
                             imageUrl: variantImg,
+                            stockQuantity: availableStock,
                             selectedVariant: currentVariant,
                           },
                           quantity

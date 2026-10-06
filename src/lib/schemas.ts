@@ -12,6 +12,7 @@ export interface IProductVariant {
   price?: number;
   originalPrice?: number;
   inStock?: boolean;
+  stockQuantity?: number;
   imageUrl?: string;
 }
 
@@ -33,6 +34,7 @@ export interface IProduct extends Document {
   specifications: string[];
   whatsInBox: string[];
   inStock: boolean;
+  stockQuantity?: number;
   isBestSeller?: boolean;
   order?: number;
   degrees?: string[];
@@ -59,6 +61,7 @@ const ProductVariantSchema: Schema = new Schema(
     price: { type: Number },
     originalPrice: { type: Number },
     inStock: { type: Boolean, default: true },
+    stockQuantity: { type: Number, default: 10 },
     imageUrl: { type: String, default: "" },
   },
   { _id: false }
@@ -83,6 +86,7 @@ const ProductSchema: Schema = new Schema(
     specifications: { type: [String], default: [] },
     whatsInBox: { type: [String], default: [] },
     inStock: { type: Boolean, default: true },
+    stockQuantity: { type: Number, default: 10 },
     isBestSeller: { type: Boolean, default: false },
     order: { type: Number, default: 0 },
     degrees: { type: [String], default: [] },

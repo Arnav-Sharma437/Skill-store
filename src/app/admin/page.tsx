@@ -57,6 +57,7 @@ export interface IAdminVariant {
   price?: number | string;
   originalPrice?: number | string;
   inStock?: boolean;
+  stockQuantity?: number | string;
   imageUrl: string;
 }
 
@@ -72,6 +73,7 @@ export interface IProduct {
   category: string;
   subCategory: string;
   inStock: boolean;
+  stockQuantity?: number;
   isBestSeller?: boolean;
   order?: number;
   rating?: number;
@@ -272,6 +274,7 @@ export default function AdminDashboard() {
     category: "high-pressure-washer",
     subCategory: "domestic",
     inStock: true,
+    stockQuantity: "10",
     isBestSeller: false,
     order: "",
     descriptionText: "",
@@ -652,26 +655,27 @@ export default function AdminDashboard() {
   // --- Stock Toggle Handler ---
   const handleStockToggle = async (product: IProduct) => {
     const updatedStock = !product.inStock;
+    const updatedStockQty = updatedStock ? (product.stockQuantity && product.stockQuantity > 0 ? product.stockQuantity : 10) : 0;
     setProducts((prev) =>
-      prev.map((p) => (p.id === product.id ? { ...p, inStock: updatedStock } : p))
+      prev.map((p) => (p.id === product.id ? { ...p, inStock: updatedStock, stockQuantity: updatedStockQty } : p))
     );
 
     try {
       const res = await fetch("/api/admin/products", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: product.id, inStock: updatedStock }),
+        body: JSON.stringify({ id: product.id, inStock: updatedStock, stockQuantity: updatedStockQty }),
       });
       const json = await res.json();
       if (!json.success) {
         setProducts((prev) =>
-          prev.map((p) => (p.id === product.id ? { ...p, inStock: product.inStock } : p))
+          prev.map((p) => (p.id === product.id ? { ...p, inStock: product.inStock, stockQuantity: product.stockQuantity } : p))
         );
         alert(`Error toggling stock: ${json.error}`);
       }
     } catch {
       setProducts((prev) =>
-        prev.map((p) => (p.id === product.id ? { ...p, inStock: product.inStock } : p))
+        prev.map((p) => (p.id === product.id ? { ...p, inStock: product.inStock, stockQuantity: product.stockQuantity } : p))
       );
       alert("Network error toggling stock");
     }
@@ -840,6 +844,7 @@ export default function AdminDashboard() {
       category: "high-pressure-washer",
       subCategory: "domestic",
       inStock: true,
+      stockQuantity: "10",
       isBestSeller: false,
       order: "",
       descriptionText: "",
@@ -873,6 +878,7 @@ export default function AdminDashboard() {
       category: prod.category || "high-pressure-washer",
       subCategory: prod.subCategory || "domestic",
       inStock: prod.inStock !== false,
+      stockQuantity: prod.stockQuantity !== undefined ? prod.stockQuantity.toString() : (prod.inStock ? "10" : "0"),
       isBestSeller: Boolean(prod.isBestSeller),
       order: prod.order !== undefined && prod.order > 0 ? prod.order.toString() : "",
       descriptionText: Array.isArray(prod.description) ? prod.description.join("\n") : "",
@@ -892,6 +898,7 @@ export default function AdminDashboard() {
         price: v.price !== undefined ? v.price.toString() : "",
         originalPrice: v.originalPrice !== undefined ? v.originalPrice.toString() : "",
         inStock: v.inStock !== false,
+        stockQuantity: v.stockQuantity !== undefined ? v.stockQuantity.toString() : "10",
         imageUrl: v.imageUrl || "",
       })) : [],
       couponCode: prod.couponCode || "",
@@ -907,6 +914,9 @@ export default function AdminDashboard() {
     e.preventDefault();
     const method = editingProduct ? "PUT" : "POST";
 
+    const parsedStock = productForm.stockQuantity !== "" ? Math.max(0, Number(productForm.stockQuantity)) : 10;
+    const finalInStock = productForm.inStock && parsedStock > 0;
+
     const payload = {
       id: productForm.id.trim(),
       title: productForm.title.trim(),
@@ -918,7 +928,8 @@ export default function AdminDashboard() {
       brand: productForm.brand.toLowerCase(),
       category: productForm.category.toLowerCase(),
       subCategory: productForm.subCategory.toLowerCase(),
-      inStock: productForm.inStock,
+      inStock: finalInStock,
+      stockQuantity: parsedStock,
       isBestSeller: Boolean(productForm.isBestSeller),
       order: productForm.order !== "" ? Number(productForm.order) : 0,
       description: productForm.descriptionText.split("\n").filter((l) => l.trim().length > 0),
@@ -937,7 +948,8 @@ export default function AdminDashboard() {
         style: v.type === "style" ? v.name.trim() : (v.style || "").trim(),
         price: v.price !== undefined && v.price !== "" ? Number(v.price) : undefined,
         originalPrice: v.originalPrice !== undefined && v.originalPrice !== "" ? Number(v.originalPrice) : undefined,
-        inStock: v.inStock !== false,
+        inStock: v.inStock !== false && (v.stockQuantity === undefined || Number(v.stockQuantity) > 0),
+        stockQuantity: v.stockQuantity !== undefined && v.stockQuantity !== "" ? Number(v.stockQuantity) : 10,
         imageUrl: (v.imageUrl || "").trim(),
       })).filter((v) => v.name || v.imageUrl || v.sku),
       couponCode: productForm.couponCode.trim().toUpperCase(),
@@ -2246,6 +2258,22 @@ export default function AdminDashboard() {
                                     </label>
                                     <span style={{ fontSize: "12px", color: p.inStock ? "#10b981" : "#ef4444", fontWeight: "700" }}>
                                       {p.inStock ? "In Stock" : "Out of Stock"}
+                                    </span>
+                                  </div>
+                                  <div style={{ marginTop: "4px" }}>
+                                    <span style={{
+                                      fontSize: "11px",
+                                      fontWeight: "800",
+                                      color: (p.stockQuantity ?? 10) <= 0 || !p.inStock ? "#dc2626" : (p.stockQuantity ?? 10) <= 5 ? "#d97706" : "#059669",
+                                      background: (p.stockQuantity ?? 10) <= 0 || !p.inStock ? "#fef2f2" : (p.stockQuantity ?? 10) <= 5 ? "#fffbeb" : "#ecfdf5",
+                                      border: `1px solid ${(p.stockQuantity ?? 10) <= 0 || !p.inStock ? "#fecaca" : (p.stockQuantity ?? 10) <= 5 ? "#fde68a" : "#a7f3d0"}`,
+                                      padding: "1px 6px",
+                                      borderRadius: "4px",
+                                      display: "inline-flex",
+                                      alignItems: "center",
+                                      gap: "3px"
+                                    }}>
+                                      📦 {(p.stockQuantity ?? (p.inStock ? 10 : 0))} Pcs Available
                                     </span>
                                   </div>
                                 </td>
@@ -4176,19 +4204,96 @@ export default function AdminDashboard() {
                     />
                   </div>
 
+                  {/* Available Stock / Quantity (Pieces) */}
+                  <div className={styles.inputField}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <label htmlFor="form-prod-stock-qty" style={{ fontWeight: "750", color: "#132c66" }}>
+                        📦 Available Stock (Pieces) *
+                      </label>
+                      <span style={{
+                        fontSize: "11px",
+                        fontWeight: "750",
+                        color: Number(productForm.stockQuantity || 0) <= 0 || !productForm.inStock ? "#dc2626" : Number(productForm.stockQuantity || 0) <= 5 ? "#d97706" : "#166534"
+                      }}>
+                        {Number(productForm.stockQuantity || 0) <= 0 || !productForm.inStock ? "Out of Stock" : `${productForm.stockQuantity || 0} Pcs`}
+                      </span>
+                    </div>
+                    <input
+                      id="form-prod-stock-qty"
+                      type="number"
+                      min="0"
+                      placeholder="e.g. 10 or 50"
+                      value={productForm.stockQuantity}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        const num = Number(val);
+                        setProductForm({
+                          ...productForm,
+                          stockQuantity: val,
+                          inStock: val !== "" ? num > 0 : productForm.inStock
+                        });
+                      }}
+                      required
+                    />
+                    <div style={{ display: "flex", gap: "4px", marginTop: "4px", flexWrap: "wrap" }}>
+                      {[5, 10, 25, 50, 100].map((qty) => (
+                        <button
+                          key={qty}
+                          type="button"
+                          onClick={() => setProductForm({ ...productForm, stockQuantity: qty.toString(), inStock: true })}
+                          style={{
+                            background: productForm.stockQuantity === qty.toString() ? "#132c66" : "#f1f5f9",
+                            color: productForm.stockQuantity === qty.toString() ? "#ffffff" : "#475569",
+                            border: "1px solid #cbd5e1",
+                            padding: "2px 6px",
+                            borderRadius: "4px",
+                            fontSize: "10.5px",
+                            fontWeight: "700",
+                            cursor: "pointer"
+                          }}
+                        >
+                          {qty} pcs
+                        </button>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={() => setProductForm({ ...productForm, stockQuantity: "0", inStock: false })}
+                        style={{
+                          background: productForm.stockQuantity === "0" || !productForm.inStock ? "#fee2e2" : "#f8fafc",
+                          color: "#dc2626",
+                          border: "1px solid #fca5a5",
+                          padding: "2px 6px",
+                          borderRadius: "4px",
+                          fontSize: "10.5px",
+                          fontWeight: "700",
+                          cursor: "pointer"
+                        }}
+                      >
+                        0 (Out)
+                      </button>
+                    </div>
+                  </div>
+
                   <div className={styles.inputField} style={{ justifyContent: "center" }}>
-                    <label>Stock Status</label>
+                    <label>Stock Status Toggle</label>
                     <div style={{ display: "flex", alignItems: "center", gap: "10px", marginTop: "4px" }}>
                       <label className={styles.switch}>
                         <input
                           type="checkbox"
-                          checked={productForm.inStock}
-                          onChange={(e) => setProductForm({ ...productForm, inStock: e.target.checked })}
+                          checked={productForm.inStock && Number(productForm.stockQuantity || 0) > 0}
+                          onChange={(e) => {
+                            const checked = e.target.checked;
+                            setProductForm({
+                              ...productForm,
+                              inStock: checked,
+                              stockQuantity: checked ? (productForm.stockQuantity && Number(productForm.stockQuantity) > 0 ? productForm.stockQuantity : "10") : "0"
+                            });
+                          }}
                         />
                         <span className={styles.slider}></span>
                       </label>
-                      <span style={{ fontSize: "12px", fontWeight: "800", color: productForm.inStock ? "#10b981" : "#ef4444" }}>
-                        {productForm.inStock ? "IN STOCK" : "OUT OF STOCK"}
+                      <span style={{ fontSize: "12px", fontWeight: "800", color: productForm.inStock && Number(productForm.stockQuantity || 0) > 0 ? "#10b981" : "#ef4444" }}>
+                        {productForm.inStock && Number(productForm.stockQuantity || 0) > 0 ? "IN STOCK" : "OUT OF STOCK"}
                       </span>
                     </div>
                   </div>

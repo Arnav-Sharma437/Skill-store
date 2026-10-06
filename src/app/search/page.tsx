@@ -60,6 +60,7 @@ function SearchContent() {
               subCategory?: string;
               brand?: string;
               inStock?: boolean;
+              stockQuantity?: number;
             }) => ({
               id: item.id,
               title: item.title,
@@ -70,7 +71,8 @@ function SearchContent() {
               ratingCount: item.ratingCount || 0,
               subType: (item.subCategory || "domestic") as "domestic" | "commercial" | "accessory" | "general",
               brand: item.brand ? item.brand.toUpperCase() : "TUQO",
-              inStock: item.inStock !== false
+              inStock: item.inStock !== false && (item.stockQuantity === undefined || item.stockQuantity > 0),
+              stockQuantity: typeof item.stockQuantity === "number" ? item.stockQuantity : (item.inStock !== false ? 10 : 0)
             }));
 
             if (isMounted) {
@@ -275,6 +277,38 @@ function SearchContent() {
                       </h3>
                     </Link>
 
+                    {/* Stock Availability Badge */}
+                    {(() => {
+                      const isOutOfStock = product.inStock === false || (typeof product.stockQuantity === "number" && product.stockQuantity <= 0);
+                      const stockQty = typeof product.stockQuantity === "number" ? product.stockQuantity : (product.inStock !== false ? 10 : 0);
+
+                      if (isOutOfStock) {
+                        return (
+                          <div style={{ margin: "2px 0 6px 0" }}>
+                            <span style={{ fontSize: "11px", fontWeight: "750", color: "#dc2626", background: "#fef2f2", border: "1px solid #fecaca", padding: "1px 6px", borderRadius: "4px", display: "inline-block" }}>
+                              ❌ Out of Stock
+                            </span>
+                          </div>
+                        );
+                      }
+                      if (stockQty <= 5) {
+                        return (
+                          <div style={{ margin: "2px 0 6px 0" }}>
+                            <span style={{ fontSize: "11px", fontWeight: "750", color: "#b45309", background: "#fef3c7", border: "1px solid #fde68a", padding: "1px 6px", borderRadius: "4px", display: "inline-block" }}>
+                              ⚡ Only {stockQty} left!
+                            </span>
+                          </div>
+                        );
+                      }
+                      return (
+                        <div style={{ margin: "2px 0 6px 0" }}>
+                          <span style={{ fontSize: "11px", fontWeight: "750", color: "#166534", background: "#f0fdf4", border: "1px solid #bbf7d0", padding: "1px 6px", borderRadius: "4px", display: "inline-block" }}>
+                            📦 {stockQty} in stock
+                          </span>
+                        </div>
+                      );
+                    })()}
+
                     <div className={styles.priceBlock}>
                       <span className={styles.price}>
                         ₹{product.price.toLocaleString("en-IN")}.00
@@ -287,19 +321,26 @@ function SearchContent() {
                     </div>
 
                     <div className={styles.actionRow}>
-                      <button
-                        type="button"
-                        onClick={() => addToCart(product)}
-                        className={styles.cartButton}
-                        aria-label={`Add ${product.title} to cart`}
-                      >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                          <circle cx="9" cy="21" r="1"></circle>
-                          <circle cx="20" cy="21" r="1"></circle>
-                          <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
-                        </svg>
-                        <span>Add to Cart</span>
-                      </button>
+                      {(() => {
+                        const isOutOfStock = product.inStock === false || (typeof product.stockQuantity === "number" && product.stockQuantity <= 0);
+                        return (
+                          <button
+                            type="button"
+                            onClick={() => addToCart(product)}
+                            disabled={isOutOfStock}
+                            className={styles.cartButton}
+                            style={isOutOfStock ? { background: "#e2e8f0", color: "#94a3b8", cursor: "not-allowed" } : undefined}
+                            aria-label={isOutOfStock ? `${product.title} is out of stock` : `Add ${product.title} to cart`}
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              <circle cx="9" cy="21" r="1"></circle>
+                              <circle cx="20" cy="21" r="1"></circle>
+                              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                            </svg>
+                            <span>{isOutOfStock ? "Out of Stock" : "Add to Cart"}</span>
+                          </button>
+                        );
+                      })()}
                       
                       <button
                         type="button"
