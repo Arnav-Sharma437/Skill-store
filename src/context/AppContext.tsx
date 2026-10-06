@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { SessionProvider } from "next-auth/react";
 
 export interface CartItem {
@@ -89,85 +89,88 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [wishlist]);
 
   // Add to cart
-  const addToCart = (
-    product: {
-      id: string;
-      productId?: string;
-      title: string;
-      price: number;
-      imageUrl: string;
-      stockQuantity?: number;
-      selectedVariant?: { name?: string; degree?: string; size?: string; style?: string };
-    },
-    quantity = 1
-  ) => {
-    const pId = product.productId || product.id;
-    const varKey = product.selectedVariant
-      ? [
-          product.selectedVariant.name,
-          product.selectedVariant.degree,
-          product.selectedVariant.size,
-          product.selectedVariant.style,
-        ]
-          .filter(Boolean)
-          .join("-")
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, "-")
-      : "";
-    const uniqueCartId = varKey ? `${pId}-${varKey}` : pId;
+  const addToCart = useCallback(
+    (
+      product: {
+        id: string;
+        productId?: string;
+        title: string;
+        price: number;
+        imageUrl: string;
+        stockQuantity?: number;
+        selectedVariant?: { name?: string; degree?: string; size?: string; style?: string };
+      },
+      quantity = 1
+    ) => {
+      const pId = product.productId || product.id;
+      const varKey = product.selectedVariant
+        ? [
+            product.selectedVariant.name,
+            product.selectedVariant.degree,
+            product.selectedVariant.size,
+            product.selectedVariant.style,
+          ]
+            .filter(Boolean)
+            .join("-")
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, "-")
+        : "";
+      const uniqueCartId = varKey ? `${pId}-${varKey}` : pId;
 
-    setCart((prev) => {
-      const existing = prev.find((item) => item.id === uniqueCartId);
-      if (existing) {
-        const maxStock = typeof product.stockQuantity === "number" ? product.stockQuantity : (typeof existing.stockQuantity === "number" ? existing.stockQuantity : 99);
-        const newQty = Math.min(maxStock, existing.quantity + quantity);
-        return prev.map((item) =>
-          item.id === uniqueCartId
-            ? {
-                ...item,
-                quantity: newQty,
-                price: product.price || item.price,
-                imageUrl: product.imageUrl || item.imageUrl,
-                stockQuantity: typeof product.stockQuantity === "number" ? product.stockQuantity : item.stockQuantity,
-              }
-            : item
-        );
-      }
-      return [
-        ...prev,
-        {
-          id: uniqueCartId,
-          productId: pId,
-          title: product.title,
-          price: product.price,
-          imageUrl: product.imageUrl,
-          quantity,
-          stockQuantity: product.stockQuantity,
-          selectedVariant: product.selectedVariant,
-        },
-      ];
-    });
-  };
+      setCart((prev) => {
+        const existing = prev.find((item) => item.id === uniqueCartId);
+        if (existing) {
+          const maxStock = typeof product.stockQuantity === "number" ? product.stockQuantity : (typeof existing.stockQuantity === "number" ? existing.stockQuantity : 99);
+          const newQty = Math.min(maxStock, existing.quantity + quantity);
+          return prev.map((item) =>
+            item.id === uniqueCartId
+              ? {
+                  ...item,
+                  quantity: newQty,
+                  price: product.price || item.price,
+                  imageUrl: product.imageUrl || item.imageUrl,
+                  stockQuantity: typeof product.stockQuantity === "number" ? product.stockQuantity : item.stockQuantity,
+                }
+              : item
+          );
+        }
+        return [
+          ...prev,
+          {
+            id: uniqueCartId,
+            productId: pId,
+            title: product.title,
+            price: product.price,
+            imageUrl: product.imageUrl,
+            quantity,
+            stockQuantity: product.stockQuantity,
+            selectedVariant: product.selectedVariant,
+          },
+        ];
+      });
+    },
+    []
+  );
 
   // Remove from cart
-  const removeFromCart = (cartItemId: string) => {
+  const removeFromCart = useCallback((cartItemId: string) => {
     setCart((prev) => prev.filter((item) => item.id !== cartItemId));
-  };
+  }, []);
 
   // Update cart quantity
-  const updateCartQuantity = (cartItemId: string, quantity: number) => {
+  const updateCartQuantity = useCallback((cartItemId: string, quantity: number) => {
     setCart((prev) =>
       prev.map((item) => (item.id === cartItemId ? { ...item, quantity } : item))
     );
-  };
+  }, []);
 
   // Clear cart
-  const clearCart = () => {
+  const clearCart = useCallback(() => {
     setCart([]);
-  };
+  }, []);
 
   // Toggle wishlist
-  const toggleWishlist = (product: { id: string; title: string; price: number; imageUrl: string }) => {
+  const toggleWishlist = useCallback((product: { id: string; title: string; price: number; imageUrl: string }) => {
     setWishlist((prev) => {
       const existing = prev.find((item) => item.id === product.id);
       if (existing) {
@@ -175,15 +178,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       }
       return [...prev, product];
     });
-  };
+  }, []);
 
   // Check if product is in wishlist
-  const isInWishlist = (productId: string) => {
-    return wishlist.some((item) => item.id === productId);
-  };
+  const isInWishlist = useCallback(
+    (productId: string) => {
+      return wishlist.some((item) => item.id === productId);
+    },
+    [wishlist]
+  );
 
   // Track and add recently viewed product
-  const addRecentlyViewed = (product: RecentlyViewedItem) => {
+  const addRecentlyViewed = useCallback((product: RecentlyViewedItem) => {
     if (!product || !product.id) return;
     setRecentlyViewed((prev) => {
       const filtered = prev.filter((item) => item.id !== product.id);
@@ -191,7 +197,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       localStorage.setItem("skill_store_recently_viewed", JSON.stringify(updated));
       return updated;
     });
-  };
+  }, []);
 
   return (
     <SessionProvider>

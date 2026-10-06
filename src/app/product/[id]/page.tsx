@@ -320,7 +320,7 @@ export default function ProductPage() {
     return () => {
       isMounted = false;
     };
-  }, [id, addRecentlyViewed]);
+  }, [id]);
 
 
   // Submit review handler
