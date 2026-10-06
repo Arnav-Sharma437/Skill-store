@@ -30,10 +30,11 @@ export function getOptimizedImageUrl(
   url?: string | null,
   options: ImageOptimizationOptions = {}
 ): string {
-  if (!url || typeof url !== "string") return "";
+  if (!url || typeof url !== "string" || !url.trim()) {
+    return "/images/products/cdw400.jpg";
+  }
 
   const trimmed = url.trim();
-  if (!trimmed) return "";
 
   // Cloudinary standard upload URL pattern
   const cloudinaryRegex = /^(https?:\/\/res\.cloudinary\.com\/[^/]+\/image\/upload\/)(.*)$/i;

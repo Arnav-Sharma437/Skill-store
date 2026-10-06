@@ -651,15 +651,15 @@ export default function ProductPage() {
               {/* Thumbnails row */}
               <div className={styles.thumbnailsWrapper}>
                 <div className={styles.thumbnailsGrid}>
-                  {gallery.map((img, index) => (
+                  {gallery.filter(Boolean).map((img, index) => (
                     <button
                       key={index}
                       onClick={() => setSelectedImage(img)}
-                      className={`${styles.thumbnailCard} ${selectedImage === img ? styles.activeThumbnail : ""}`}
+                      className={`${styles.thumbnailCard} ${(selectedImage || product.imageUrl) === img ? styles.activeThumbnail : ""}`}
                       aria-label={`View image ${index + 1}`}
                     >
                       <Image
-                        src={optimizeGalleryThumbnail(img)}
+                        src={optimizeGalleryThumbnail(img) || "/images/products/cdw400.jpg"}
                         alt={`Thumbnail ${index + 1}`}
                         width={60}
                         height={60}
@@ -779,7 +779,7 @@ export default function ProductPage() {
                             >
                               {vImg && (
                                 <span className={styles.variantThumbBox}>
-                                  <Image src={vImg} alt={deg} fill sizes="24px" style={{ objectFit: "contain" }} />
+                                  <Image src={vImg || "/images/products/cdw400.jpg"} alt={deg} fill sizes="24px" style={{ objectFit: "contain" }} />
                                 </span>
                               )}
                               <span>{deg}</span>
@@ -812,7 +812,7 @@ export default function ProductPage() {
                             >
                               {vImg && (
                                 <span className={styles.variantThumbBox}>
-                                  <Image src={vImg} alt={sz} fill sizes="24px" style={{ objectFit: "contain" }} />
+                                  <Image src={vImg || "/images/products/cdw400.jpg"} alt={sz} fill sizes="24px" style={{ objectFit: "contain" }} />
                                 </span>
                               )}
                               <span>{sz}</span>
@@ -845,7 +845,7 @@ export default function ProductPage() {
                             >
                               {vImg && (
                                 <span className={styles.variantThumbBox}>
-                                  <Image src={vImg} alt={st} fill sizes="24px" style={{ objectFit: "contain" }} />
+                                  <Image src={vImg || "/images/products/cdw400.jpg"} alt={st} fill sizes="24px" style={{ objectFit: "contain" }} />
                                 </span>
                               )}
                               <span>{st}</span>
@@ -878,7 +878,7 @@ export default function ProductPage() {
                               >
                                 {v.imageUrl && (
                                   <span className={styles.variantThumbBox}>
-                                    <Image src={v.imageUrl} alt={v.name || "Variant"} fill sizes="24px" style={{ objectFit: "contain" }} />
+                                    <Image src={v.imageUrl || "/images/products/cdw400.jpg"} alt={v.name || "Variant"} fill sizes="24px" style={{ objectFit: "contain" }} />
                                   </span>
                                 )}
                                 <span>{v.name}</span>
