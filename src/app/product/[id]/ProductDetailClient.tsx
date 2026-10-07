@@ -904,7 +904,7 @@ export default function ProductDetailClient({ initialId }: { initialId?: string 
                     disabled={quantity >= maxAllowedQty}
                     className={styles.qtyBtn}
                     aria-label="Increase quantity"
-                    title={quantity >= maxAllowedQty ? `Maximum available quantity (${maxAllowedQty}) reached` : "Increase quantity"}
+                    title={quantity >= maxAllowedQty ? "Maximum available quantity reached" : "Increase quantity"}
                   >
                     +
                   </button>

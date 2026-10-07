@@ -617,7 +617,7 @@ export default function CartPage() {
                         disabled={typeof item.stockQuantity === "number" && item.quantity >= item.stockQuantity}
                         className={styles.qtyBtn}
                         aria-label="Increase quantity"
-                        title={typeof item.stockQuantity === "number" && item.quantity >= item.stockQuantity ? `Maximum ${item.stockQuantity} pieces available in stock` : "Increase quantity"}
+                        title={typeof item.stockQuantity === "number" && item.quantity >= item.stockQuantity ? "Maximum available stock limit reached" : "Increase quantity"}
                         style={typeof item.stockQuantity === "number" && item.quantity >= item.stockQuantity ? { opacity: 0.5, cursor: "not-allowed" } : undefined}
                       >
                         +
