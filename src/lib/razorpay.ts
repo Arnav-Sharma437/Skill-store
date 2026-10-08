@@ -4,6 +4,21 @@ import dbConnect from "@/lib/db/mongodb";
 import { Product } from "@/lib/schemas";
 import { getProductById, getAllCatalogProducts } from "@/data/categories";
 
+interface ResolvedProductDoc {
+  title?: string;
+  price?: number;
+  imageUrl?: string;
+  inStock?: boolean;
+  stockQuantity?: number;
+  variants?: Array<{
+    id?: string;
+    sku?: string;
+    name?: string;
+    inStock?: boolean;
+    stockQuantity?: number;
+  }>;
+}
+
 export interface CheckoutItemInput {
   id: string;
   quantity: number;
@@ -83,13 +98,16 @@ export async function calculateVerifiedOrder(
     let productPrice = 0;
     let productImageUrl = "";
 
+    let resolvedDbProduct: ResolvedProductDoc | null = null;
+
     // 1. Try finding in MongoDB Product collection
     try {
-      const dbProduct = await Product.findOne({
+      const dbProduct = (await Product.findOne({
         $or: [{ id: productId }, ...(productId.match(/^[0-9a-fA-F]{24}$/) ? [{ _id: productId }] : [])],
-      }).lean() as { title?: string; price?: number; imageUrl?: string } | null;
+      }).lean()) as unknown as ResolvedProductDoc | null;
 
       if (dbProduct && typeof dbProduct.price === "number" && dbProduct.price > 0) {
+        resolvedDbProduct = dbProduct;
         productTitle = dbProduct.title || `Product ${productId}`;
         productPrice = dbProduct.price;
         productImageUrl = dbProduct.imageUrl || "";
@@ -111,6 +129,40 @@ export async function calculateVerifiedOrder(
     // 3. If item cannot be resolved, reject order for security
     if (!productPrice || productPrice <= 0) {
       throw new Error(`Invalid or unavailable product in cart: ID ${productId}`);
+    }
+
+    // 4. Strict Stock Quantity & Out-of-Stock Server Validation
+    if (resolvedDbProduct) {
+      const isOutOfStock = resolvedDbProduct.inStock === false || (typeof resolvedDbProduct.stockQuantity === "number" && resolvedDbProduct.stockQuantity <= 0);
+      if (isOutOfStock) {
+        throw new Error(`Product "${productTitle}" is currently out of stock.`);
+      }
+
+      const availableStock = typeof resolvedDbProduct.stockQuantity === "number" ? resolvedDbProduct.stockQuantity : 10;
+      if (quantity > availableStock) {
+        throw new Error(`Only ${availableStock} piece(s) available in stock for "${productTitle}". Please reduce your cart quantity to ${availableStock}.`);
+      }
+
+      // Check variant stock if applicable
+      if (resolvedDbProduct.variants && Array.isArray(resolvedDbProduct.variants)) {
+        const matchingVar = resolvedDbProduct.variants.find((v) => {
+          const vSku = (v.sku || "").toLowerCase().trim();
+          const vId = (v.id || "").toLowerCase().trim();
+          const rawIdLower = productId.toLowerCase().trim();
+          return (vSku && vSku === rawIdLower) || (vId && vId === rawIdLower);
+        });
+
+        if (matchingVar) {
+          const isVarOutOfStock = matchingVar.inStock === false || (typeof matchingVar.stockQuantity === "number" && matchingVar.stockQuantity <= 0);
+          if (isVarOutOfStock) {
+            throw new Error(`Variant "${matchingVar.name || matchingVar.sku || productTitle}" is currently out of stock.`);
+          }
+          const varAvailableStock = typeof matchingVar.stockQuantity === "number" ? matchingVar.stockQuantity : 10;
+          if (quantity > varAvailableStock) {
+            throw new Error(`Only ${varAvailableStock} piece(s) available for "${matchingVar.name || productTitle}". Please adjust your cart quantity to ${varAvailableStock}.`);
+          }
+        }
+      }
     }
 
     const itemSubtotal = productPrice * quantity;
