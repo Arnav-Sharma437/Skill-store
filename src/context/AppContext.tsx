@@ -134,8 +134,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
               : item
           );
         }
-        const maxStock = typeof product.stockQuantity === "number" ? product.stockQuantity : 99;
-        const safeQuantity = Math.max(1, Math.min(maxStock, quantity));
         return [
           ...prev,
           {
@@ -144,7 +142,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             title: product.title,
             price: product.price,
             imageUrl: product.imageUrl,
-            quantity: safeQuantity,
+            quantity,
             stockQuantity: product.stockQuantity,
             selectedVariant: product.selectedVariant,
           },
@@ -162,12 +160,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // Update cart quantity
   const updateCartQuantity = useCallback((cartItemId: string, quantity: number) => {
     setCart((prev) =>
-      prev.map((item) => {
-        if (item.id !== cartItemId) return item;
-        const maxStock = typeof item.stockQuantity === "number" ? item.stockQuantity : 99;
-        const safeQty = Math.max(1, Math.min(maxStock, quantity));
-        return { ...item, quantity: safeQty };
-      })
+      prev.map((item) => (item.id === cartItemId ? { ...item, quantity } : item))
     );
   }, []);
 
