@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
     const subCategory = searchParams.get("subCategory");
     const search = searchParams.get("search");
     const bestSeller = searchParams.get("bestSeller") || searchParams.get("isBestSeller");
-    const inStockOnly = searchParams.get("inStockOnly") !== "false";
+    const inStockOnly = searchParams.get("inStockOnly") === "true";
     const limit = searchParams.get("limit") ? parseInt(searchParams.get("limit")!) : 0;
 
     const query: Record<string, unknown> = {};

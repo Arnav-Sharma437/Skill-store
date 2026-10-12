@@ -329,7 +329,6 @@ export default function CategoryProductsPage({ params }: PageProps) {
                       {/* Stock Availability Badge */}
                       {(() => {
                         const isOutOfStock = product.inStock === false || (typeof product.stockQuantity === "number" && product.stockQuantity <= 0);
-                        const stockQty = typeof product.stockQuantity === "number" ? product.stockQuantity : (product.inStock !== false ? 10 : 0);
                         if (isOutOfStock) {
                           return (
                             <div style={{ margin: "2px 0 6px 0" }}>
@@ -339,22 +338,7 @@ export default function CategoryProductsPage({ params }: PageProps) {
                             </div>
                           );
                         }
-                        if (stockQty <= 5) {
-                          return (
-                            <div style={{ margin: "2px 0 6px 0" }}>
-                              <span style={{ fontSize: "11px", fontWeight: "750", color: "#b45309", background: "#fef3c7", border: "1px solid #fde68a", padding: "1px 6px", borderRadius: "4px", display: "inline-block" }}>
-                                ⚡ Only {stockQty} left!
-                              </span>
-                            </div>
-                          );
-                        }
-                        return (
-                          <div style={{ margin: "2px 0 6px 0" }}>
-                            <span style={{ fontSize: "11px", fontWeight: "750", color: "#166534", background: "#f0fdf4", border: "1px solid #bbf7d0", padding: "1px 6px", borderRadius: "4px", display: "inline-block" }}>
-                              📦 {stockQty} in stock
-                            </span>
-                          </div>
-                        );
+                        return null;
                       })()}
 
                       <span className={styles.price}>Rs. {product.price.toLocaleString("en-IN")}.00</span>
@@ -436,7 +420,6 @@ export default function CategoryProductsPage({ params }: PageProps) {
                       {/* Stock Availability Badge */}
                       {(() => {
                         const isOutOfStock = product.inStock === false || (typeof product.stockQuantity === "number" && product.stockQuantity <= 0);
-                        const stockQty = typeof product.stockQuantity === "number" ? product.stockQuantity : (product.inStock !== false ? 10 : 0);
                         if (isOutOfStock) {
                           return (
                             <div style={{ margin: "2px 0 6px 0" }}>
@@ -446,22 +429,7 @@ export default function CategoryProductsPage({ params }: PageProps) {
                             </div>
                           );
                         }
-                        if (stockQty <= 5) {
-                          return (
-                            <div style={{ margin: "2px 0 6px 0" }}>
-                              <span style={{ fontSize: "11px", fontWeight: "750", color: "#b45309", background: "#fef3c7", border: "1px solid #fde68a", padding: "1px 6px", borderRadius: "4px", display: "inline-block" }}>
-                                ⚡ Only {stockQty} left!
-                              </span>
-                            </div>
-                          );
-                        }
-                        return (
-                          <div style={{ margin: "2px 0 6px 0" }}>
-                            <span style={{ fontSize: "11px", fontWeight: "750", color: "#166534", background: "#f0fdf4", border: "1px solid #bbf7d0", padding: "1px 6px", borderRadius: "4px", display: "inline-block" }}>
-                              📦 {stockQty} in stock
-                            </span>
-                          </div>
-                        );
+                        return null;
                       })()}
 
                       <span className={styles.price}>Rs. {product.price.toLocaleString("en-IN")}.00</span>
@@ -543,7 +511,6 @@ export default function CategoryProductsPage({ params }: PageProps) {
                       {/* Stock Availability Badge */}
                       {(() => {
                         const isOutOfStock = product.inStock === false || (typeof product.stockQuantity === "number" && product.stockQuantity <= 0);
-                        const stockQty = typeof product.stockQuantity === "number" ? product.stockQuantity : (product.inStock !== false ? 10 : 0);
                         if (isOutOfStock) {
                           return (
                             <div style={{ margin: "2px 0 6px 0" }}>
@@ -553,22 +520,7 @@ export default function CategoryProductsPage({ params }: PageProps) {
                             </div>
                           );
                         }
-                        if (stockQty <= 5) {
-                          return (
-                            <div style={{ margin: "2px 0 6px 0" }}>
-                              <span style={{ fontSize: "11px", fontWeight: "750", color: "#b45309", background: "#fef3c7", border: "1px solid #fde68a", padding: "1px 6px", borderRadius: "4px", display: "inline-block" }}>
-                                ⚡ Only {stockQty} left!
-                              </span>
-                            </div>
-                          );
-                        }
-                        return (
-                          <div style={{ margin: "2px 0 6px 0" }}>
-                            <span style={{ fontSize: "11px", fontWeight: "750", color: "#166534", background: "#f0fdf4", border: "1px solid #bbf7d0", padding: "1px 6px", borderRadius: "4px", display: "inline-block" }}>
-                              📦 {stockQty} in stock
-                            </span>
-                          </div>
-                        );
+                        return null;
                       })()}
 
                       <span className={styles.price}>Rs. {product.price.toLocaleString("en-IN")}.00</span>
