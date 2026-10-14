@@ -291,25 +291,6 @@ export default function CategoryPage({ params }: PageProps) {
               <div className={styles.controls}>
                 <div className={styles.selectWrapper}>
                   <select
-                    value={filterType}
-                    onChange={(e) => setFilterType(e.target.value)}
-                    className={styles.select}
-                    aria-label="Filter by Type"
-                  >
-                    <option value="all">Category: All Types</option>
-                    {currentCategoryDetail.subCategories && currentCategoryDetail.subCategories.map((sub) => (
-                      <option key={sub.slug || sub.name} value={sub.slug || sub.name}>
-                        {sub.name}
-                      </option>
-                    ))}
-                    <option value="domestic">Domestic</option>
-                    <option value="commercial">Commercial / Industrial</option>
-                    <option value="accessory">Accessories &amp; Spares</option>
-                  </select>
-                </div>
-
-                <div className={styles.selectWrapper}>
-                  <select
                     value={filterPrice}
                     onChange={(e) => setFilterPrice(e.target.value)}
                     className={styles.select}
